@@ -23,13 +23,33 @@ def _secret(name: str, default: str = "") -> str:
         return default
 
 
-# Streamlit Cloud 시크릿에 키가 있으면 환경변수로 옮겨 둔다
-if not os.getenv("OPENAI_API_KEY"):
-    _k = _secret("OPENAI_API_KEY")
-    if _k:
-        os.environ["OPENAI_API_KEY"] = _k
+def ensure_api_key() -> bool:
+    """시크릿·환경변수에서 키를 찾아 환경변수에 넣는다. 호출할 때마다 확인한다.
 
-APP_PASSWORD = _secret("MOKI_PASSWORD")    # 비어 있으면 잠그지 않는다
+    import 시점에 한 번만 읽으면, 배포 후에 시크릿을 추가했을 때
+    프로세스가 옛 값을 들고 있어 반영되지 않는다.
+    """
+    if os.getenv("OPENAI_API_KEY"):
+        return True
+    k = _secret("OPENAI_API_KEY")
+    if k:
+        os.environ["OPENAI_API_KEY"] = k
+        return True
+    return False
+
+
+def app_password() -> str:
+    """비어 있으면 잠그지 않는다 (로컬 개발)."""
+    return _secret("MOKI_PASSWORD")
+
+
+def secret_status() -> dict:
+    """화면에 표시할 진단 정보. 키 값 자체는 노출하지 않는다."""
+    k = os.getenv("OPENAI_API_KEY") or _secret("OPENAI_API_KEY")
+    pw = _secret("MOKI_PASSWORD")
+    src = "환경변수(.env)" if os.getenv("OPENAI_API_KEY") else ("시크릿" if k else "없음")
+    return {"key_found": bool(k), "key_head": (k[:7] + "...") if k else "",
+            "key_source": src, "password_set": bool(pw)}
 
 # ── 모델 (팀 합의: gpt-4.1-mini) ──────────────────────────────
 ROUTER_MODEL = os.getenv("MOKI_ROUTER_MODEL", "gpt-4.1-mini")

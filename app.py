@@ -7,7 +7,8 @@ import html, json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from src.config import TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL, INDEX_DIR
+from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL, INDEX_DIR,
+                        ensure_api_key, secret_status)
 from src.index import load_index
 from src.cart import Cart
 from src.kiosk import handle
@@ -74,8 +75,16 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**실행 상태**")
+    _s = secret_status()
     st.caption(f"모델 {ROUTER_MODEL}")
     st.caption(f"인덱스 {'있음' if (INDEX_DIR / 'index.faiss').exists() else '없음'}")
+    if _s["key_found"]:
+        st.caption(f"API 키 ✅ {_s['key_head']} ({_s['key_source']})")
+    else:
+        st.error("API 키를 찾지 못했습니다. Secrets 에 OPENAI_API_KEY 를 넣어주세요.", icon="🔑")
+    if not _s["password_set"]:
+        st.warning("비밀번호 미설정 — 누구나 들어올 수 있습니다. "
+                   "Secrets 에 MOKI_PASSWORD 를 넣어주세요.", icon="🔓")
     if MOCK:
         st.warning("MOCK 모드 — API를 호출하지 않습니다", icon="🧪")
     st.metric("이번 세션 LLM 호출", st.session_state.llm_calls)

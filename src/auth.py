@@ -7,11 +7,12 @@
 from __future__ import annotations
 import hmac
 import streamlit as st
-from .config import APP_PASSWORD
+from .config import app_password
 
 
 def check() -> bool:
-    if not APP_PASSWORD:              # 설정 안 하면 잠그지 않음 (로컬 개발)
+    pw_set = app_password()
+    if not pw_set:              # 설정 안 하면 잠그지 않음 (로컬 개발)
         return True
     if st.session_state.get("_authed"):
         return True
@@ -20,7 +21,7 @@ def check() -> bool:
     st.caption("4조 시연용입니다. 조에서 공유한 비밀번호를 입력해 주세요.")
     pw = st.text_input("비밀번호", type="password", label_visibility="collapsed")
     if pw:
-        if hmac.compare_digest(pw, APP_PASSWORD):
+        if hmac.compare_digest(pw, pw_set):
             st.session_state["_authed"] = True
             st.rerun()
         else:
