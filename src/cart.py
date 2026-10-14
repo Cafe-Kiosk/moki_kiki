@@ -43,13 +43,21 @@ def resolve_variant(menu_id: str, temp: str | None = None, size: str | None = No
     vs = find_variants(menu_id)
     if not vs:
         return None, []
-    if len(vs) == 1:
-        return vs[0], vs
+
     cand = vs
+    # 손님이 말한 온도·크기가 없으면 비슷한 것으로 바꾸지 않는다 (P03).
+    # 카푸치노는 HOT 하나뿐인데 "아이스로" 라고 하면 HOT 을 담아 버리던 문제.
     if temp:
-        cand = [v for v in cand if str(v.get("온도", "")).upper() == temp.upper()] or cand
+        hit = [v for v in cand if str(v.get("온도", "")).upper() == temp.upper()]
+        if not hit:
+            return None, vs
+        cand = hit
     if size:
-        cand = [v for v in cand if str(v.get("크기", "")).upper() == size.upper()]
+        hit = [v for v in cand if str(v.get("크기", "")).upper() == size.upper()]
+        if not hit:
+            return None, vs
+        cand = hit
+
     if len(cand) == 1:
         return cand[0], vs
     return None, vs
