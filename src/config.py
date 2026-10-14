@@ -10,6 +10,27 @@ from dotenv import load_dotenv
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
+
+def _secret(name: str, default: str = "") -> str:
+    """로컬은 .env, Streamlit Cloud 는 시크릿에서 읽는다."""
+    v = os.getenv(name)
+    if v:
+        return v
+    try:                                   # 배포 환경에서만 있다
+        import streamlit as st
+        return str(st.secrets.get(name, default))
+    except Exception:
+        return default
+
+
+# Streamlit Cloud 시크릿에 키가 있으면 환경변수로 옮겨 둔다
+if not os.getenv("OPENAI_API_KEY"):
+    _k = _secret("OPENAI_API_KEY")
+    if _k:
+        os.environ["OPENAI_API_KEY"] = _k
+
+APP_PASSWORD = _secret("MOKI_PASSWORD")    # 비어 있으면 잠그지 않는다
+
 # ── 모델 (팀 합의: gpt-4.1-mini) ──────────────────────────────
 ROUTER_MODEL = os.getenv("MOKI_ROUTER_MODEL", "gpt-4.1-mini")
 ANSWER_MODEL = os.getenv("MOKI_ANSWER_MODEL", "gpt-4.1-mini")

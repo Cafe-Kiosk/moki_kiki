@@ -14,6 +14,10 @@ from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
 
+from src.auth import check as _check_password
+if not _check_password():
+    st.stop()
+
 CSS = """
 <style>
 .block-container {padding-top: 2rem; max-width: 1280px;}

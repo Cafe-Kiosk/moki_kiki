@@ -27,9 +27,35 @@ cd moki-kiosk
 pip install -r requirements.txt
 
 cp .env.example .env        # 열어서 OPENAI_API_KEY 채우기
-python scripts/build_index.py   # 한 번만. 문서 61개 임베딩
 streamlit run app.py
 ```
+
+**인덱스를 다시 만들 필요가 없습니다.** `index/` 를 저장소에 포함해 두었습니다.
+각자 `build_index.py` 를 돌리면 1인당 임베딩 61회가 나가므로, 미리 만들어 올렸습니다.
+`data/moki_data.xlsx` 를 고쳤을 때만 아래를 돌리고 결과를 커밋하세요.
+
+```bash
+python scripts/build_index.py && git add index && git commit -m "인덱스 갱신"
+```
+
+## 배포 (Streamlit Community Cloud)
+
+1. [share.streamlit.io](https://share.streamlit.io) → **New app**
+2. 저장소 `Cafe-Kiosk/moki_kiki` · 브랜치 `main` · 파일 `app.py`
+3. **Advanced settings → Secrets** 에 아래를 붙여 넣기
+
+```toml
+OPENAI_API_KEY = "sk-..."
+MOKI_PASSWORD  = "조에서 정한 비밀번호"
+```
+
+4. Deploy
+
+⚠️ **비밀번호를 반드시 설정하세요.** 공개 URL이라 설정하지 않으면 인터넷 누구나
+들어와 조교님 공용 키로 API를 씁니다. `MOKI_PASSWORD` 가 있으면 입력 화면이 먼저 뜹니다.
+
+배포해 두면 발표 때 노트북 환경에 상관없이 URL 하나로 시연할 수 있고,
+조원들이 각자 환경을 맞출 필요도 없습니다.
 
 `.env` 는 깃에 올라가지 않는다. **조교님 공용 키를 커밋하지 말 것.**
 
@@ -47,6 +73,8 @@ streamlit run app.py
 | `max_tokens` 제한 | 출력 토큰이 입력보다 비싸다 |
 | 대화 이력 최근 4턴만 | 턴이 쌓여도 입력 토큰이 늘지 않음 |
 | **MOCK 모드** | `MOKI_MOCK=1` 이면 API를 한 번도 부르지 않는다. 화면 작업용 |
+| 인덱스를 저장소에 포함 | 조원 7명이 각자 만들면 427회. 미리 올려 두어 **0회** |
+| 배포본 공유 | 각자 돌리지 않고 한 곳을 쓰면 캐시가 공유된다 |
 
 ```bash
 MOKI_MOCK=1 streamlit run app.py     # API 0원으로 화면 개발
