@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from .router import route
 from .retrieve import hybrid_search, as_context, _alias_map
 from .chain import answer
-from .cart import Cart, CartItem, OPTION_FIELDS, resolve_variant, menu_by_id, find_variants, option_rules
+from .cart import Cart, CartItem, OPTION_FIELDS, resolve_variant, menu_by_id, variant_by_id, find_variants, option_rules
 
 def _menu_candidates(text):
     t = str(text or "").lower()
@@ -87,17 +87,22 @@ def _execute(actions, cart):
                     if replacement.is_alcohol and cart.service_mode != "dine_in": raise ValueError("주류는 포장할 수 없습니다.")
                     cart.items[idx] = replacement; cart._changed(); continue
                 changes = {k: target[k] for k in OPTION_FIELDS if target.get(k) is not None and target[k] != getattr(old, k)}
+                defaults = {"bean":variant_by_id(old.variant_id).get("원두 ID"), "milk":"dairy", "sweetness":"normal", "ice":"normal", "warming":"room"}
+                for k in list(changes):
+                    applicable = old.menu_id in {x.strip() for x in option_rules()[k]["적용 메뉴 ID"].split(",")}
+                    if applicable and getattr(old,k) is None and changes[k] == defaults.get(k): changes.pop(k)
                 if (target.get("temp") and target["temp"] != old.temp) or (target.get("size") and target["size"] != old.size):
                     v, _ = resolve_variant(old.menu_id, target.get("temp") or old.temp,
                                            target.get("size") or old.size)
                     if not v: raise ValueError("지원하지 않는 온도·크기입니다. 가능한 구성을 다시 골라 주세요.")
                     changes.update(variant_id=v["주문 단위 ID"], temp=v["온도"], size=v["크기"])
                 qty = target.get("quantity")
+                mode = action.get("quantity_mode", "set")
                 if changes:
+                    if mode != "set": raise ValueError("옵션을 바꿀 기존 잔과 새로 추가할 잔을 구분해 주세요. 아직 변경하지 않았습니다.")
                     cart.update(idx, changes, affected_qty=qty)
                 else:
                     if qty is None: raise ValueError("바꿀 수량 또는 옵션을 알려 주세요.")
-                    mode = action.get("quantity_mode", "set")
                     qty = old.qty + qty if mode == "increment" else old.qty - qty if mode == "decrement" else qty
                     ok, msg = cart.set_qty(idx, qty)
                     if not ok: raise ValueError(msg)
@@ -304,7 +309,6 @@ def handle(user_input, store, cart, history=None):
         budget = budget_recommendation(r, user_input, lang)
         abv_text = ""
         if re.search(r"도수|%|abv", user_input, re.I):
-            from .cart import variant_by_id
             ids = list(dict.fromkeys(t.get("menu_id") for a in actions for t in a.get("targets", []) if t.get("menu_id")))
             if len(ids) == 1:
                 for v in find_variants(ids[0]):

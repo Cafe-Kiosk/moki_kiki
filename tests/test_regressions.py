@@ -214,6 +214,16 @@ class OrderTests(unittest.TestCase):
         with patch("src.kiosk.route",return_value=p):r=handle("라떼만 하나 더",None,c)
         self.assertTrue(r.success);self.assertEqual(c.total,12400);self.assertEqual(c.items[0].qty,2)
 
+    def test_default_options_do_not_hide_quantity_or_explicit_changes(self):
+        c=Cart(table_id=1);c.add(item("M02","ICED","S"))
+        p=plan(action("cart_update",targets=[{"line_id":c.items[0].line_id,"bean":"B01","quantity":2}],quantity_mode="increment"))
+        with patch("src.kiosk.route",return_value=p):r=handle("아메리카노 두 잔 더",None,c)
+        self.assertTrue(r.success);self.assertEqual(c.total,13500)
+        for field,value in [("milk","dairy"),("bean","B03")]:
+            p=plan(action("cart_update",targets=[{"line_id":c.items[0].line_id,field:value,"quantity":1}],quantity_mode="increment"))
+            with patch("src.kiosk.route",return_value=p):r=handle("옵션과 추가 수량",None,c)
+            self.assertFalse(r.success);self.assertEqual(c.total,13500)
+
     def test_bundle_count_requires_sales_unit_confirmation(self):
         c=Cart(table_id=1)
         p=plan(action("cart_add",targets=[{"menu_id":"M29","quantity":1}]),language="en")

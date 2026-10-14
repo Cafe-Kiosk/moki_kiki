@@ -8,6 +8,7 @@ test_budget_is_calculated_even_when_router_misses_fields (test_regressions.Order
 test_bundle_count_requires_sales_unit_confirmation (test_regressions.OrderTests.test_bundle_count_requires_sales_unit_confirmation) ... ok
 test_cancel_requires_confirmation (test_regressions.OrderTests.test_cancel_requires_confirmation) ... ok
 test_customer_staff_flag_never_authorizes_alcohol (test_regressions.OrderTests.test_customer_staff_flag_never_authorizes_alcohol) ... ok
+test_default_options_do_not_hide_quantity_or_explicit_changes (test_regressions.OrderTests.test_default_options_do_not_hide_quantity_or_explicit_changes) ... ok
 test_diet_constraint_rechecked_at_confirmation (test_regressions.OrderTests.test_diet_constraint_rechecked_at_confirmation) ... ok
 test_explicit_allergy_is_kept_when_order_is_rejected (test_regressions.OrderTests.test_explicit_allergy_is_kept_when_order_is_rejected) ... ok
 test_explicit_decaf_is_preserved_when_parser_drops_it (test_regressions.OrderTests.test_explicit_decaf_is_preserved_when_parser_drops_it) ... ok
@@ -37,15 +38,15 @@ test_two_phase_confirmation_and_immutable_order (test_regressions.OrderTests.tes
 test_undo_whole_compound_change_and_confirm_boundary (test_regressions.OrderTests.test_undo_whole_compound_change_and_confirm_boundary) ... ok
 test_unknown_and_ambiguous_names_never_add (test_regressions.OrderTests.test_unknown_and_ambiguous_names_never_add) ... ok
 test_update_quantity_set_and_increment (test_regressions.OrderTests.test_update_quantity_set_and_increment) ... ok
-test_screen_confirm_and_edit_preserve_order (test_regressions.ScreenTests.test_screen_confirm_and_edit_preserve_order) ... 2026-10-14 23:45:55.728 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-14 23:45:55.728 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_screen_confirm_and_edit_preserve_order (test_regressions.ScreenTests.test_screen_confirm_and_edit_preserve_order) ... 2026-10-14 23:52:28.774 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-14 23:52:28.774 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_screen_language_and_service_callbacks (test_regressions.ScreenTests.test_screen_language_and_service_callbacks) ... 2026-10-14 23:45:56.129 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-14 23:45:56.129 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_screen_language_and_service_callbacks (test_regressions.ScreenTests.test_screen_language_and_service_callbacks) ... 2026-10-14 23:52:29.130 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-14 23:52:29.130 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
 
 ----------------------------------------------------------------------
-Ran 41 tests in 2.609s
+Ran 42 tests in 2.441s
 
 OK
 
