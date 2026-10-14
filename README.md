@@ -4,6 +4,16 @@
 
 좌석 태블릿에 대고 말로 주문하는 커피바 키오스크. 메뉴 지식은 RAG로 공급한다.
 
+**4조 작업 저장소입니다.** 코드·데이터·프롬프트·문서가 모두 여기 있습니다.
+
+| 팀 | 담당 | 고칠 곳 |
+|---|---|---|
+| 데이터 | 류성환 · 오승재 | `data/moki_data.xlsx` |
+| 프롬프트 | 안나량 · 이주연 | **`prompts/*.md`** — 파이썬 안 건드려도 됩니다 |
+| 개발 | 박채원 · 신기훈 | `src/` · `app.py` |
+
+문서: [컨셉](docs/01_컨셉.md) · [HTI](docs/02_HTI.md) · [회의록](docs/03_회의록.md) · [일정](docs/04_일정.md)
+
 ```
 손님 입력 → 질의 재작성 + 의도 분류 (LLM 1회) → 하이브리드 검색 → 답변 생성 (LLM 1회)
                                               ↘ 장바구니·가격 계산 (코드)
@@ -42,10 +52,25 @@ streamlit run app.py
 MOKI_MOCK=1 streamlit run app.py     # API 0원으로 화면 개발
 ```
 
+## 프롬프트 팀에게
+
+프롬프트는 코드에서 빼내 `prompts/` 폴더의 마크다운으로 두었습니다.
+**파이썬을 열 필요 없이 .md 파일만 고치면 됩니다.**
+
+| 파일 | 역할 |
+|---|---|
+| `prompts/system.md` | 응대 규칙·캐릭터·가드레일 |
+| `prompts/router.md` | 질의 재작성 + 의도 분류 (JSON 키 이름은 바꾸지 마세요) |
+| `prompts/offtopic.md` | 범위 밖 질문 응대 |
+
+고친 뒤 `streamlit run app.py` 를 다시 켜면 반영됩니다.
+실패 사례는 `python tests/run_checks.py --ids Q05 Q10` 식으로 특정 질문만 돌려 확인할 수 있습니다.
+
 ## 구조
 
 ```
 app.py                  Streamlit 화면 (채팅·장바구니·검색근거·TTS)
+prompts/                프롬프트 팀 담당 — 마크다운만 고치면 됨
 src/
   config.py             모델·임계값·비용 설정 한곳
   documents.py          엑셀 → RAG 문서 61개
@@ -58,6 +83,7 @@ src/
 scripts/build_index.py  인덱스 생성 (최초 1회)
 tests/run_checks.py     데이터팀 검증질문 47개 러너
 data/moki_data.xlsx     데이터팀 산출물 (원본)
+docs/                   컨셉·HTI·회의록·일정
 ```
 
 ## RAG 문서 설계
