@@ -1,0 +1,1492 @@
+[
+  {
+    "conversation": 1,
+    "question": "따뜻한 디카페인 라떼랑 약과 한 접시 주세요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "따뜻한 디카페인 카페 라떼 1잔과 약과 1접시 주문해줘",
+      "queries": [
+        "따뜻한 디카페인 라떼 주문",
+        "약과 한 접시 주문"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "카페 라떼",
+              "menu_id": "M03",
+              "line_id": null,
+              "temp": "HOT",
+              "size": null,
+              "quantity": 1,
+              "bean": "B03",
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "약과 2개",
+              "menu_id": "M28",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "카페 라떼의 가능한 구성을 골라 주세요: HOT·S 5,500원 / HOT·L 6,500원 / ICED·S 5,500원 / ICED·L 6,500원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 1,
+    "question": "라떼는 작은 걸로요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "라떼를 작은 사이즈로 주문할게요",
+      "queries": [
+        "라떼 작은 사이즈 주문",
+        "카페 라떼 S 사이즈 주문"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "카페 라떼",
+              "menu_id": "M03",
+              "line_id": null,
+              "temp": "HOT",
+              "size": "S",
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n2. 약과 2개 NA/ONE (기본) ×1 = 4,500 원\n합계 10,700 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L7514f707",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M28",
+          "variant_id": "M28-NA-ONE",
+          "name": "약과 2개",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "Lce3d8759",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 10700
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 1,
+    "question": "라떼만 하나 더",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "기존에 담긴 따뜻한 디카페인 라떼 작은 사이즈를 한 잔 더 추가해 주세요.",
+      "queries": [
+        "기존에 담긴 따뜻한 디카페인 라떼 작은 사이즈를 한 잔 더 추가해 주세요."
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "카페 라떼",
+              "menu_id": "M03",
+              "line_id": null,
+              "temp": "HOT",
+              "size": "S",
+              "quantity": 1,
+              "bean": "B03",
+              "extra_shots": 0,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n2. 약과 2개 NA/ONE (기본) ×1 = 4,500 원\n3. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n합계 16,900 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 3,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L7514f707",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M28",
+          "variant_id": "M28-NA-ONE",
+          "name": "약과 2개",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "Lce3d8759",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L63d2dbb6",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 16900
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 1,
+    "question": "주문 내역 보여줘",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "현재 주문 내역을 보여줘",
+      "queries": [
+        "현재 주문 내역을 보여줘",
+        "내가 주문한 음료와 디저트 내역을 알려줘",
+        "내 주문한 카페 라떼와 약과 주문 내역을 보여줘"
+      ],
+      "actions": [
+        {
+          "intent": "cart_view",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "최종 내역을 확인한 뒤 확정해 주세요.\n좌석 3 · 매장 이용\n1. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n2. 약과 2개 NA/ONE (기본) ×1 = 4,500 원\n3. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n합계 16,900 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 3,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L7514f707",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M28",
+          "variant_id": "M28-NA-ONE",
+          "name": "약과 2개",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "Lce3d8759",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L63d2dbb6",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 16900
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 1,
+    "question": "그 내용으로 시연 주문 확정할게요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "주문 내역을 최종 확정합니다.",
+      "queries": [
+        "주문 내역을 최종 확정합니다."
+      ],
+      "actions": [
+        {
+          "intent": "order_confirm",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "시연 주문을 확정했습니다. 주문번호 MA3F75992. 실제 결제·매장 접수는 이루어지지 않았습니다.\n좌석 3 · 매장 이용\n1. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n2. 약과 2개 NA/ONE (기본) ×1 = 4,500 원\n3. 카페 라떼 HOT/S (디카페인) ×1 = 6,200 원\n합계 16,900 원\n시연 주문번호 MA3F75992 · 실제 결제·접수 없음",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 3,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "confirmed_demo",
+      "order_no": "MA3F75992",
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L7514f707",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M28",
+          "variant_id": "M28-NA-ONE",
+          "name": "약과 2개",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "Lce3d8759",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-HOT-S",
+          "name": "카페 라떼",
+          "temp": "HOT",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L63d2dbb6",
+          "unit_price": 6200,
+          "subtotal": 6200,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 16900
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 1,
+    "question": "추가로 아이스 아메리카노 작은 거 하나 주세요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "아이스 아메리카노 작은 사이즈 1잔 추가 주문 요청",
+      "queries": [
+        "아이스 아메리카노 작은 거 하나 추가로 주문해줘",
+        "아이스 아메리카노 S 사이즈 1잔 추가해줘"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "아메리카노",
+              "menu_id": "M02",
+              "line_id": null,
+              "temp": "ICED",
+              "size": "S",
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 아메리카노 ICED/S (기본) ×1 = 4,500 원\n합계 4,500 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 5,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L4efaeee6",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 4500
+    },
+    "previous_orders": [
+      {
+        "table_id": 3,
+        "language": "ko",
+        "service_mode": "dine_in",
+        "cart_version": 3,
+        "undo_available": false,
+        "avoid_allergens": [],
+        "max_caffeine_mg": null,
+        "avoid_alcohol": false,
+        "order_status": "confirmed_demo",
+        "order_no": "MA3F75992",
+        "cart": [
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L7514f707",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M28",
+            "variant_id": "M28-NA-ONE",
+            "name": "약과 2개",
+            "temp": "NA",
+            "size": "ONE",
+            "qty": 1,
+            "bean": null,
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "Lce3d8759",
+            "unit_price": 4500,
+            "subtotal": 4500,
+            "caffeine_mg_per_unit": 0,
+            "nutrition": "기본 레시피 시연값",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L63d2dbb6",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          }
+        ],
+        "total_krw": 16900
+      }
+    ]
+  },
+  {
+    "conversation": 1,
+    "question": "영어로 바꿔줘",
+    "plan": {
+      "language": "en",
+      "rewritten_query": "Please translate the previous conversation into English.",
+      "queries": [
+        "Translate the previous conversation into English."
+      ],
+      "actions": [
+        {
+          "intent": "language_set",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": "en"
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "English selected. Your order is unchanged.\nTable 3 · dine-in\n1. Americano ICED/S (standard) ×1 = 4,500 KRW\nTotal 4,500 KRW",
+    "state": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 5,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L4efaeee6",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 4500
+    },
+    "previous_orders": [
+      {
+        "table_id": 3,
+        "language": "ko",
+        "service_mode": "dine_in",
+        "cart_version": 3,
+        "undo_available": false,
+        "avoid_allergens": [],
+        "max_caffeine_mg": null,
+        "avoid_alcohol": false,
+        "order_status": "confirmed_demo",
+        "order_no": "MA3F75992",
+        "cart": [
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L7514f707",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M28",
+            "variant_id": "M28-NA-ONE",
+            "name": "약과 2개",
+            "temp": "NA",
+            "size": "ONE",
+            "qty": 1,
+            "bean": null,
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "Lce3d8759",
+            "unit_price": 4500,
+            "subtotal": 4500,
+            "caffeine_mg_per_unit": 0,
+            "nutrition": "기본 레시피 시연값",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L63d2dbb6",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          }
+        ],
+        "total_krw": 16900
+      }
+    ]
+  },
+  {
+    "conversation": 1,
+    "question": "Show my current order",
+    "plan": {
+      "language": "en",
+      "rewritten_query": "Show my current order",
+      "queries": [
+        "Show my current order"
+      ],
+      "actions": [
+        {
+          "intent": "cart_view",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "Review the final order before confirming.\nTable 3 · dine-in\n1. Americano ICED/S (standard) ×1 = 4,500 KRW\nTotal 4,500 KRW",
+    "state": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 5,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L4efaeee6",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 4500
+    },
+    "previous_orders": [
+      {
+        "table_id": 3,
+        "language": "ko",
+        "service_mode": "dine_in",
+        "cart_version": 3,
+        "undo_available": false,
+        "avoid_allergens": [],
+        "max_caffeine_mg": null,
+        "avoid_alcohol": false,
+        "order_status": "confirmed_demo",
+        "order_no": "MA3F75992",
+        "cart": [
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L7514f707",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M28",
+            "variant_id": "M28-NA-ONE",
+            "name": "약과 2개",
+            "temp": "NA",
+            "size": "ONE",
+            "qty": 1,
+            "bean": null,
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "Lce3d8759",
+            "unit_price": 4500,
+            "subtotal": 4500,
+            "caffeine_mg_per_unit": 0,
+            "nutrition": "기본 레시피 시연값",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L63d2dbb6",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          }
+        ],
+        "total_krw": 16900
+      }
+    ]
+  },
+  {
+    "conversation": 1,
+    "question": "Cancel all items",
+    "plan": {
+      "language": "en",
+      "rewritten_query": "Cancel all items in my current order",
+      "queries": [
+        "Cancel all items in my current order"
+      ],
+      "actions": [
+        {
+          "intent": "cart_clear",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "Cancel the entire draft cart? Please confirm.\nTable 3 · dine-in\n1. Americano ICED/S (standard) ×1 = 4,500 KRW\nTotal 4,500 KRW",
+    "state": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 5,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L4efaeee6",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 4500
+    },
+    "previous_orders": [
+      {
+        "table_id": 3,
+        "language": "ko",
+        "service_mode": "dine_in",
+        "cart_version": 3,
+        "undo_available": false,
+        "avoid_allergens": [],
+        "max_caffeine_mg": null,
+        "avoid_alcohol": false,
+        "order_status": "confirmed_demo",
+        "order_no": "MA3F75992",
+        "cart": [
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L7514f707",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M28",
+            "variant_id": "M28-NA-ONE",
+            "name": "약과 2개",
+            "temp": "NA",
+            "size": "ONE",
+            "qty": 1,
+            "bean": null,
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "Lce3d8759",
+            "unit_price": 4500,
+            "subtotal": 4500,
+            "caffeine_mg_per_unit": 0,
+            "nutrition": "기본 레시피 시연값",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L63d2dbb6",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          }
+        ],
+        "total_krw": 16900
+      }
+    ]
+  },
+  {
+    "conversation": 1,
+    "question": "Yes, cancel the draft cart",
+    "plan": {
+      "language": "en",
+      "rewritten_query": "Please confirm cancellation of the entire draft cart.",
+      "queries": [
+        "Cancel the entire draft cart"
+      ],
+      "actions": [
+        {
+          "intent": "cart_clear",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": "confirmed"
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "The draft cart was cancelled.\nYour cart is empty.",
+    "state": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 6,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [
+      {
+        "table_id": 3,
+        "language": "ko",
+        "service_mode": "dine_in",
+        "cart_version": 3,
+        "undo_available": false,
+        "avoid_allergens": [],
+        "max_caffeine_mg": null,
+        "avoid_alcohol": false,
+        "order_status": "confirmed_demo",
+        "order_no": "MA3F75992",
+        "cart": [
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L7514f707",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M28",
+            "variant_id": "M28-NA-ONE",
+            "name": "약과 2개",
+            "temp": "NA",
+            "size": "ONE",
+            "qty": 1,
+            "bean": null,
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "Lce3d8759",
+            "unit_price": 4500,
+            "subtotal": 4500,
+            "caffeine_mg_per_unit": 0,
+            "nutrition": "기본 레시피 시연값",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          },
+          {
+            "menu_id": "M03",
+            "variant_id": "M03-HOT-S",
+            "name": "카페 라떼",
+            "temp": "HOT",
+            "size": "S",
+            "qty": 1,
+            "bean": "B03",
+            "extra_shots": 0,
+            "milk": null,
+            "sweetness": null,
+            "ice": null,
+            "warming": null,
+            "is_alcohol": false,
+            "line_id": "L63d2dbb6",
+            "unit_price": 6200,
+            "subtotal": 6200,
+            "caffeine_mg_per_unit": 8,
+            "nutrition": "미산정",
+            "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+          }
+        ],
+        "total_krw": 16900
+      }
+    ]
+  },
+  {
+    "conversation": 2,
+    "question": "저는 우유 알레르기가 있고 카페인 30mg 이하 음료를 원해요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "우유 알레르기가 있고 카페인 30mg 이하인 음료를 추천해 주세요.",
+      "queries": [
+        "우유 알레르기가 있는 카페인 30mg 이하 음료 추천",
+        "우유 알레르기 때문에 우유가 들어가지 않은 카페인 30mg 이하 음료 추천"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": [
+        "우유"
+      ],
+      "max_caffeine_mg": 30,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "우유 알레르기가 있으시고 카페인 30mg 이하 음료를 원하시면, 우유를 두유나 오트 음료로 변경할 수 있는 메뉴 중에서 선택하셔야 합니다. 다만, 크림 라떼, 모카, 초코 라떼는 우유 변경이 불가능합니다.\n\n카페인 30mg 이하인 음료는 디카페인 필터커피, 말차 라떼, 보성 홍차 밀크티, 유자티, 루이보스티, 오미자차, 대추생강차 등이 있습니다. 이 중 우유가 들어가는 메뉴는 우유 변경이 가능하며, 논커피 음료도 카페인 함량이 낮은 편입니다.\n\n추천 메뉴 3가지와 우유 변경 가능 여부, 카페인 함량을 알려드릴게요.\n\n1. 디카페인 필터커피 (우유 변경 가능, 카페인 30mg 이하)\n2. 말차 라떼 (우유 변경 가능, 카페인 30mg 이하)\n3. 보성 홍차 밀크티 (우유 변경 가능, 카페인 30mg 이하)\n\n원하시는 메뉴와 우유 변경(두유 또는 오트) 옵션을 알려주시면 주문 도와드리겠습니다. 또한, 알레르기 관련해서는 공용기구로 인한 교차접촉 가능성이 있으니 바리스타에게 직접 확인 부탁드립니다.\n재료 변경만으로 알레르기 안전성이 보장되지는 않습니다. 공용기구 교차접촉 가능성이 있어 바리스타에게 성분을 확인해 주세요.",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": false,
+      "avoid_allergens": [
+        "우유"
+      ],
+      "max_caffeine_mg": 30,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 2,
+    "question": "오트로 바꾼 디카페인 아이스 라떼 작은 거 하나 주세요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "오트 밀크로 변경한 디카페인 아이스 카페 라떼 작은 사이즈 1잔 주문해 주세요.",
+      "queries": [
+        "오트 밀크 디카페인 아이스 라떼 작은 사이즈 1잔 주문"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "카페 라떼",
+              "menu_id": "M03",
+              "line_id": null,
+              "temp": "ICED",
+              "size": "S",
+              "quantity": 1,
+              "bean": "B03",
+              "extra_shots": null,
+              "milk": "oat",
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": [
+        "우유"
+      ],
+      "max_caffeine_mg": 30,
+      "avoid_alcohol": false,
+      "budget_krw": null,
+      "drink_count": 1,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 카페 라떼 ICED/S (디카페인 · 오트) ×1 = 6,700 원\n합계 6,700 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 3,
+      "undo_available": true,
+      "avoid_allergens": [
+        "우유"
+      ],
+      "max_caffeine_mg": 30,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-ICED-S",
+          "name": "카페 라떼",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": "B03",
+          "extra_shots": 0,
+          "milk": "oat",
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L2019a746",
+          "unit_price": 6700,
+          "subtotal": 6700,
+          "caffeine_mg_per_unit": 8,
+          "nutrition": "미산정",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 6700
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 3,
+    "question": "아이스 라떼 작은 거 하나 주세요",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "아이스 카페 라떼 작은 사이즈 1잔 주문해줘",
+      "queries": [
+        "아이스 라떼 작은 거 하나 주세요",
+        "아이스 카페 라떼 작은 사이즈 1잔 주문해줘"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "카페 라떼",
+              "menu_id": "M03",
+              "line_id": null,
+              "temp": "ICED",
+              "size": "S",
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 카페 라떼 ICED/S (기본) ×1 = 5,500 원\n합계 5,500 원",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 1,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M03",
+          "variant_id": "M03-ICED-S",
+          "name": "카페 라떼",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L1ceefa13",
+          "unit_price": 5500,
+          "subtotal": 5500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 5500
+    },
+    "previous_orders": []
+  },
+  {
+    "conversation": 3,
+    "question": "직전 변경 취소해줘",
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "직전 변경을 취소해 주세요.",
+      "queries": [
+        "직전 변경 취소해줘"
+      ],
+      "actions": [
+        {
+          "intent": "undo",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "직전 변경을 되돌렸습니다.\n장바구니가 비어 있습니다.",
+    "state": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": []
+  }
+]

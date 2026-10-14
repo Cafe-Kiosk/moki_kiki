@@ -1,0 +1,12 @@
+{
+  "menus": 33,
+  "variants": 52,
+  "options": 6,
+  "policies": 19,
+  "documents": 61,
+  "bilingual_menu_rows": 33,
+  "source_questions": 47,
+  "data_sha256": "dac257dd2ef30a12aa7b67c80d572d4248a12262d1e4aa29f2b32f0a78fb8a46",
+  "all_checks_passed": true,
+  "api_calls": 0
+}

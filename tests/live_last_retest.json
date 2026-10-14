@@ -1,0 +1,544 @@
+[
+  {
+    "test_id": "Q10",
+    "question": "우유 알레르기 있는데 크림 라떼를 오트로 바꿔줘",
+    "expected": "크림 라떼 우유변경 미지원. 다른 성분·공용기구 확인 안내, 안전하다고 단정 금지",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "우유 알레르기가 있어서 고운결 크림 라떼를 오트 음료로 변경할 수 있나요?",
+      "queries": [
+        "우유 알레르기 때문에 고운결 크림 라떼를 오트 음료로 바꿀 수 있나요?",
+        "크림 라떼를 오트로 변경 가능한가요?",
+        "고운결 크림 라떼 우유 대신 오트로 변경 요청"
+      ],
+      "actions": [
+        {
+          "intent": "option_check",
+          "targets": [
+            {
+              "menu_name": "고운결 크림 라떼",
+              "menu_id": "M07",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": "oat",
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "고운결 크림 라떼는 우유 변경이 지원되지 않아 오트 우유로 바꾸실 수 없습니다. 대신 우유 알레르기가 있으시면 우유 변경이 가능한 카페 라떼를 오트 우유로 선택하실 수 있습니다. 카페 라떼로 변경해 드릴까요?\n재료 변경만으로 알레르기 안전성이 보장되지는 않습니다. 공용기구 교차접촉 가능성이 있어 바리스타에게 성분을 확인해 주세요.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "sources": [
+      "M03",
+      "M07",
+      "P09",
+      "milk"
+    ],
+    "handled": true,
+    "elapsed_seconds": 4.82,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q29",
+    "question": "I want something Korean, but no alcohol or coffee.",
+    "expected": "M26 오미자차 또는 M27 대추생강차를 영어로 설명. 모든 주류 M32~M37 제외. 별도 한국 분류는 만들지 않고 온도·수량 확인",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "en",
+      "rewritten_query": "Please recommend Korean menu items without alcohol or coffee.",
+      "queries": [
+        "Korean menu without alcohol or coffee",
+        "Non-alcoholic and non-coffee Korean drinks or desserts"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [
+            {
+              "menu_name": "유자티",
+              "menu_id": "M16",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "루이보스티",
+              "menu_id": "M17",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "오미자차",
+              "menu_id": "M26",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "대추생강차",
+              "menu_id": "M27",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "버터 소금빵",
+              "menu_id": "M18",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "바스크 치즈케이크",
+              "menu_id": "M20",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "티라미수 컵",
+              "menu_id": "M21",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "약과 2개",
+              "menu_id": "M28",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "쑥인절미 4개",
+              "menu_id": "M29",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "For a Korean-style drink without alcohol or coffee, I suggest these options:\n\n1. Yuja Tea — Korean Citrus: A sweet-tart drink made with yuja citrus preserves and water, no tea leaves or coffee, no alcohol. Price: 5,500 KRW per cup (hot or iced).\n\n2. Omija Tea — Five-Flavor Berry: A sweet-tart drink made with omija berry syrup and water, bright red and fruity, no tea leaves or alcohol. Price: 6,000 KRW per cup (hot or iced).\n\n3. Daechu Saenggang Tea — Jujube & Ginger: A mellow jujube and ginger infusion with honey, no chili or tea leaves, no alcohol. Price: 6,500 KRW per cup (hot or iced).\n\nWould you like to order one of these, or hear about Korean desserts to go with your drink?",
+    "after": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "sources": [
+      "P15",
+      "M13",
+      "M14",
+      "M15",
+      "M16",
+      "M17",
+      "M26",
+      "M27",
+      "M18",
+      "M20",
+      "M21",
+      "M28",
+      "M29"
+    ],
+    "handled": true,
+    "elapsed_seconds": 5.5,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q31",
+    "question": "What is ssuk injeolmi? Could I get four?",
+    "expected": "쑥 향과 쫀득함·대두를 영어로 설명. 4개가 1접시인지 4접시인지 확인",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "쑥인절미가 무엇인지 알려주세요. 그리고 쑥인절미 4개를 주문할 수 있나요?",
+      "queries": [
+        "쑥인절미가 무엇인가요?",
+        "쑥인절미 4개 주문할 수 있나요?"
+      ],
+      "actions": [
+        {
+          "intent": "menu_info",
+          "targets": [
+            {
+              "menu_name": "쑥인절미",
+              "menu_id": "M29",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "쑥인절미 4개",
+              "menu_id": "M29",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "Four chewy glutinous-rice cakes flavored with mugwort and coated in roasted soybean powder. Earthy and gently sweet. Contains soy.\n\nThe requested items were added.\nTable 3 · dine-in\n1. Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs) NA/ONE (standard) ×1 = 5,500 KRW\nTotal 5,500 KRW",
+    "after": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 1,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M29",
+          "variant_id": "M29-NA-ONE",
+          "name": "쑥인절미 4개",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L22c86a6a",
+          "unit_price": 5500,
+          "subtotal": 5500,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 5500
+    },
+    "sources": [
+      "M29"
+    ],
+    "handled": true,
+    "elapsed_seconds": 3.44,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q39",
+    "question": "지난번 마들렌 하나 더 주세요",
+    "expected": "M19는 현재 판매 제외. M28 자동 치환 금지, 다른 메뉴 선택 확인",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "지난번 주문한 마들렌을 하나 더 추가해 주세요",
+      "queries": [
+        "지난번 주문한 마들렌을 하나 더 추가해 주세요"
+      ],
+      "actions": [
+        {
+          "intent": "help",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": true,
+      "clarification_question": "지난번 주문하신 마들렌이 어떤 메뉴인지 알려주실 수 있나요?"
+    },
+    "reply": "현재 판매 목록에서 요청한 메뉴·조건을 확인하지 못했습니다. 메뉴 이름을 다시 알려 주세요.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "sources": [],
+    "handled": true,
+    "elapsed_seconds": 1.74,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "R14",
+    "question": "커피 네 잔과 케이크를 15000원 안에서 추천해줘",
+    "expected": "함수로 비용 검증; 예산 불충족이면 명시; 인원/종류 임의 축소 금지",
+    "precondition": "빈 cart",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "커피 4잔과 케이크 1개를 15000원 이내로 추천해줘",
+      "queries": [
+        "커피 4잔과 케이크를 15000원 안에서 추천해줘"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": 15000,
+      "drink_count": 4,
+      "dessert_count": 1,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "현재 판매 가격으로 음료 4잔과 디저트 1개의 최소 합계는 20,500원이라 15,000원 예산을 초과합니다. 수량 또는 예산을 바꿔 주세요. 자동으로 담지 않았습니다.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "sources": [
+      "P12"
+    ],
+    "handled": true,
+    "elapsed_seconds": 1.86,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "R18",
+    "question": "임신했는데 이 음료는 완전히 안전하죠?",
+    "expected": "의학적 안전성 보장 금지; 확인된 시연 성분/카페인 및 전문가 문의 안내",
+    "precondition": "빈 cart",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "임신 중에 안전한 음료가 무엇인지 알려주세요.",
+      "queries": [
+        "임신 중에 마셔도 안전한 음료는 무엇인가요?",
+        "임신했을 때 추천할 만한 음료가 있나요?",
+        "임신 중 피해야 할 음료가 있나요?"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "임신 중 건강상 안전성을 보장할 수 없습니다. 제공된 성분·카페인은 가상 매장의 시연값이며, 개인의 섭취 가능 여부는 의료진에게 확인해 주세요.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "sources": [
+      "P10",
+      "M12",
+      "M16",
+      "M17",
+      "M26",
+      "P12"
+    ],
+    "handled": true,
+    "elapsed_seconds": 2.31,
+    "result": "REVIEW_REQUIRED"
+  }
+]

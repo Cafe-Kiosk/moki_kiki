@@ -1,0 +1,823 @@
+[
+  {
+    "test_id": "Q01",
+    "question": "산미 적고 고소한 커피랑 빵 추천해줘",
+    "expected": "M02 하우스+M18. 맛 점수·원두 설명을 근거로 제안, 장바구니 자동 추가 금지",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "산미가 적고 고소한 커피와 함께 어울리는 빵을 추천해줘.",
+      "queries": [
+        "산미 적고 고소한 커피 추천",
+        "고소한 빵 추천"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [
+            {
+              "menu_name": "고소한 커피",
+              "menu_id": null,
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "recommend",
+          "targets": [
+            {
+              "menu_name": "고소한 빵",
+              "menu_id": null,
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "산미가 적고 고소한 커피로는 부드럽고 산미가 낮은 카페 라떼, 바닐라 라떼, 고운결 크림 라떼, 콜드브루를 추천드립니다. 이 중 카페 라떼와 바닐라 라떼는 산미 1/5, 고운결 크림 라떼도 산미 1/5이며, 콜드브루는 산미 1/5에 깔끔한 맛입니다.\n\n고소한 빵으로는 버터 소금빵이 있습니다. 버터 향과 짭짤한 맛이 어우러져 산미 적은 커피와 잘 어울립니다.\n\n요약 추천:\n1. 카페 라떼 (부드럽고 산미 적음) - 5,500원~\n2. 고운결 크림 라떼 (진하고 크리미, 산미 적음) - 6,500원\n3. 버터 소금빵 (고소하고 짭짤함) - 3,800원\n\n필요하시면 구체적인 온도, 크기, 우유 변경 등 옵션도 도와드릴게요. 어떤 메뉴를 먼저 주문해 보시겠어요?",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [],
+    "sources": [
+      "P12",
+      "M03",
+      "M06",
+      "M07",
+      "M09",
+      "milk",
+      "M18",
+      "M20",
+      "M28",
+      "M21",
+      "warming"
+    ],
+    "handled": true,
+    "elapsed_seconds": 6.41,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q20",
+    "question": "Could I have a hot decaf coffee and a small dessert?",
+    "expected": "영어로 M12-HOT-ONE 6800와 M28 약과 1접시(2개)4500 제안. 합계11300. 성분 안내 후 확인, 자동 주문 금지",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "en",
+      "rewritten_query": "I would like to order a hot decaf coffee and a small dessert.",
+      "queries": [
+        "hot decaf coffee",
+        "small dessert"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "디카페인 필터커피",
+              "menu_id": "M12",
+              "line_id": null,
+              "temp": "HOT",
+              "size": null,
+              "quantity": 1,
+              "bean": "B03",
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "small dessert",
+              "menu_id": null,
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "budget_krw": null,
+      "drink_count": 1,
+      "dessert_count": 1,
+      "needs_clarification": true,
+      "clarification_question": "Which small dessert would you like to order?"
+    },
+    "reply": "You can order a hot decaf coffee and a small dessert. For the hot decaf coffee, we have the Decaf Filter Coffee served hot in one size (240ml) at 6,800 KRW. For a small dessert, we have options like the Tiramisu Cup priced at 6,500 KRW.\n\nWould you like to order the Decaf Filter Coffee hot and the Tiramisu Cup as your dessert? Or would you prefer a different dessert? Please let me know your choice.",
+    "after": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [],
+    "sources": [
+      "P03",
+      "P10",
+      "M12",
+      "M25",
+      "M21"
+    ],
+    "handled": true,
+    "elapsed_seconds": 5.18,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q31",
+    "question": "What is ssuk injeolmi? Could I get four?",
+    "expected": "쑥 향과 쫀득함·대두를 영어로 설명. 4개가 1접시인지 4접시인지 확인",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "en",
+      "rewritten_query": "What is Ssuk Injeolmi? Please add four Ssuk Injeolmi to my order.",
+      "queries": [
+        "What is Ssuk Injeolmi?",
+        "Order four Ssuk Injeolmi"
+      ],
+      "actions": [
+        {
+          "intent": "menu_info",
+          "targets": [
+            {
+              "menu_name": "Ssuk Injeolmi",
+              "menu_id": "M29",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "Ssuk Injeolmi 4개",
+              "menu_id": "M29",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs): one plate contains 4 pieces. How many plates would you like? Nothing was added.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [],
+    "sources": [],
+    "handled": true,
+    "elapsed_seconds": 2.25,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q34",
+    "question": "에스프레소 마티니 하나랑 치즈케이크 한 조각 주세요",
+    "expected": "M35 12000+M20 6800=18800. 마티니 알코올·카페인70mg 안내, 직원 확인 전 대기",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "에스프레소 마티니 1잔과 바스크 치즈케이크 1조각 주문해 주세요.",
+      "queries": [
+        "에스프레소 마티니 1잔 주문",
+        "바스크 치즈케이크 1조각 주문"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "에스프레소 마티니",
+              "menu_id": "M35",
+              "line_id": null,
+              "temp": "ICED",
+              "size": "ONE",
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "바스크 치즈케이크",
+              "menu_id": "M20",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 1,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 에스프레소 마티니 ICED/ONE (기본) ×1 = 12,000 원\n2. 바스크 치즈케이크 NA/ONE (기본) ×1 = 6,800 원\n합계 18,800 원\n주류 포함 — 해당 손님 직원 확인 대기",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "pending_staff_check",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M35",
+          "variant_id": "M35-ICED-ONE",
+          "name": "에스프레소 마티니",
+          "temp": "ICED",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": true,
+          "line_id": "L9a8b3eb8",
+          "unit_price": 12000,
+          "subtotal": 12000,
+          "caffeine_mg_per_unit": 70,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M20",
+          "variant_id": "M20-NA-ONE",
+          "name": "바스크 치즈케이크",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L531eb349",
+          "unit_price": 6800,
+          "subtotal": 6800,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 18800
+    },
+    "previous_orders": [],
+    "sources": [
+      "M01",
+      "M35",
+      "M20"
+    ],
+    "handled": true,
+    "elapsed_seconds": 2.49,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "Q45",
+    "question": "라거 두 잔, 레드와인 두 잔 주세요. 맥주에 얼음은 없죠?",
+    "expected": "M36 330ml×2 14000 + M37 150ml×2 18000 = 32000. 둘 다 얼음 없이 제공. 주류 직원 확인 전 대기",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "라거 맥주 2잔과 하우스 레드와인 2잔을 주문하고, 맥주에는 얼음을 넣지 않는지 확인해 주세요.",
+      "queries": [
+        "라거 맥주 2잔 주문",
+        "하우스 레드와인 2잔 주문",
+        "맥주에 얼음이 들어가나요?"
+      ],
+      "actions": [
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "라거 맥주",
+              "menu_id": "M36",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 2,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "cart_add",
+          "targets": [
+            {
+              "menu_name": "하우스 레드와인",
+              "menu_id": "M37",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": 2,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        },
+        {
+          "intent": "option_check",
+          "targets": [
+            {
+              "menu_name": "라거 맥주",
+              "menu_id": "M36",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": "없음",
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "라거 맥주 두 잔과 하우스 레드와인 두 잔 주문해 드렸습니다. 라거 맥주는 330ml 차갑게 얼음 없이 제공되며, 레드와인은 150ml 잔 단위로 얼음 없이 나옵니다. 맥주에 얼음은 제공하지 않습니다. 주문 내역과 금액은 총 32,000원입니다. 추가로 도와드릴 사항 있으신가요?\n\n요청한 품목을 담았습니다.\n좌석 3 · 매장 이용\n1. 라거 맥주 ICED/ONE (기본) ×2 = 14,000 원\n2. 하우스 레드와인 NA/ONE (기본) ×2 = 18,000 원\n합계 32,000 원\n주류 포함 — 해당 손님 직원 확인 대기",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "pending_staff_check",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M36",
+          "variant_id": "M36-ICED-ONE",
+          "name": "라거 맥주",
+          "temp": "ICED",
+          "size": "ONE",
+          "qty": 2,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": true,
+          "line_id": "L3328d652",
+          "unit_price": 7000,
+          "subtotal": 14000,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        },
+        {
+          "menu_id": "M37",
+          "variant_id": "M37-NA-ONE",
+          "name": "하우스 레드와인",
+          "temp": "NA",
+          "size": "ONE",
+          "qty": 2,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": true,
+          "line_id": "Le19c0321",
+          "unit_price": 9000,
+          "subtotal": 18000,
+          "caffeine_mg_per_unit": 0,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 32000
+    },
+    "previous_orders": [],
+    "sources": [
+      "M36",
+      "M37",
+      "M23",
+      "ice"
+    ],
+    "handled": true,
+    "elapsed_seconds": 4.65,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "R06",
+    "question": "아메리카노 두 잔 더",
+    "expected": "increment2; 최종3 검증",
+    "precondition": "L1=M02-ICED-S qty1",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 1,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 1,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L1",
+          "unit_price": 4500,
+          "subtotal": 4500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 4500
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "아메리카노 아이스 S 사이즈 두 잔 추가 주문",
+      "queries": [
+        "아메리카노 두 잔 더"
+      ],
+      "actions": [
+        {
+          "intent": "cart_update",
+          "targets": [
+            {
+              "menu_name": null,
+              "menu_id": "M02",
+              "line_id": "L1",
+              "temp": null,
+              "size": null,
+              "quantity": 2,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "increment",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": null,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "요청한 품목을 변경했습니다.\n좌석 3 · 매장 이용\n1. 아메리카노 ICED/S (기본) ×3 = 13,500 원\n합계 13,500 원",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 2,
+      "undo_available": true,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [
+        {
+          "menu_id": "M02",
+          "variant_id": "M02-ICED-S",
+          "name": "아메리카노",
+          "temp": "ICED",
+          "size": "S",
+          "qty": 3,
+          "bean": null,
+          "extra_shots": 0,
+          "milk": null,
+          "sweetness": null,
+          "ice": null,
+          "warming": null,
+          "is_alcohol": false,
+          "line_id": "L1",
+          "unit_price": 4500,
+          "subtotal": 13500,
+          "caffeine_mg_per_unit": 120,
+          "nutrition": "기본 레시피 시연값",
+          "allergy_notice": "성분과 교차접촉 가능성은 바리스타에게 확인해 주세요."
+        }
+      ],
+      "total_krw": 13500
+    },
+    "previous_orders": [],
+    "sources": [],
+    "handled": true,
+    "elapsed_seconds": 1.92,
+    "result": "REVIEW_REQUIRED"
+  },
+  {
+    "test_id": "R11",
+    "question": "주문 내용을 읽어주고 글씨도 크게 해",
+    "expected": "구현된 기능만 안내; 쉬운 텍스트 제공",
+    "precondition": "capabilities.tts=false",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "주문 내역이 없습니다. 주문 내역을 크게 보여주세요.",
+      "queries": [
+        "주문 내역 보여줘",
+        "주문 내역 크게 보여줘"
+      ],
+      "actions": [
+        {
+          "intent": "cart_view",
+          "targets": [],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "최종 내역을 확인한 뒤 확정해 주세요.\n장바구니가 비어 있습니다.\n글자는 이용 설정의 ‘글자 크기’, 음성은 ‘마지막 답변 읽기’ 버튼을 직접 선택해 주세요. 채팅에서 글자 크기나 음성을 실행하지는 않았습니다.",
+    "after": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "undo_available": false,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [],
+    "sources": [],
+    "handled": true,
+    "elapsed_seconds": 1.38,
+    "result": "REVIEW_REQUIRED"
+  }
+]

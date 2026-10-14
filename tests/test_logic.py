@@ -77,7 +77,7 @@ okc, msg = c.confirm()
 check("Q32 직원 확인 전 확정 거부", okc, False)
 c.staff_checked = True
 okc, _ = c.confirm()
-check("직원 확인 후 확정 가능", okc, True)
+check("고객 화면의 확인값은 직원 인증이 아님", okc, False)
 
 print("\n【 규칙 검색 (API 0회) 】")
 check("Q47 '하이볼' → 두 메뉴 모두", sorted(rule_hits("하이볼 하나 주세요")[0]), ["M32", "M34"])
@@ -91,3 +91,5 @@ check("Q01 산미 적고 고소한 커피 → 커피만",
       all(menu_by_id(m)["분류"] in ("커피","디저트") for m in taste_candidates("산미 적고 고소한 커피랑 빵")), True)
 
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
+
+if fail: raise SystemExit(1)
