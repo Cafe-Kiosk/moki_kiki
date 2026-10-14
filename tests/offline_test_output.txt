@@ -1,0 +1,90 @@
+test_current_documents_and_index (test_regressions.DataTests.test_current_documents_and_index) ... ok
+test_mock_never_uses_real_disk_embedding_cache (test_regressions.DataTests.test_mock_never_uses_real_disk_embedding_cache) ... ok
+test_required_rule_hits_not_truncated (test_regressions.DataTests.test_required_rule_hits_not_truncated) ... ok
+test_accessibility_request_guides_actual_controls (test_regressions.OrderTests.test_accessibility_request_guides_actual_controls) ... ok
+test_all_or_nothing_multiple_items (test_regressions.OrderTests.test_all_or_nothing_multiple_items) ... ok
+test_answer_failure_rolls_back_write (test_regressions.OrderTests.test_answer_failure_rolls_back_write) ... ok
+test_budget_is_calculated_even_when_router_misses_fields (test_regressions.OrderTests.test_budget_is_calculated_even_when_router_misses_fields) ... ok
+test_bundle_count_requires_sales_unit_confirmation (test_regressions.OrderTests.test_bundle_count_requires_sales_unit_confirmation) ... ok
+test_cancel_requires_confirmation (test_regressions.OrderTests.test_cancel_requires_confirmation) ... ok
+test_customer_staff_flag_never_authorizes_alcohol (test_regressions.OrderTests.test_customer_staff_flag_never_authorizes_alcohol) ... ok
+test_default_options_do_not_hide_quantity_or_explicit_changes (test_regressions.OrderTests.test_default_options_do_not_hide_quantity_or_explicit_changes) ... ok
+test_diet_constraint_rechecked_at_confirmation (test_regressions.OrderTests.test_diet_constraint_rechecked_at_confirmation) ... ok
+test_explicit_allergy_is_kept_when_order_is_rejected (test_regressions.OrderTests.test_explicit_allergy_is_kept_when_order_is_rejected) ... ok
+test_explicit_decaf_is_preserved_when_parser_drops_it (test_regressions.OrderTests.test_explicit_decaf_is_preserved_when_parser_drops_it) ... ok
+test_korean_cuisine_word_does_not_select_korean_language (test_regressions.OrderTests.test_korean_cuisine_word_does_not_select_korean_language) ... ok
+test_language_change_preserves_order (test_regressions.OrderTests.test_language_change_preserves_order) ... ok
+test_line_identity_and_fields_cannot_be_forged (test_regressions.OrderTests.test_line_identity_and_fields_cannot_be_forged) ... ok
+test_malformed_route_rejected (test_regressions.OrderTests.test_malformed_route_rejected) ... ok
+test_menu_option_boundaries (test_regressions.OrderTests.test_menu_option_boundaries) ... ok
+test_new_order_failure_preserves_confirmed_order (test_regressions.OrderTests.test_new_order_failure_preserves_confirmed_order) ... ok
+test_non_integer_shot_none_rejected (test_regressions.OrderTests.test_non_integer_shot_none_rejected) ... ok
+test_other_drinker_does_not_supply_order_or_authorization (test_regressions.OrderTests.test_other_drinker_does_not_supply_order_or_authorization) ... ok
+test_pending_cancel_accepts_explicit_yes_even_if_router_drops_value (test_regressions.OrderTests.test_pending_cancel_accepts_explicit_yes_even_if_router_drops_value) ... ok
+test_pending_size_reply_completes_original_compound_order (test_regressions.OrderTests.test_pending_size_reply_completes_original_compound_order) ... ok
+test_persisted_diet_constraints_survive_language_and_reset (test_regressions.OrderTests.test_persisted_diet_constraints_survive_language_and_reset) ... ok
+test_price_and_modified_nutrition (test_regressions.OrderTests.test_price_and_modified_nutrition) ... ok
+test_product_replacement_keeps_other_line (test_regressions.OrderTests.test_product_replacement_keeps_other_line) ... ok
+test_quantity_increment_with_unchanged_options (test_regressions.OrderTests.test_quantity_increment_with_unchanged_options) ... ok
+test_reject_invalid_quantities (test_regressions.OrderTests.test_reject_invalid_quantities) ... ok
+test_repeat_keeps_existing_decaf_options (test_regressions.OrderTests.test_repeat_keeps_existing_decaf_options) ... ok
+test_retry_request_reads_actual_state (test_regressions.OrderTests.test_retry_request_reads_actual_state) ... ok
+test_review_and_confirm_in_same_turn_cannot_skip_display (test_regressions.OrderTests.test_review_and_confirm_in_same_turn_cannot_skip_display) ... ok
+test_same_variant_does_not_turn_total_qty_into_subset (test_regressions.OrderTests.test_same_variant_does_not_turn_total_qty_into_subset) ... ok
+test_source_mutation_rejects_stale_index (test_regressions.OrderTests.test_source_mutation_rejects_stale_index) ... ok
+test_split_one_cup_preserves_other (test_regressions.OrderTests.test_split_one_cup_preserves_other) ... ok
+test_stale_review (test_regressions.OrderTests.test_stale_review) ... ok
+test_two_phase_confirmation_and_immutable_order (test_regressions.OrderTests.test_two_phase_confirmation_and_immutable_order) ... ok
+test_undo_whole_compound_change_and_confirm_boundary (test_regressions.OrderTests.test_undo_whole_compound_change_and_confirm_boundary) ... ok
+test_unknown_and_ambiguous_names_never_add (test_regressions.OrderTests.test_unknown_and_ambiguous_names_never_add) ... ok
+test_update_quantity_set_and_increment (test_regressions.OrderTests.test_update_quantity_set_and_increment) ... ok
+test_screen_confirm_and_edit_preserve_order (test_regressions.ScreenTests.test_screen_confirm_and_edit_preserve_order) ... 2026-10-14 23:52:28.774 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-14 23:52:28.774 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_screen_language_and_service_callbacks (test_regressions.ScreenTests.test_screen_language_and_service_callbacks) ... 2026-10-14 23:52:29.130 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-14 23:52:29.130 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 42 tests in 2.441s
+
+OK
+
+【 금액 계산 — 검증질문 기대값과 대조 】
+  ✅ Q03 디카페인 라떼 S + 약과 = 10,700원
+  ✅ Q04 아이스라떼L 디카페인+오트+샷2 ×2 = 17,800원
+  ✅ Q04 단가 8,900원
+  ✅ Q34 에스프레소 마티니 + 치즈케이크 = 18,800원
+  ✅ Q45 라거×2 + 레드와인×2 = 32,000원
+  ✅ Q16 에티오피아 원두 200g = 19,000원
+  ✅ Q20 디카페인 필터커피 + 약과 = 11,300원
+
+【 수량 검증 (P11 · Q14) 】
+  ✅ 수량 0 거부
+  ✅ 수량 -1 거부
+  ✅ 수량 11 거부
+  ✅ 잘못된 수량은 담기지 않음
+
+【 온도·크기 구성 (P03) 】
+  ✅ Q07 아메리카노 XL 없음 → 확정 안 함
+  ✅    선택지 4개 제시
+  ✅ Q06 카푸치노 ICED 없음 → 확정 안 함
+  ✅ Q06 카푸치노는 HOT/ONE 하나뿐
+
+【 주류 (P15) 】
+  ✅ Q32 주류 담으면 pending_staff_check
+  ✅ Q32 직원 확인 전 확정 거부
+  ✅ 고객 화면의 확인값은 직원 인증이 아님
+
+【 규칙 검색 (API 0회) 】
+  ✅ Q47 '하이볼' → 두 메뉴 모두
+  ✅ Q25 '아아' → 아메리카노
+  ✅ Q25 '핫초코' → 초코 라떼
+  ✅ Q17 '기프티콘' → 미지원 정책
+  ✅ Q39 '마들렌' → 메뉴 없음
+  ✅ Q43 '김부각' → 메뉴 없음
+  ✅ '두유' → 우유 변경 옵션
+  ✅ Q01 산미 적고 고소한 커피 → 커피만
+
+====================================================
+통과 26 · 실패 0   (API 호출 0회)

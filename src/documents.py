@@ -13,7 +13,7 @@
 전체 본문을 넘기는 편이 정확하다.
 """
 from __future__ import annotations
-import openpyxl
+import openpyxl, hashlib
 from langchain_core.documents import Document
 from .config import DATA_XLSX
 
@@ -50,14 +50,14 @@ def build_documents() -> list[Document]:
     # 메뉴명 → 주문 단위 목록
     by_menu: dict[str, list[dict]] = {}
     for v in variants:
-        by_menu.setdefault(str(v["메뉴명"]).strip(), []).append(v)
+        by_menu.setdefault(str(v["주문 단위 ID"]).split("-")[0], []).append(v)
 
     docs: list[Document] = []
 
     # ── ① 메뉴 문서 ────────────────────────────────────────
     for m in menus:
         mid, name = m["메뉴 ID"], str(m["메뉴명"]).strip()
-        vs = by_menu.get(name, [])
+        vs = by_menu.get(mid, [])
         en = bilingual.get(mid, {})
 
         price_lines = []
@@ -71,6 +71,11 @@ def build_documents() -> list[Document]:
                 extra.append(f"카페인 {v['카페인(mg)']}mg")
             if v.get("열량(kcal)") not in (None, ""):
                 extra.append(f"{v['열량(kcal)']}kcal")
+            if v.get("도수(계산 기준)") is not None:
+                extra.append(f"시연 도수 {v['도수(계산 기준)'] * 100:.1f}%")
+                extra.append(f"계산 액체량 {v.get('계산 액체량(ml)')}ml")
+            for column in ("당류(g)", "탄수화물(g)", "단백질(g)", "지방(g)", "나트륨(mg)"):
+                if v.get(column) is not None: extra.append(f"{column} {v[column]}")
             if v.get("제공량(표준 구성)"):
                 extra.append(f"{v['제공량(표준 구성)']}{v.get('단위','')}")
             price_lines.append(
@@ -118,7 +123,9 @@ def build_documents() -> list[Document]:
         docs.append(Document(
             page_content=search_text,
             metadata={"type": "메뉴", "menu_id": mid, "name": name,
-                      "category": m["분류"],
+                      "category": m["분류"], "description": m["설명"],
+                      "description_en": en.get("English description", ""),
+                      "order_unit": m.get("판매 단위", ""),
                       "is_alcohol": str(m.get("주류 구분", "")).startswith("주류 포함"),
                       "variant_ids": ",".join(str(v["주문 단위 ID"]) for v in vs),
                       "full": full}))
@@ -168,6 +175,11 @@ def build_documents() -> list[Document]:
             metadata={"type": "정책", "policy_id": p["정책 ID"],
                       "name": p["주제"], "full": full}))
 
+    version = hashlib.sha256(DATA_XLSX.read_bytes()).hexdigest()
+    for doc in docs:
+        md = doc.metadata
+        md["doc_id"] = md.get("menu_id") or md.get("bean_id") or md.get("option_id") or md.get("policy_id")
+        md["version"] = version
     return docs
 
 

@@ -1,0 +1,10 @@
+{
+  "model": "text-embedding-3-small",
+  "documents": 61,
+  "data_sha256": "dac257dd2ef30a12aa7b67c80d572d4248a12262d1e4aa29f2b32f0a78fb8a46",
+  "document_digest": "e0acebcc502cac897706bb78bfef0902f3c6a56510f7107446a42d2e16ceccf6",
+  "files": {
+    "index.faiss": "8659b15d4b9bb04c91c52972af9380c6095b598c4fc4ecc1292ef8323662fa4b",
+    "index.pkl": "34d844b9715d63d975c8626ff2e4aac1b166157a91677b023a55e39ae7c783ae"
+  }
+}

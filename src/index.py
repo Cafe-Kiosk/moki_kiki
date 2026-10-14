@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 import json, hashlib
+from .config import DATA_XLSX
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.embeddings import Embeddings
@@ -46,7 +47,7 @@ class CachedEmbeddings(Embeddings):
         return self.inner.embed_documents(texts)
 
     def embed_query(self, text):
-        key = hashlib.sha1(text.strip().encode()).hexdigest()
+        key = hashlib.sha1((EMBED_MODEL + "||" + text.strip()).encode()).hexdigest()
         if key in self._cache:
             return self._cache[key]
         self.api_calls += 1
@@ -57,8 +58,8 @@ class CachedEmbeddings(Embeddings):
 
 
 def get_embeddings() -> Embeddings:
-    inner = _MockEmbeddings() if MOCK else OpenAIEmbeddings(model=EMBED_MODEL)
-    return CachedEmbeddings(inner)
+    if MOCK: return _MockEmbeddings()
+    return CachedEmbeddings(OpenAIEmbeddings(model=EMBED_MODEL))
 
 
 def build_index(verbose: bool = True) -> FAISS:
@@ -67,20 +68,41 @@ def build_index(verbose: bool = True) -> FAISS:
     emb = get_embeddings()
     store = FAISS.from_documents(docs, emb)
     INDEX_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if MOCK:
+        return store
     store.save_local(str(INDEX_DIR))
+    write_manifest(docs)
     if verbose:
         print(f"인덱스 생성: 문서 {len(docs)}개 → {INDEX_DIR}")
         print(f"임베딩 API 호출 {getattr(emb, 'api_calls', '?')}회")
     return store
 
 
-def load_index() -> FAISS:
-    """저장된 인덱스를 불러온다. 없으면 만든다."""
-    emb = get_embeddings()
-    if (INDEX_DIR / "index.faiss").exists():
-        return FAISS.load_local(str(INDEX_DIR), emb,
-                                allow_dangerous_deserialization=True)
-    return build_index(verbose=False)
+def document_digest(docs):
+    payload = [{"page_content": d.page_content, "metadata": d.metadata} for d in docs]
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+def write_manifest(docs):
+    manifest = {"model": EMBED_MODEL, "documents": len(docs), "data_sha256": hashlib.sha256(DATA_XLSX.read_bytes()).hexdigest(),
+                "document_digest": document_digest(docs),
+                "files": {n: hashlib.sha256((INDEX_DIR / n).read_bytes()).hexdigest() for n in ("index.faiss", "index.pkl")}}
+    (INDEX_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2))
+
+def load_index():
+    """저장 인덱스와 현재 데이터/문서의 일치를 검사한다. 자동 유료 재생성은 하지 않는다."""
+    if MOCK:
+        return FAISS.from_documents(build_documents(), _MockEmbeddings())
+    path = INDEX_DIR / "manifest.json"
+    if not path.exists(): raise ValueError("인덱스 검증 기록이 없습니다. python scripts/build_index.py를 실행해 주세요.")
+    manifest = json.loads(path.read_text())
+    if manifest["model"] != EMBED_MODEL or manifest["data_sha256"] != hashlib.sha256(DATA_XLSX.read_bytes()).hexdigest() or manifest["document_digest"] != document_digest(build_documents()):
+        raise ValueError("데이터/문서/모델이 저장 인덱스와 다릅니다. 인덱스를 갱신해 주세요.")
+    if set(manifest["files"]) != {"index.faiss", "index.pkl"}:
+        raise ValueError("인덱스 파일 검증 목록이 올바르지 않습니다.")
+    for name, digest in manifest["files"].items():
+        if name not in ("index.faiss", "index.pkl") or hashlib.sha256((INDEX_DIR / name).read_bytes()).hexdigest() != digest:
+            raise ValueError("저장 인덱스의 무결성 검사가 실패했습니다.")
+    return FAISS.load_local(str(INDEX_DIR), get_embeddings(), allow_dangerous_deserialization=True)
 
 
 def search(store: FAISS, query: str, k: int = TOP_K,

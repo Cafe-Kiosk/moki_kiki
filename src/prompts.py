@@ -12,7 +12,9 @@ PROMPT_DIR = pathlib.Path(__file__).resolve().parent.parent / "prompts"
 
 @lru_cache(maxsize=8)
 def load(name: str) -> str:
-    raw = (PROMPT_DIR / f"{name}.md").read_text(encoding="utf-8")
+    path = PROMPT_DIR / f"{name}.txt"
+    if not path.exists(): path = PROMPT_DIR / f"{name}.md"
+    raw = path.read_text(encoding="utf-8")
     if "\n---\n" in raw:                 # 설명 블록과 본문을 --- 로 나눈 경우
         raw = raw.split("\n---\n", 1)[1]
     lines = [ln for ln in raw.splitlines()

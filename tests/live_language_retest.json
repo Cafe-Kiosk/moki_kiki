@@ -1,0 +1,136 @@
+[
+  {
+    "test_id": "Q29",
+    "question": "I want something Korean, but no alcohol or coffee.",
+    "expected": "M26 오미자차 또는 M27 대추생강차를 영어로 설명. 모든 주류 M32~M37 제외. 별도 한국 분류는 만들지 않고 온도·수량 확인",
+    "precondition": "독립 세션. 지시대상/수정/확정 질문은 해당 장바구니·이전 대화·pending_question을 테스트에서 구성할 것.",
+    "before": {
+      "table_id": 3,
+      "language": "ko",
+      "service_mode": "dine_in",
+      "cart_version": 0,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": false,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "plan": {
+      "language": "ko",
+      "rewritten_query": "한국식이면서 알코올과 커피가 없는 음료를 추천해줘.",
+      "queries": [
+        "한국식 음료 중 알코올과 커피가 없는 음료 추천",
+        "알코올과 커피가 없는 한국식 음료 추천"
+      ],
+      "actions": [
+        {
+          "intent": "recommend",
+          "targets": [
+            {
+              "menu_name": "유자티",
+              "menu_id": "M16",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "루이보스티",
+              "menu_id": "M17",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "오미자차",
+              "menu_id": "M26",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            },
+            {
+              "menu_name": "대추생강차",
+              "menu_id": "M27",
+              "line_id": null,
+              "temp": null,
+              "size": null,
+              "quantity": null,
+              "bean": null,
+              "extra_shots": null,
+              "milk": null,
+              "sweetness": null,
+              "ice": null,
+              "warming": null
+            }
+          ],
+          "quantity_mode": "set",
+          "value": null
+        }
+      ],
+      "avoid_allergens": null,
+      "max_caffeine_mg": null,
+      "avoid_alcohol": true,
+      "budget_krw": null,
+      "drink_count": null,
+      "dessert_count": null,
+      "needs_clarification": false,
+      "clarification_question": null
+    },
+    "reply": "For a Korean-style drink without alcohol or coffee, I recommend these options:\n\n1. Yuja Tea — Korean Citrus: A sweet-tart drink made with yuja citrus preserves and water. No tea leaves or coffee. Price: 5,500 KRW per cup (hot or iced).\n\n2. Yakgwa — Honey Cookies (2 pcs): Two small flower-shaped Korean honey cookies, moist and chewy, no alcohol. Price: 4,500 KRW per plate.\n\n3. Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs): Four chewy glutinous-rice cakes with mugwort and roasted soybean powder, no alcohol. Price: 5,500 KRW per plate.\n\nWould you like to order any of these, or hear about more Korean non-alcoholic, non-coffee options?",
+    "after": {
+      "table_id": 3,
+      "language": "en",
+      "service_mode": "dine_in",
+      "cart_version": 1,
+      "avoid_allergens": [],
+      "max_caffeine_mg": null,
+      "avoid_alcohol": true,
+      "order_status": "draft",
+      "order_no": null,
+      "cart": [],
+      "total_krw": 0
+    },
+    "previous_orders": [],
+    "sources": [
+      "P12",
+      "P19",
+      "M13",
+      "M14",
+      "M15",
+      "M16",
+      "M17",
+      "M26",
+      "M27",
+      "M18",
+      "M20",
+      "M21",
+      "M28",
+      "M29"
+    ],
+    "handled": true,
+    "elapsed_seconds": 5.7,
+    "result": "REVIEW_REQUIRED"
+  }
+]

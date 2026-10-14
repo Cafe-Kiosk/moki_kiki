@@ -13,6 +13,7 @@ import re, openpyxl
 from functools import lru_cache
 from .config import DATA_XLSX, TOP_K, DISTANCE_THRESHOLD
 from .documents import _sheet_rows
+from .cart import find_variants
 
 # 정책 문서를 부르는 말들 — 데이터의 정책 본문에 나오는 표현에서 뽑았다
 POLICY_KEYWORDS = {
@@ -139,8 +140,7 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         rows = filtered or rows
     if low_caffeine:
         rows = [r for r in rows
-                if r["category"] == "차/논커피" or "디카페인" in r["name"]
-                or "디카페인" in r["tags"]]
+                if any(v.get("카페인(mg)") is not None and v["카페인(mg)"] <= 10 for v in find_variants(r["menu_id"]))]
 
     def score(r):
         s = 0.0
@@ -154,7 +154,7 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
     # 분류 힌트가 둘 이상이면 각 분류에서 고르게 뽑는다 ("커피랑 빵 추천")
     if len(wants) > 1:
         out, per = [], max(1, limit // len(wants))
-        for c in wants:
+        for c in sorted(wants):
             out += [r["menu_id"] for r in rows if r["category"] == c][:per]
         return out[:limit]
     return [r["menu_id"] for r in rows[:limit]]
@@ -179,11 +179,11 @@ def hybrid_search(store, query: str, k: int = TOP_K,
     picked, seen = [], set()
     trace = []
 
-    for mid in menu_ids:
+    for mid in sorted(menu_ids):
         if mid in by_id and mid not in seen:
             seen.add(mid); picked.append(by_id[mid])
             trace.append(("규칙·별칭", by_id[mid].metadata["name"], None))
-    for pid in policy_ids:
+    for pid in sorted(policy_ids):
         if pid in by_id and pid not in seen:
             seen.add(pid); picked.append(by_id[pid])
             trace.append(("규칙·정책/옵션", by_id[pid].metadata["name"], None))
@@ -205,7 +205,7 @@ def hybrid_search(store, query: str, k: int = TOP_K,
         if len(picked) >= k + len(menu_ids) + len(policy_ids):
             break
 
-    return picked[: k + 3], trace
+    return picked, trace
 
 
 def as_context(docs) -> str:
