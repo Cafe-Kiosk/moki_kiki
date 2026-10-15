@@ -8,9 +8,9 @@ import re
 from dataclasses import dataclass, field
 
 from .router import route
-from .retrieve import hybrid_search, as_context, match_menus, alias_hits, _alias_attrs
+from .retrieve import hybrid_search, as_context, match_menus, alias_hits, _alias_attrs, wants_decaf
 from .chain import answer
-from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
+from .cart import (Cart, option_rules, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
 from .budget import budget_lines, budget_table, parse_budget
@@ -128,9 +128,39 @@ def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset(),
     return line
 
 
+DECAF_NEG_RE = re.compile(r"디카페인\s*(?:말고|아닌|아니|빼|없이)|not\s+decaf|no\s+decaf", re.I)
+
+
+def force_decaf(order_items: list[dict], user_input: str) -> list[dict]:
+    """손님 원문에 '디카페인/decaf'가 있으면 원두를 B03 으로 정한다. 라우터 값과 다르면 원문을 따른다 (Q04·S05).
+
+    라우터가 '디카페인'을 B02(에티오피아)로 넣어 18,400원으로 담기던 문제.
+    - 원두 선택이 되는 커피(옵션규칙 bean 적용 메뉴)가 담기·수정 대상에 정확히 하나일 때만 바꾼다.
+      둘 이상이면 어느 잔인지 모르므로 라우터 값을 그대로 둔다.
+    - '디카페인 말고'처럼 부정이면 바꾸지 않는다.
+    - 디카페인 필터커피(M12)·콜드브루처럼 원두 선택이 안 되는 메뉴는 대상이 아니다 (기존 검증이 처리).
+    """
+    if not wants_decaf(user_input) or DECAF_NEG_RE.search(user_input):
+        return order_items
+    bean_menus = option_rules()["bean"]["menus"]
+    targets = []
+    for i, it in enumerate(order_items):
+        if (it.get("action") or "add").lower() not in ("add", "update"):
+            continue
+        cands, _ = _menu_candidates(it.get("menu_name", ""))
+        if len(cands) == 1 and cands[0] in bean_menus:
+            targets.append(i)
+    if len(targets) != 1:
+        return order_items
+    out = list(order_items)
+    out[targets[0]] = dict(out[targets[0]], bean="B03")
+    return out
+
+
 def apply_order_items(order_items: list[dict], cart: Cart,
                       blocked: set[str] = frozenset(), user_input: str = "") -> list[str]:
     """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
+    order_items = force_decaf(order_items, user_input)
     text_attrs = text_alias_attrs(user_input)
     lines = []
     for it in order_items:

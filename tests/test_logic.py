@@ -873,4 +873,32 @@ finally:
     K.route, K.answer, K.hybrid_search = saved
 check("라우터가 ko 라 해도 영문 입력이면 범위밖 답변은 en", langs, [(True, "en"), (True, "ko")])
 
+print("\n【 디카페인 원두는 원문을 따른다 (Q04 · S05) 】")
+c, s = safe(lambda: calc("아이스 라떼 큰 거 디카페인에 오트, 샷 두 번 더, 두 잔", "장바구니",
+                         {"action": "add", "menu_name": "카페 라떼", "temp": "ICED", "size": "L", "qty": 2,
+                          "bean": "B02", "milk": "oat", "extra_shots": 2}))
+check("Q04 라우터가 B02 로 줘도 원문 '디카페인' → B03, 17,800원",
+      ([(i.bean, i.milk, i.extra_shots, i.qty) for i in c.items], c.total), ([("B03", "oat", 2, 2)], 17800))
+c, s = safe(lambda: calc("decaf iced latte small please", "장바구니",
+                         {"action": "add", "menu_name": "latte", "temp": "ICED", "size": "S", "qty": 1, "bean": None}))
+check("영어 decaf + 라우터 bean=null → B03", [i.bean for i in c.items], ["B03"])
+c, s = safe(lambda: calc("디카페인 말고 에티오피아 원두로 라떼 따뜻한 S", "장바구니",
+                         {"action": "add", "menu_name": "카페 라떼", "temp": "HOT", "size": "S", "qty": 1, "bean": "B02"}))
+check("'디카페인 말고' 는 바꾸지 않음 (B02 유지)", [i.bean for i in c.items], ["B02"])
+c, s = safe(lambda: calc("디카페인 라떼랑 아메리카노 하나씩, 둘 다 아이스 S", "장바구니",
+                         {"action": "add", "menu_name": "카페 라떼", "temp": "ICED", "size": "S", "qty": 1, "bean": "B03"},
+                         {"action": "add", "menu_name": "아메리카노", "temp": "ICED", "size": "S", "qty": 1, "bean": None}))
+check("원두 선택 커피가 둘이면 라우터 값 그대로 (라떼 B03, 아메리카노 기본)",
+      [(i.menu_id, i.bean) for i in c.items], [("M03", "B03"), ("M02", None)])
+c, s = safe(lambda: calc("디카페인 필터커피 따뜻하게 하나", "장바구니",
+                         {"action": "add", "menu_name": "디카페인 필터커피", "temp": "HOT", "qty": 1, "bean": None}))
+check("디카페인 필터커피(M12)는 원두를 넣지 않고 그대로 담김", [(i.menu_id, i.bean) for i in c.items], [("M12", None)])
+c, s = safe(lambda: calc("콜드브루 디카페인으로 바꾸고 샷 추가해줘", "장바구니",
+                         {"action": "add", "menu_name": "콜드브루", "qty": 1, "bean": "B03", "extra_shots": 1}))
+check("Q05 콜드브루 디카페인은 여전히 거부 (원두 선택 불가)", (len(c.items), "담지 않았습니다" in s), (0, True))
+c = Cart(table_id=1); add(c, "M03", "HOT", "S")
+s = "\n".join(K.apply_order_items([{"action": "update", "menu_name": "라떼", "match": {}, "bean": "B02"}],
+                                   c, user_input="라떼 디카페인으로 바꿔 주세요"))
+check("수정도 원문 '디카페인'을 따름", [i.bean for i in c.items], ["B03"])
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
