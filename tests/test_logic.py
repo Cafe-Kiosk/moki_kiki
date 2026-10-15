@@ -554,4 +554,33 @@ c = Cart(table_id=1)
 s = run(c, {"action": "add", "menu_name": "소금빵", "qty": 1, "warming": "warm"})
 check("디저트 데우기는 그대로 옵션", [i.warming for i in c.items], ["warm"])
 
+print("\n【 C-3 라우터 JSON 안정화 】")
+from src.router import parse as rparse, _llm as router_llm
+check("라우터는 JSON 모드로 호출", router_llm().model_kwargs.get("response_format"), {"type": "json_object"})
+r = rparse('{"intent":"장바구니","rewritten_query":"x","language":"ko","order_items":[{"menu_name":"아아"}]}', "아아")
+check("정상 JSON → errors 없음, 기본 키 채움",
+      (r["errors"], r["budget"], r["wants"], len(r["order_items"])), ([], None, [], 1))
+r = rparse('```json\n{"intent":"추천","rewritten_query":"x","language":"ko"}\n```', "x")
+check("코드펜스가 붙어도 파싱", (r["intent"], r["errors"]), ("추천", []))
+r = rparse("죄송합니다, 다시 말씀해 주세요", "아아 하나")
+check("파싱 실패 → errors 에 기록 (조용히 넘어가지 않음)",
+      (r["intent"], r["errors"][0].startswith("JSON 파싱 실패")), ("메뉴질문", True))
+r = rparse('{"intent":"주문","order_items":"아아"}', "아아")
+check("모르는 intent·잘못된 order_items → 기록 후 보정",
+      (r["intent"], r["order_items"], len(r["errors"])), ("메뉴질문", [], 2))
+r = rparse('{"intent":"장바구니","order_items":[{"menu_name":"아아"},"라떼",{"qty":1}]}', "x")
+check("형식이 틀린 항목만 제외", (len(r["order_items"]), any("2개 형식 오류" in e for e in r["errors"])), (1, True))
+c = Cart(table_id=1)
+saved_route = K.route
+K.route = lambda *a, **k: rparse("not json", "아아 하나 담아줘")
+saved = K.answer, K.hybrid_search
+K.answer = lambda *a, **k: ("(모델 답변)", True)
+K.hybrid_search = lambda *a, **k: ([], [("벡터", "아메리카노", 0.9)])
+try:
+    res = K.handle("아아 하나 담아줘", None, c)
+finally:
+    K.route, (K.answer, K.hybrid_search) = saved_route, saved
+check("파싱 실패 턴 → trace 맨 앞에 라우터·실패", res.trace[0][0], "라우터·실패")
+check("파싱 실패 턴 → 담지 않고 calc 에 다시 말해 달라고", (len(c.items), "해석하지 못했습니다" in res.calc), (0, True))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

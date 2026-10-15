@@ -164,7 +164,7 @@ with right:
         if last["rewritten"] != last["user"]:
             st.caption(f"재작성: {last['rewritten']}")
         for how, name, score in last["trace"][:7]:
-            cls = "pill-cut" if "초과" in how else ("pill-rule" if "규칙" in how or "맛" in how else "pill-vec")
+            cls = "pill-cut" if ("초과" in how or "실패" in how) else ("pill-rule" if "규칙" in how or "맛" in how else "pill-vec")
             st.markdown(
                 f'<span class="pill {cls}">{how}</span> {html.escape(str(name))}'
                 + (f' <span style="color:#A2928A;font-size:.78rem">{score}</span>' if score is not None else ""),

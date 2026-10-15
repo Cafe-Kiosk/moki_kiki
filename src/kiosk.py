@@ -202,6 +202,7 @@ def handle(user_input: str, store, cart: Cart,
     r = route(user_input, history)
     intent, rq, lang = r["intent"], r["rewritten_query"], r["language"]
     calls = 1
+    router_trace = [("라우터·실패", e, None) for e in r.get("errors", [])]
     # 메뉴 이름이 걸렸는데 범위밖·잡담으로 분류되면 코드가 뒤집는다 (Q47: '하이볼'을 범위밖으로 봄)
     if intent in ("범위밖", "잡담") and any(menu_by_id(m) for m in match_menus(user_input)[0]):
         intent = "메뉴질문"
@@ -212,7 +213,7 @@ def handle(user_input: str, store, cart: Cart,
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
         reply, cached = answer(user_input, "", history=history, offtopic=True)
-        return TurnResult(reply, intent, rq, lang, cached=cached,
+        return TurnResult(reply, intent, rq, lang, trace=router_trace, cached=cached,
                           llm_calls=calls + (0 if cached else 1))
 
     # ── 결제 : 코드가 처리하고 모델을 부르지 않는다 ─────────
@@ -229,14 +230,18 @@ def handle(user_input: str, store, cart: Cart,
         if unsupported:
             reply = ("기프티콘·쿠폰·적립·분할 결제는 이 키오스크에서 지원하지 않습니다.\n"
                      + reply)
-        return TurnResult(reply, intent, rq, lang, calc=cart.as_text(), llm_calls=calls)
+        return TurnResult(reply, intent, rq, lang, trace=router_trace,
+                          calc=cart.as_text(), llm_calls=calls)
 
     # ── 장바구니 담기 ──────────────────────────────────────
     before = cart_signature(cart)
     calc_lines = build_calc(user_input, intent, r.get("order_items"), cart, r)
+    if any(e.startswith("JSON 파싱 실패") for e in r.get("errors", [])):
+        calc_lines.append("요청을 해석하지 못했습니다 — 담기·빼기·변경은 하지 않았습니다. 손님에게 다시 말해 달라고 요청")
 
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)
+    trace = router_trace + trace
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
     if cart_signature(cart) != before:
