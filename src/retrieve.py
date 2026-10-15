@@ -229,7 +229,6 @@ def hybrid_search(store, query: str, k: int = TOP_K,
         if key in seen:
             continue
         if score > threshold:
-            trace.append(("벡터·기준값초과", md["name"], round(float(score), 3)))
             continue
         seen.add(key); picked.append(doc)
         trace.append(("벡터", md["name"], round(float(score), 3)))

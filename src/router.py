@@ -52,6 +52,18 @@ def _history_summary(history: list[dict] | None) -> str:
     return "\n".join(lines)
 
 
+def _history_messages(history: list[dict] | None) -> list[dict[str, str]]:
+    """재작성·의도 분류에도 최근 대화의 역할과 충분한 문맥을 보존한다."""
+    return [
+        {
+            "role": "user" if message.get("role") == "user" else "assistant",
+            "content": str(message.get("content", ""))[:1200],
+        }
+        for message in (history or [])[-HISTORY_TURNS * 2:]
+        if str(message.get("content", "")).strip()
+    ]
+
+
 def _parse_json(content: Any) -> dict:
     if isinstance(content, dict):
         return content
@@ -135,6 +147,7 @@ def rewrite(user_input: str, history: list[dict] | None = None,
     payload = {
         "user_message": user_input,
         "conversation_summary": _history_summary(history),
+        "conversation_history": _history_messages(history),
         "session_state": session_state or {},
     }
     try:
@@ -153,6 +166,7 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
         "user_message": user_input,
         "rewrite_result": rewrite_result,
         "conversation_summary": _history_summary(history),
+        "conversation_history": _history_messages(history),
         "session_state": session_state or {},
         "catalog_aliases": catalog_aliases or [],
         "retrieved_documents": retrieved_documents,

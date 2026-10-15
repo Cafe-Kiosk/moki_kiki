@@ -43,10 +43,13 @@ def answer(user_input: str, context: str, calc: str = "",
            capabilities: dict | None = None,
            plan: dict | None = None) -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
+    history_messages = _conversation_messages(history)
     if offtopic:
         system = OFFTOPIC
     else:
         server_input = {
+            "user_message": user_input,
+            "conversation_history": history_messages,
             "session_state": session_state or {},
             "retrieved_documents": context or "(없음)",
             "tool_results": calc or "(실행 결과 없음)",
@@ -68,7 +71,7 @@ def answer(user_input: str, context: str, calc: str = "",
 
     messages = [
         {"role": "system", "content": system},
-        *_conversation_messages(history),
+        *history_messages,
         {"role": "user", "content": user_input},
     ]
 

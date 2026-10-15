@@ -10,8 +10,9 @@ import streamlit.components.v1 as components
 
 from src.config import (TABLES, MOCK, ROUTER_MODEL,
                         ensure_api_key, is_mock, secret_status)
-from src.index import load_index, active_index_dir
+from src.index import load_index
 from src.cart import Cart, find_variants, list_menus
+from src.content import content_status, source_cards
 from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
@@ -94,7 +95,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background:var(--card)!importan
   overflow:hidden;text-overflow:ellipsis;}
 .menu-en {font-size:.67rem;color:var(--muted);height:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .menu-price {font-size:.78rem;color:var(--accent);font-weight:720;margin:.16rem 0 .42rem;}
-.meta {font-size:.66rem;color:#9c9188;margin:.1rem 0 .55rem;font-family:ui-monospace,monospace;}
 .cart-line {font-size:.88rem;padding:.55rem .1rem;border-bottom:1px solid #eee9e1;}
 .cart-total {font-weight:750;font-size:1.05rem;color:var(--ink);padding:.8rem 0 .15rem;}
 .pill {display:inline-block;font-size:.65rem;padding:.14rem .48rem;border-radius:999px;background:#eee8df;color:#67564d;margin-right:.25rem;}
@@ -248,12 +248,27 @@ with st.sidebar:
         st.caption(f"실제 AI · {ROUTER_MODEL}")
 
     st.divider()
+    _content = content_status()
+    st.markdown("**콘텐츠 연결**")
+    if _content["ready"]:
+        st.caption(
+            f"메뉴 {_content['menu_count']}개 · 검색 문서 {_content['document_count']}개 · "
+            f"사진 {_content['image_count']}장"
+        )
+        if is_mock():
+            st.caption("AI 응대 규칙은 API 연결 후 적용됩니다.")
+        else:
+            st.success("메뉴 데이터와 AI 응대 규칙이 연결되었습니다.")
+    else:
+        for content_error in _content["errors"]:
+            st.error(content_error)
+
+    st.divider()
     st.markdown("**매장 설정**")
     cart.staff_checked = st.toggle(
         "직원 나이 확인 완료", value=cart.staff_checked,
         help="주류 주문은 직원 확인 후에만 확정됩니다.")
-    index_ready = (active_index_dir() / "index.faiss").exists()
-    st.caption(f"검색 인덱스 {'준비됨' if index_ready else '첫 질문 때 생성'} · LLM {st.session_state.llm_calls}회")
+    st.caption("메뉴 가격과 옵션은 서버가 데이터 원장과 다시 확인합니다.")
 
     st.divider()
     if st.button("대화·장바구니 초기화", use_container_width=True):
@@ -364,13 +379,6 @@ with left:
                     st.markdown(f'<div class="bubble-user">{html.escape(m["content"])}</div>',
                                 unsafe_allow_html=True)
                 else:
-                    t = next((t for t in st.session_state.turns if t["idx"] == i), None)
-                    meta_html = ""
-                    if t:
-                        meta_html = (
-                            f'<div class="meta">의도 {t["intent"]} · 검색 {t["ndocs"]}건 · '
-                            f'LLM {t["calls"]}회{" · 캐시" if t["cached"] else ""}</div>'
-                        )
                     latest = i == len(st.session_state.history) - 1
                     status_html = ('<span class="moki-status"><i></i><i></i><i></i></span>'
                                    if latest else "")
@@ -378,7 +386,7 @@ with left:
                     st.markdown(
                         f'<div class="{row_class}"><div class="moki-avatar" role="img" aria-label="모키"></div>'
                         f'<div class="bot-content"><div class="moki-name">모키 {status_html}</div>'
-                        f'<div class="bubble-bot">{html.escape(m["content"])}</div>{meta_html}</div></div>',
+                        f'<div class="bubble-bot">{html.escape(m["content"])}</div></div></div>',
                         unsafe_allow_html=True,
                     )
 
@@ -429,23 +437,23 @@ with right:
 
     with st.container(border=True):
         st.markdown(
-            '<div class="section-head"><b>🔍 방금 검색한 근거</b>'
-            '<span>모키가 참고한 메뉴·정책</span></div>',
+            '<div class="section-head"><b>📖 답변에 참고한 정보</b>'
+            '<span>메뉴·원두·매장 안내</span></div>',
             unsafe_allow_html=True)
         if st.session_state.turns:
             last = st.session_state.turns[-1]
-            if last["rewritten"] != last["user"]:
-                st.caption(f"재작성: {last['rewritten']}")
-            for how, name, score in last["trace"][:7]:
-                cls = "pill-cut" if "초과" in how else ("pill-rule" if "규칙" in how or "맛" in how else "pill-vec")
+            for source in last.get("sources", [])[:7]:
                 st.markdown(
-                    f'<span class="pill {cls}">{how}</span> {html.escape(str(name))}'
-                    + (f' <span style="color:#A2928A;font-size:.78rem">{score}</span>' if score is not None else ""),
-                    unsafe_allow_html=True)
-            with st.expander("모델에게 넘긴 문서 전체"):
+                    f'<span class="pill pill-rule">{html.escape(source["label"])}</span> '
+                    f'{html.escape(source["name"])}',
+                    unsafe_allow_html=True,
+                )
+            if not last.get("sources"):
+                st.caption("이번 답변에는 별도의 메뉴 자료가 필요하지 않았습니다.")
+            with st.expander("참고한 데이터 내용"):
                 st.text(last["context"][:4000])
         else:
-            st.caption("대화를 시작하면 어떤 문서를 근거로 답했는지 여기에 보입니다.")
+            st.caption("대화를 시작하면 답변에 사용한 메뉴와 안내 자료가 표시됩니다.")
 
 # ── 입력 처리 ───────────────────────────────────────────────
 if prompt and not is_mock() and not ensure_api_key():
@@ -463,6 +471,7 @@ elif prompt:
     st.session_state.turns.append({
         "idx": len(st.session_state.history) - 1,
         "user": prompt, "rewritten": res.rewritten, "intent": res.intent,
+        "sources": source_cards(res.docs),
         "trace": res.trace, "ndocs": len(res.docs), "calls": res.llm_calls,
         "cached": res.cached,
         "context": "\n\n---\n\n".join(d.metadata.get("full", d.page_content) for d in res.docs),

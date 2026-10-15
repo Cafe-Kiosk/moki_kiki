@@ -11,13 +11,14 @@ from unittest.mock import patch
 from src import chain
 from src.cart import CartItem, validate_item_options
 from src.chain import _conversation_messages
+from src.content import content_status, source_cards
 from src.documents import build_documents
 from src.few_shot import load_examples, render_examples, select_examples
 from src.index import load_index
 from src.prompts import load, load_schema
 from src.quick_replies import build_quick_replies
 from src.retrieve import hybrid_search
-from src.router import adapt_plan
+from src.router import _history_messages, adapt_plan
 
 
 class ArtifactIntegrationTests(unittest.TestCase):
@@ -45,6 +46,17 @@ class ArtifactIntegrationTests(unittest.TestCase):
         self.assertEqual(images, menu_ids)
         self.assertEqual(len(images), 33)
 
+    def test_web_content_contract_is_ready(self):
+        status = content_status()
+        self.assertTrue(status["ready"], status["errors"])
+        self.assertEqual(status["menu_count"], 33)
+        self.assertEqual(status["document_count"], 122)
+        self.assertEqual(status["image_count"], 33)
+
+    def test_sources_are_presented_without_vector_debug_scores(self):
+        cards = source_cards(self.documents[:2])
+        self.assertEqual(cards, [{"id": "M01", "label": "메뉴", "name": "에스프레소"}])
+
     def test_prompts_and_schemas_load(self):
         system = load("system")
         self.assertIn("자연어 테이블 주문 도우미", system)
@@ -65,6 +77,11 @@ class ArtifactIntegrationTests(unittest.TestCase):
         ])
         self.assertEqual([m["role"] for m in messages], ["user", "assistant"])
         self.assertEqual(messages[0]["content"], long_detail.strip())
+        router_messages = _history_messages([
+            {"role": "assistant", "content": "두 메뉴 중 하나를 골라주세요."},
+            {"role": "user", "content": "두 번째 거요"},
+        ])
+        self.assertEqual([m["role"] for m in router_messages], ["assistant", "user"])
 
     def test_answer_sends_history_as_native_chat_messages(self):
         history = [
@@ -82,6 +99,9 @@ class ArtifactIntegrationTests(unittest.TestCase):
         sent = chat_model.return_value.invoke.call_args.args[0]
         self.assertEqual([message["role"] for message in sent],
                          ["system", "user", "assistant", "user"])
+        self.assertIn('"user_message": "디카페인도 돼요?"', sent[0]["content"])
+        self.assertIn('"conversation_history"', sent[0]["content"])
+        self.assertIn('"retrieved_documents": "메뉴 근거"', sent[0]["content"])
         self.assertEqual(sent[-1]["content"], "디카페인도 돼요?")
         self.assertEqual(reply, "좋아요.")
         self.assertFalse(cached)
@@ -96,10 +116,11 @@ class ArtifactIntegrationTests(unittest.TestCase):
         self.assertLess(len(rendered), 3000)
 
     def test_rule_search_selects_query_language(self):
-        ko_docs, _ = hybrid_search(self.store, "아아 가격")
+        ko_docs, trace = hybrid_search(self.store, "아아 가격")
         en_docs, _ = hybrid_search(self.store, "Americano price")
         self.assertEqual(ko_docs[0].metadata["id"], "M02")
         self.assertEqual(en_docs[0].metadata["id"], "M02:en")
+        self.assertFalse(any("기준값" in how for how, _, _ in trace))
 
     def test_clarification_blocks_cart_add(self):
         rewrite_result = {
