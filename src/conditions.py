@@ -215,3 +215,29 @@ def item_caution_line(item: CartItem) -> str | None:
     if not bits:
         return None
     return f"⚠️ {item.name} — " + " · ".join(bits)
+
+
+# P07 미지원 항목 — 범위밖 판정을 뒤집고 [미지원] 으로 넘길 때 쓴다 (S10 T2·Q17·Q18).
+# POLICY_KEYWORDS 의 '대기'처럼 넓은 말은 '직원 확인 대기'에도 걸리므로 항목별로 좁혀 둔다.
+UNSUPPORTED = {
+    "쿠폰·기프티콘": ["기프티콘", "쿠폰", "gifticon", "coupon", "voucher"],
+    "분할 결제": ["분할", "나눠서 결제", "나눠 결제", "나눠서 계산", "반씩", "따로 결제", "더치", "split"],
+    "포인트 적립": ["적립", "포인트", "멤버십", "point", "membership"],
+    "영수증 발급": ["영수증", "receipt"],
+    "예약": ["예약", "reserv"],
+    "실시간 재고·제조 진행·대기시간": ["몇 분", "대기시간", "대기 시간", "얼마나 걸", "언제 나와", "재고", "품절",
+                              "how long", "wait time", "ready yet", "in stock"],
+}
+
+
+def unsupported_hits(text: str) -> list[str]:
+    q = str(text).lower()
+    return [label for label, words in UNSUPPORTED.items() if any(w in q for w in words)]
+
+
+def unsupported_line(text: str) -> str | None:
+    hits = unsupported_hits(text)
+    if not hits:
+        return None
+    return (f"[미지원] {' · '.join(hits)} — 이 키오스크에서 지원하지 않음 (P07). "
+            "지원된다거나 매장마다 다르다고 말하지 않는다")

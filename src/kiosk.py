@@ -15,7 +15,8 @@ from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
 from .budget import budget_lines, parse_budget
 from .cart_edit import remove_item, update_item
 from . import orders
-from .conditions import screen, alternatives_line, item_caution_line, decaf_notes
+from .conditions import (screen, alternatives_line, item_caution_line, decaf_notes,
+                         unsupported_hits, unsupported_line)
 
 
 def _menu_candidates(text: str) -> tuple[list[str], dict]:
@@ -182,6 +183,8 @@ def build_calc(user_input: str, intent: str, order_items: list[dict] | None,
         return budget_lines(user_input, router)          # 장바구니는 건드리지 않는다
     lines, blocked = screen(user_input, order_items)
     lines += decaf_notes(user_input)
+    if (ln := unsupported_line(user_input)):
+        lines.append(ln)
     if intent == "장바구니" and order_items:
         lines = apply_order_items(order_items, cart, blocked, user_input) + lines
     else:
@@ -242,6 +245,10 @@ def handle(user_input: str, store, cart: Cart,
     # 메뉴 이름이 걸렸는데 범위밖·잡담으로 분류되면 코드가 뒤집는다 (Q47: '하이볼'을 범위밖으로 봄)
     if intent in ("범위밖", "잡담") and any(menu_by_id(m) for m in match_menus(user_input)[0]):
         intent = "메뉴질문"
+    # 기프티콘·분할 결제·대기시간처럼 P07 미지원 항목도 범위밖이 아니다. 잡담 프롬프트로 가면
+    # "매장마다 다르다"고 지어낸다 (S10 T2). 메뉴질문으로 돌려 [미지원] 안내 경로를 탄다
+    if intent in ("범위밖", "잡담") and unsupported_hits(user_input):
+        intent = "메뉴질문"
     # 금액이 들어간 추천은 예산추천으로 본다 ("만 원으로 뭐 마실까")
     if intent == "추천" and parse_budget(user_input):
         intent = "예산추천"
@@ -258,9 +265,10 @@ def handle(user_input: str, store, cart: Cart,
         _, pids = rule_hits(user_input)
         unsupported = ("P07" in pids)
         reply = orders.ask_confirm(cart)            # 바로 확정하지 않고 확인을 받는다 (P05)
-        if unsupported:
-            reply = ("기프티콘·쿠폰·적립·분할 결제는 이 키오스크에서 지원하지 않습니다.\n"
-                     + reply)
+        hits = unsupported_hits(user_input)
+        if unsupported or hits:
+            what = " · ".join(hits) if hits else "기프티콘·쿠폰·적립·분할 결제"
+            reply = f"이 키오스크에서 지원하지 않습니다: {what}\n" + reply
         return TurnResult(reply, intent, rq, lang, trace=router_trace,
                           calc=cart.as_text(), llm_calls=calls)
 

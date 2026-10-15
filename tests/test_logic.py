@@ -701,4 +701,21 @@ import src.prompts as _sp
 check("system.md 에 ⚠️/🧾 형식 설명 없음",
       any(m in _sp.load("system") for m in ("⚠️", "🧾")), False)
 
+print("\n【 P07 미지원 — 범위밖 판정 뒤집기 (S10 T2 · Q17 · Q18) 】")
+from src.conditions import unsupported_hits
+check("기프티콘 + 반씩 → 쿠폰·기프티콘, 분할 결제", unsupported_hits("기프티콘 쓰고 반씩 결제해줘"),
+      ["쿠폰·기프티콘", "분할 결제"])
+check("몇 분 뒤에 나와요 → 대기시간", unsupported_hits("제 커피 몇 분 뒤에 나와요?"), ["실시간 재고·제조 진행·대기시간"])
+check("'직원 확인 대기' 는 미지원 아님", unsupported_hits("직원 확인 대기 중이에요?"), [])
+for text in ["기프티콘 쓰고 반씩 결제해줘", "제 커피 몇 분 뒤에 나와요?"]:
+    r = safe(lambda: handle_stub(text, {"intent": "범위밖"}))
+    check(f"라우터 범위밖이어도 '{text}' → 메뉴질문 + [미지원]",
+          (getattr(r, "intent", r), "[미지원]" in getattr(r, "calc", "")), ("메뉴질문", True))
+r = safe(lambda: handle_stub("오늘 날씨 어때요", {"intent": "범위밖"}))
+check("미지원 키워드 없는 범위밖은 그대로", getattr(r, "intent", r), "범위밖")
+r = safe(lambda: handle_stub("기프티콘 쓰고 반씩 결제해줘", {"intent": "결제"}))
+check("결제 의도로 와도 미지원 항목을 코드가 안내",
+      "이 키오스크에서 지원하지 않습니다: 쿠폰·기프티콘 · 분할 결제" in getattr(r, "reply", ""), True)
+check("P07 문서가 검색에 들어감 ('몇 분')", "P07" in rule_hits("제 커피 몇 분 뒤에 나와요?")[1], True)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
