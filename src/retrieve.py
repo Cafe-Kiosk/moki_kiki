@@ -36,7 +36,8 @@ POLICY_KEYWORDS = {
 
 # 옵션 문서를 부르는 말들
 OPTION_KEYWORDS = {
-    "bean":        ["원두", "에티오피아", "싱글오리진", "하우스 블렌드", "bean"],
+    "bean":        ["원두", "에티오피아", "싱글오리진", "하우스 블렌드", "bean",
+                    "디카페인", "decaf"],      # 라떼류는 디카페인 원두(B03)로 바꿀 수 있다
     "extra_shots": ["샷", "shot", "진하게", "연하게"],
     "milk":        ["우유", "두유", "오트", "저지방", "무지방", "milk", "soy", "oat", "lactose"],
     "sweetness":   ["덜 달게", "단맛", "시럽", "당도", "달게", "less sweet", "sweet"],
@@ -102,10 +103,47 @@ def _menu_tastes() -> list[dict]:
     return out
 
 
+# 카페인 조건 — 문구는 가격영양 시트의 카페인(mg) 실측(시연)값으로 판정한다
+NO_CAFFEINE_WORDS = ["카페인 없", "카페인없", "무카페인", "노카페인", "논카페인", "임산부", "임신",
+                     "pregnan", "caffeine free", "caffeine-free", "no caffeine", "without caffeine"]
+LOW_CAFFEINE_WORDS = ["카페인 적", "카페인적", "카페인 낮", "카페인 약", "저카페인", "디카페인",
+                      "decaf", "low caffeine", "less caffeine"]
+DRINK_CATEGORIES = ("커피", "차/논커피")
+
+
+@lru_cache(maxsize=1)
+def _menu_caffeine() -> dict[str, int]:
+    """메뉴별 카페인(mg) 최솟값. 주문 단위가 여럿이면 가장 낮은 값."""
+    wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
+    out: dict[str, int] = {}
+    for v in _sheet_rows(wb, "가격영양"):
+        c = v.get("카페인(mg)")
+        if not isinstance(c, (int, float)):
+            continue
+        mid = str(v["주문 단위 ID"]).split("-")[0]
+        out[mid] = min(out.get(mid, int(c)), int(c))
+    return out
+
+
+def _is_decaf(r: dict) -> bool:
+    return "디카페인" in str(r["name"]) or "디카페인" in r["tags"]
+
+
+def with_decaf_policy(ids):
+    """디카페인 메뉴가 근거에 들어가면 'P10 디카페인은 카페인 0이 아님'을 붙인다."""
+    ids = list(ids)
+    decaf = {r["menu_id"] for r in _menu_tastes() if _is_decaf(r)} | {"B03"}
+    if any(i in decaf for i in ids) and "P10" not in ids:
+        ids.append("P10")
+    return ids
+
+
 def taste_candidates(query: str, limit: int = 4) -> list[str]:
     """"산미 적고 고소한" 같은 맛 조건을 점수로 풀어 메뉴 ID를 고른다.
 
     벡터 검색은 이런 표현에 약하다. 데이터에 1~5 점수가 있으므로 숫자로 거른다.
+    카페인은 분류(차/논커피)로 짐작하지 않고 가격영양 시트의 mg 값으로 거른다.
+    말차 라떼(70mg)·홍차 밀크티(45mg)는 논커피지만 카페인이 있다 (Q08).
     """
     q = query.lower()
 
@@ -118,10 +156,9 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
     if any(w in q for w in ["차", "티", "tea", "논커피"]):
         wants.add("차/논커피")
 
-    # 카페인 조건 — 임산부·카페인 질문은 숫자로 거른다
-    low_caffeine = any(w in q for w in
-                       ["임산부", "임신", "카페인 없", "카페인 적", "무카페인",
-                        "디카페인", "pregnan", "caffeine free", "no caffeine", "decaf"])
+    # 카페인 조건 — "없는"은 0mg만, "적은·디카페인"은 낮은 순
+    no_caffeine = any(w in q for w in NO_CAFFEINE_WORDS)
+    low_caffeine = not no_caffeine and any(w in q for w in LOW_CAFFEINE_WORDS)
 
     conds = []
     for term, (col, direction) in TASTE_TERMS.items():
@@ -130,17 +167,21 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         neg = any(n in q for n in ["적", "낮", "없", "덜", "약한", "안 "])
         want_low = (direction == "low") or (direction is None and neg) or (direction == "high" and neg)
         conds.append((col, want_low))
-    if not conds and not low_caffeine:
+    if not conds and not (no_caffeine or low_caffeine):
         return []
 
+    caf = _menu_caffeine()
+    # 주류는 카페인 0이어도 제외한다 (Q42: 카페인과 주류는 별개)
     rows = [r for r in _menu_tastes() if not r["is_alcohol"] and r["category"] != "원두"]
     if wants:
         filtered = [r for r in rows if r["category"] in wants]
         rows = filtered or rows
-    if low_caffeine:
-        rows = [r for r in rows
-                if r["category"] == "차/논커피" or "디카페인" in r["name"]
-                or "디카페인" in r["tags"]]
+    if no_caffeine or low_caffeine:
+        rows = [r for r in rows if r["menu_id"] in caf]
+        if not wants:                         # "마실 만한 거" — 음료만
+            rows = [r for r in rows if r["category"] in DRINK_CATEGORIES]
+    if no_caffeine:
+        rows = [r for r in rows if caf[r["menu_id"]] == 0]
 
     def score(r):
         s = 0.0
@@ -151,6 +192,12 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         return s
 
     rows.sort(key=score, reverse=True)
+    if low_caffeine:
+        rows.sort(key=lambda r: caf[r["menu_id"]])          # 안정 정렬: 같은 mg 안에서는 맛 점수 순
+        decaf = [r for r in rows if _is_decaf(r)]
+        if decaf:                                            # 디카페인 메뉴는 꼭 넣는다
+            keep = decaf + [r for r in rows if not _is_decaf(r)]
+            rows = sorted(keep[:limit], key=lambda r: caf[r["menu_id"]])
     # 분류 힌트가 둘 이상이면 각 분류에서 고르게 뽑는다 ("커피랑 빵 추천")
     if len(wants) > 1:
         out, per = [], max(1, limit // len(wants))
@@ -168,6 +215,8 @@ def hybrid_search(store, query: str, k: int = TOP_K,
     """
     menu_ids, policy_ids = rule_hits(query)
     taste_ids = [t for t in taste_candidates(query) if t not in menu_ids]
+    if "P10" in with_decaf_policy([*menu_ids, *taste_ids]):
+        policy_ids.add("P10")
 
     by_id = {}
     for doc_id, doc in store.docstore._dict.items():
