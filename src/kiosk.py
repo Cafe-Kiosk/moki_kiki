@@ -12,6 +12,7 @@ from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    variant_by_id, validate_item_options)
 from .config import MOCK
+from .quick_replies import build_quick_replies, is_choice_prompt
 
 
 def _menu_candidates(text: str) -> list[str]:
@@ -47,6 +48,7 @@ class TurnResult:
     calc: str = ""
     cached: bool = False
     llm_calls: int = 0
+    quick_replies: list[dict[str, str]] = field(default_factory=list)
 
 
 def _session_state(cart: Cart) -> dict:
@@ -91,8 +93,9 @@ def handle(user_input: str, store, cart: Cart,
     # 새 프롬프트 계약: 미해결 대상이나 필수값이 있으면 쓰기 작업 전체를 보류한다.
     if plan.get("needs_clarification"):
         question = plan.get("clarification_question") or "주문 조건을 조금 더 구체적으로 알려주세요."
+        quick_replies = build_quick_replies(question, plan, rewritten)
         return TurnResult(question, intent, rq, lang, docs, trace,
-                          "상태 변경 없음 — 확인 필요", False, calls)
+                          "상태 변경 없음 — 확인 필요", False, calls, quick_replies)
 
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
@@ -189,5 +192,8 @@ def handle(user_input: str, store, cart: Cart,
     reply, cached = answer(user_input, context,
                            calc="\n".join(calc_lines), history=history,
                            session_state=_session_state(cart), plan=plan)
+    quick_replies = (build_quick_replies(reply, plan, rewritten)
+                     if is_choice_prompt(reply) else [])
     return TurnResult(reply, intent, rq, lang, docs, trace,
-                      "\n".join(calc_lines), cached, calls + (0 if cached else 1))
+                      "\n".join(calc_lines), cached, calls + (0 if cached else 1),
+                      quick_replies)

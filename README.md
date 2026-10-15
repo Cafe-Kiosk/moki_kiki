@@ -12,7 +12,7 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 
 | 항목 | 현재 상태 | 확인할 곳 |
 |---|---|---|
-| `main` 앱 | 한·영 RAG 122개와 v1.1 에이전트 프롬프트 적용 | `app.py`, `src/`, `prompts/` |
+| 이 기능 브랜치 앱 | 한·영 RAG 122개와 v1.1 에이전트 프롬프트 적용 | `app.py`, `src/`, `prompts/` |
 | 별도 수정 후보 `bb5b0a2` | [PR #1](https://github.com/Cafe-Kiosk/moki_kiki/pull/1)의 과거 작업 기록 | `codex/complete-moki-order-flow` |
 | 최신 발표 | 16장 발표 자료 | [PDF](docs/team/presentation/팀과제_4조_모키커피바.pdf) · [PPT](docs/team/presentation/모키_커피바_최종발표.pptx) |
 
@@ -27,6 +27,10 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 
 에이전트가 실행 계획을 만들더라도 장바구니 변경 전에 메뉴·주문 단위·수량·옵션·주류 조건을
 코드에서 다시 검증합니다. `needs_clarification=true`이면 상태 변경을 보류합니다.
+
+화면은 따뜻한 목재·한지·호박색 조명을 사용한 한옥 카페바 콘셉트입니다. 첫 화면의 추천
+버튼과 대화 중 확인 버튼을 누르면 문장 입력 없이 다음 단계로 진행할 수 있습니다. 메뉴와
+온도·크기 선택지는 가능한 경우 실제 카탈로그에서 생성합니다.
 
 ## 빠른 시작
 
@@ -106,6 +110,7 @@ src/router.py                  질의 재작성 + 의도/실행계획
 src/cart.py                    옵션·수량·가격·주류 검증
 src/chain.py                   근거 기반 답변 생성 + 캐시
 src/kiosk.py                   전체 파이프라인
+src/quick_replies.py           확인 질문 → 메뉴·옵션 선택 버튼
 scripts/build_index.py         인덱스 생성
 tests/test_logic.py            기존 가격·정책·검색 규칙 검사
 tests/test_artifact_integration.py  새 산출물 연동 검사

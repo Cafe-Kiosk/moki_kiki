@@ -9,6 +9,7 @@ from src.documents import build_documents
 from src.few_shot import load_examples, render_examples, select_examples
 from src.index import load_index
 from src.prompts import load, load_schema
+from src.quick_replies import build_quick_replies
 from src.retrieve import hybrid_search
 from src.router import adapt_plan
 
@@ -80,6 +81,20 @@ class ArtifactIntegrationTests(unittest.TestCase):
         ok, message = validate_item_options(item)
         self.assertFalse(ok)
         self.assertIn("적용할 수 없습니다", message)
+
+    def test_quick_replies_use_catalog_choices(self):
+        plan = {"actions": [{"targets": [{"menu_id": None}]}]}
+        rewritten = {"queries": [{"menu_ids": ["M32", "M34"]}]}
+        replies = build_quick_replies("어떤 하이볼을 선택하시겠어요?", plan, rewritten)
+        self.assertEqual([r["label"] for r in replies], ["유자 소주 하이볼", "위스키 하이볼"])
+
+        plan = {"actions": [{"targets": [{"menu_id": "M02"}]}]}
+        replies = build_quick_replies("온도와 사이즈를 선택해 주세요.", plan, {})
+        self.assertEqual(len(replies), 4)
+        self.assertEqual(replies[0]["label"], "따뜻하게 · S 사이즈")
+
+        replies = build_quick_replies("아메리카노 수량을 선택해 주세요.", plan, {})
+        self.assertEqual([r["label"] for r in replies], ["1개", "2개", "3개"])
 
 
 if __name__ == "__main__":
