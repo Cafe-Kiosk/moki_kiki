@@ -20,6 +20,7 @@ from .config import (ROUTER_MODEL, ROUTER_MAX_TOKENS, HISTORY_TURNS,
                      OPENAI_TIMEOUT_SECONDS, OPENAI_MAX_RETRIES,
                      current_api_key, current_language, is_mock)
 from .prompts import load as load_prompt, load_schema
+from .demo_scenario import demo_plan, detect_demo_step
 
 REWRITE_PROMPT = load_prompt("rewrite")
 INTENT_PROMPT = load_prompt("intent")
@@ -378,6 +379,8 @@ def normalize_explicit_order_actions(
 
 def rewrite(user_input: str, history: list[dict] | None = None,
             session_state: dict | None = None) -> dict:
+    if detect_demo_step(user_input) is not None:
+        return _mock_rewrite(user_input)
     if is_mock():
         return _mock_rewrite(user_input)
     payload = {
@@ -397,6 +400,13 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
              history: list[dict] | None = None,
              session_state: dict | None = None,
              catalog_aliases: list[tuple[str, str]] | None = None) -> dict:
+    scripted = demo_plan(
+        user_input,
+        str(rewrite_result.get("language") or current_language()),
+    )
+    if scripted is not None:
+        return normalize_explicit_order_actions(
+            user_input, rewrite_result, scripted, catalog_aliases)
     if is_mock():
         return normalize_explicit_order_actions(
             user_input,

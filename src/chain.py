@@ -9,6 +9,7 @@ from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, CACHE_DIR,
 
 from .prompts import load as load_prompt
 from .few_shot import render_examples
+from .demo_scenario import demo_reply
 
 SYSTEM = load_prompt("system")
 OFFTOPIC = load_prompt("offtopic")
@@ -67,6 +68,9 @@ def answer(user_input: str, context: str, calc: str = "",
            plan: dict | None = None) -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
     history_messages = _conversation_messages(history)
+    scripted_reply = demo_reply(user_input, session_state)
+    if scripted_reply is not None:
+        return scripted_reply, True
     effective_capabilities = {
         **DEFAULT_CAPABILITIES,
         **(capabilities or {}),
