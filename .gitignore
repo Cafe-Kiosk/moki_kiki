@@ -20,3 +20,5 @@ venv/
 # OS
 .DS_Store
 secrets.toml
+.vercel/
+.env.local
