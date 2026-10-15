@@ -6,6 +6,7 @@ from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, MOCK, CACHE_DIR,
                      ANSWER_CACHE, HISTORY_TURNS)
 
 from .prompts import load as load_prompt
+from .few_shot import render_examples
 
 SYSTEM = load_prompt("system")
 OFFTOPIC = load_prompt("offtopic")
@@ -28,7 +29,8 @@ def _cache_key(system: str, user: str) -> str:
 def answer(user_input: str, context: str, calc: str = "",
            history: list[dict] | None = None, offtopic: bool = False,
            session_state: dict | None = None,
-           capabilities: dict | None = None) -> tuple[str, bool]:
+           capabilities: dict | None = None,
+           plan: dict | None = None) -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
     if offtopic:
         system = OFFTOPIC
@@ -47,6 +49,8 @@ def answer(user_input: str, context: str, calc: str = "",
         }
         system = (
             SYSTEM
+            + "\n\n[현재 요청에 맞춰 선별한 few-shot 예시]\n"
+            + render_examples(user_input, plan, session_state)
             + "\n\n[서버가 검증해 제공한 현재 입력]\n"
             + json.dumps(server_input, ensure_ascii=False, default=str)
         )

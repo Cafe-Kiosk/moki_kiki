@@ -188,6 +188,6 @@ def handle(user_input: str, store, cart: Cart,
     # ── 답변 생성 ──────────────────────────────────────────
     reply, cached = answer(user_input, context,
                            calc="\n".join(calc_lines), history=history,
-                           session_state=_session_state(cart))
+                           session_state=_session_state(cart), plan=plan)
     return TurnResult(reply, intent, rq, lang, docs, trace,
                       "\n".join(calc_lines), cached, calls + (0 if cached else 1))

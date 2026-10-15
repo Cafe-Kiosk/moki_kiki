@@ -78,11 +78,14 @@ git commit -m "RAG 인덱스 갱신"
 | `prompts/system.md` | 응대 규칙·근거 제한·안전·접근성 |
 | `prompts/rewrite.md` | 검색 질의 재작성 |
 | `prompts/intent.md` | 의도 분류와 실행 계획 |
+| `prompts/few_shot.md` | 예외·악성 고객·접근성 대응 예시 50개 |
 | `prompts/schemas/rewrite.json` | 재작성 출력 JSON Schema |
 | `prompts/schemas/intent.json` | 실행 계획 출력 JSON Schema |
 | `prompts/offtopic.md` | 범위 밖 질문 응대 |
 
 구조화 출력이 스키마 검증에 실패하면 상태를 변경하지 않는 안전한 계획으로 돌아갑니다.
+few-shot 라이브러리는 전체를 매번 넣지 않고 현재 발화·안전 플래그·상태에 맞는 2~4개만
+답변 생성 단계에 제공합니다. 예시는 응답 방식 참고용이며 메뉴·가격·정책의 사실 근거로 쓰지 않습니다.
 
 ## 구조와 담당
 
