@@ -430,6 +430,8 @@ class CompoundApiTests(unittest.TestCase):
     def test_generic_alcohol_purchase_phrases_are_distinct_from_policy_questions(self):
         purchase_messages = (
             "주류를 주문하고 싶어요",
+            "주류 구매를 원해",
+            "술 주문을 원합니다",
             "술을 주문하려고 해요",
             "술 좀 주세요",
         )
@@ -443,6 +445,7 @@ class CompoundApiTests(unittest.TestCase):
             "도수가 낮은 술을 추천해줘",
             "술을 주문하고 싶지 않아요",
             "주류는 구매하고 싶지 않아",
+            "주류 구매를 원하지 않아요",
             "맥주는 안 살게요",
             "I do not want to order alcohol",
             "I won't order alcohol",
@@ -558,7 +561,11 @@ class CompoundApiTests(unittest.TestCase):
             ))
 
     def test_production_specific_alcohol_purchase_gates_before_api_key(self):
-        requests = ("맥주 주문할게요", "위스키 하이볼 한 잔 주세요")
+        requests = (
+            "맥주 주문할게요",
+            "위스키 하이볼 한 잔 주세요",
+            "주류 구매를 원해",
+        )
         with patch.dict(os.environ, {
             "MOKI_STATE_SECRET": STATE_SECRET,
         }, clear=False), patch("api.index.is_mock", return_value=False), \
