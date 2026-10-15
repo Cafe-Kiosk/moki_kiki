@@ -7,8 +7,8 @@ import html, json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL,
-                        ensure_api_key, secret_status)
+from src.config import (TABLES, MOCK, ROUTER_MODEL,
+                        ensure_api_key, is_mock, secret_status)
 from src.index import load_index, active_index_dir
 from src.cart import Cart
 from src.kiosk import handle
@@ -22,93 +22,110 @@ if not _check_password():
 CSS = """
 <style>
 :root {
-  --ink:#2d211d; --wood:#3f251c; --wood-deep:#261713; --wood-soft:#6d4634;
-  --hanji:#fbf6eb; --hanji-deep:#efe3cc; --amber:#d69a45; --persimmon:#a64e35;
-  --pine:#53624d; --line:rgba(91,57,39,.18);
+  --ink:#25211e; --muted:#81766d; --wood:#34231d; --accent:#9b5b3d;
+  --paper:#faf8f3; --card:#fffefa; --line:#e5dfd5; --soft:#f1ece4;
 }
 .stApp {
-  background:
-    radial-gradient(circle at 12% 8%, rgba(214,154,69,.14), transparent 26rem),
-    linear-gradient(90deg, rgba(63,37,28,.045) 1px, transparent 1px),
-    linear-gradient(#f8f1e4, #f3eadb);
-  background-size:auto, 34px 34px, auto;
+  background:var(--paper);
   color:var(--ink);
 }
-.stApp::before {
-  content:""; position:fixed; inset:0 0 auto 0; height:10px; z-index:999;
-  background:repeating-linear-gradient(90deg, var(--wood-deep) 0 72px, #6b412e 72px 78px);
-  box-shadow:0 3px 12px rgba(38,23,19,.28);
-}
 [data-testid="stHeader"] {background:transparent;}
-.block-container {padding-top:1.35rem; padding-bottom:2.5rem; max-width:1280px;}
+.block-container {padding-top:1.4rem; padding-bottom:3rem; max-width:1220px;}
+#MainMenu, footer {visibility:hidden;}
 [data-testid="stSidebar"] {
-  background:linear-gradient(180deg, #2b1a15 0%, #45291f 58%, #2d1b16 100%);
-  border-right:1px solid rgba(214,154,69,.4);
+  background:#f5f1ea;
+  border-right:1px solid var(--line);
 }
 [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label,
-[data-testid="stSidebar"] p {color:#f8eddb;}
-[data-testid="stSidebar"] hr {border-color:rgba(247,230,201,.16);}
-.side-brand {padding:.3rem 0 .8rem; text-align:center;}
-.side-brand .stamp {display:inline-grid; place-items:center; width:54px; height:54px; border-radius:18px;
-  background:#f4e5cb; color:#4a2d22; font-size:1.55rem; border:2px solid #c98a3d;
-  box-shadow:0 8px 24px rgba(0,0,0,.22);}
-.side-brand b {display:block; margin-top:.55rem; font-size:1.05rem; letter-spacing:.08em;}
-.side-brand small {color:#d7b98e;}
+[data-testid="stSidebar"] p {color:var(--ink);}
+[data-testid="stSidebar"] hr {border-color:var(--line);}
+.side-brand {padding:.45rem 0 1rem; text-align:left; border-bottom:1px solid var(--line); margin-bottom:1rem;}
+.side-brand .brand-row {display:flex; align-items:center; gap:.7rem;}
+.side-brand .stamp {display:grid; place-items:center; width:40px; height:40px; border-radius:50%;
+  background:var(--wood); color:#f8f1e7; font-size:.95rem; letter-spacing:-.1em;}
+.side-brand b {font-size:1rem; letter-spacing:.06em;}.side-brand small {display:block;color:var(--muted);margin-top:.1rem;}
+.masthead {display:flex; align-items:center; justify-content:space-between; padding:.25rem .1rem 1rem;
+  border-bottom:1px solid var(--line); margin-bottom:1rem;}
+.mast-brand {font-size:.74rem;letter-spacing:.2em;font-weight:700;color:var(--wood);}
+.table-chip {font-size:.72rem;color:var(--muted);border:1px solid var(--line);padding:.34rem .7rem;border-radius:999px;background:#fff;}
 .hanok-hero {position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between;
-  min-height:150px; padding:1.45rem 1.8rem 1.25rem; margin:.25rem 0 1.1rem;
-  color:#fff9ed; border:1px solid rgba(214,154,69,.65); border-radius:8px 8px 22px 22px;
-  background:linear-gradient(125deg, #271713 0%, #4b2c21 55%, #6a3c28 100%);
-  box-shadow:0 16px 38px rgba(60,35,25,.18);}
-.hanok-hero::before {content:""; position:absolute; top:0; left:0; right:0; height:16px;
-  background:repeating-linear-gradient(90deg,#17100d 0 78px,#825239 78px 86px);
-  box-shadow:0 5px 0 rgba(214,154,69,.25);}
-.hanok-hero::after {content:""; position:absolute; right:10%; top:14px; width:54px; height:72px;
-  background:radial-gradient(circle,#ffd992 0 15%,#d8993f 16% 34%,rgba(216,153,63,.18) 35% 62%,transparent 63%);
-  filter:drop-shadow(0 8px 12px rgba(255,185,76,.3));}
-.hero-copy {position:relative; z-index:1;}
-.hero-kicker {font-size:.72rem; color:#e8bd78; letter-spacing:.18em; font-weight:700;}
-.hanok-hero h1 {margin:.2rem 0 .25rem; font-size:2.25rem; color:#fffaf0; letter-spacing:-.04em;}
-.hanok-hero p {margin:0; color:#e9d9c3; font-size:.9rem;}
-.moki-mark {position:relative; z-index:1; min-width:116px; text-align:center; padding:.7rem .75rem;
-  color:#3a251e; background:#f7ecd8; border:1px solid #d4a65f; border-radius:44% 44% 18px 18px;
-  box-shadow:inset 0 0 0 4px rgba(255,255,255,.38),0 10px 24px rgba(0,0,0,.2);}
-.moki-mark .face {font-size:1.55rem; letter-spacing:.08em;}.moki-mark small {display:block;font-weight:700;font-size:.7rem;}
-div[data-testid="stVerticalBlockBorderWrapper"] {background:rgba(255,252,244,.88)!important;
-  border:1px solid var(--line)!important; border-radius:18px!important;
-  box-shadow:0 10px 28px rgba(66,42,30,.08); backdrop-filter:blur(8px);}
-.section-head {display:flex; align-items:center; justify-content:space-between; margin:.05rem 0 .7rem;}
-.section-head b {font-size:1.02rem; color:var(--wood);}.section-head span {font-size:.72rem;color:#9a7b65;}
-.bubble-user {background:linear-gradient(135deg,#6a4030,#8a5138); color:#fffaf1;
-  padding:.68rem .95rem; border-radius:16px 16px 4px 16px; margin:.38rem 0 .38rem auto;
-  max-width:82%; width:fit-content; box-shadow:0 5px 14px rgba(71,40,28,.12);}
-.bubble-bot {background:#fffaf0; color:#30231e; padding:.72rem .95rem; border-radius:16px 16px 16px 4px;
-  border:1px solid #eadcc5; border-left:4px solid var(--amber); margin:.38rem auto .28rem 0;
-  max-width:90%; width:fit-content; white-space:pre-wrap; box-shadow:0 5px 14px rgba(71,40,28,.07);}
-.welcome-note {font-size:.73rem;color:#8c6b54;margin:.1rem 0 .65rem;}
-.quick-label {font-size:.72rem; color:#8a684f; margin:.35rem 0 .25rem; font-weight:700; letter-spacing:.02em;}
-.meta {font-size:.7rem; color:#a18876; margin:.1rem 0 .55rem 0; font-family:ui-monospace,monospace;}
-.cart-line {font-size:.9rem; padding:.48rem .15rem; border-bottom:1px dashed #dfcfb7;}
-.cart-total {font-weight:800; font-size:1.08rem; color:var(--wood); padding:.7rem 0 .15rem;}
-.pill {display:inline-block; font-size:.68rem; padding:.12rem .46rem; border-radius:999px;
-  background:#efe3d1; color:#704a36; margin-right:.25rem; font-family:ui-monospace,monospace;}
-.pill-rule {background:#e3eadf; color:#43593f;}.pill-vec {background:#e6e8e4; color:#445244;}
-.pill-cut {background:#f2dfd9; color:#8a3f31;}
-.stButton > button {border:1px solid #d8bd96; border-radius:12px; background:#fffaf0; color:#573729;
-  font-weight:700; box-shadow:0 3px 9px rgba(76,46,31,.06); transition:.15s ease;}
-.stButton > button:hover {border-color:var(--amber); color:#7c3c28; background:#fff4df;
-  transform:translateY(-1px); box-shadow:0 6px 14px rgba(76,46,31,.1);}
-[data-testid="stChatInput"] {border:1px solid #d7bea0; border-radius:14px; background:#fffdf7;
-  box-shadow:0 4px 14px rgba(70,42,28,.07);}
-@media (max-width:760px) {.hanok-hero{padding:1.35rem 1.05rem;min-height:130px}.hanok-hero h1{font-size:1.75rem}
-  .moki-mark{display:none}.block-container{padding-left:.8rem;padding-right:.8rem}}
+  min-height:142px; padding:1.8rem 2rem; margin:0 0 1.15rem; border:1px solid var(--line);
+  border-radius:4px 4px 22px 22px; background:var(--card); box-shadow:0 14px 40px rgba(52,35,29,.055);}
+.hanok-hero::before {content:"";position:absolute;inset:0 0 auto;height:5px;background:var(--wood);}
+.hanok-hero::after {content:"";position:absolute;right:0;top:0;width:28%;height:100%;opacity:.12;
+  background:linear-gradient(90deg,var(--wood) 1px,transparent 1px),linear-gradient(var(--wood) 1px,transparent 1px);
+  background-size:28px 28px;mask-image:linear-gradient(90deg,transparent,#000);}
+.hero-copy {position:relative;z-index:1;}.hero-kicker {font-size:.69rem;color:var(--accent);letter-spacing:.18em;font-weight:700;}
+.hanok-hero h1 {margin:.35rem 0 .35rem;font-size:2.15rem;line-height:1.15;color:var(--ink);letter-spacing:-.055em;}
+.hanok-hero p {margin:0;color:var(--muted);font-size:.88rem;}
+.moki-mark {position:relative;z-index:1;text-align:center;width:76px;height:76px;display:grid;place-items:center;
+  color:var(--wood);background:#f4ede3;border:1px solid #ded2c4;border-radius:50%;}
+.moki-mark .face {font-size:1.12rem;line-height:1.15}.moki-mark small {display:block;font-size:.62rem;letter-spacing:.08em;margin-top:.2rem;}
+div[data-testid="stVerticalBlockBorderWrapper"] {background:var(--card)!important;border:1px solid var(--line)!important;
+  border-radius:16px!important;box-shadow:0 8px 26px rgba(50,38,31,.045);}
+.section-head {display:flex;align-items:center;justify-content:space-between;margin:.05rem 0 .8rem;padding-bottom:.7rem;border-bottom:1px solid #eee9e1;}
+.section-head b {font-size:.95rem;color:var(--ink);}.section-head span {font-size:.7rem;color:var(--muted);}
+.bubble-user {background:var(--wood);color:#fff;padding:.7rem 1rem;border-radius:16px 16px 4px 16px;
+  margin:.48rem 0 .48rem auto;max-width:82%;width:fit-content;box-shadow:0 4px 14px rgba(52,35,29,.1);}
+.bubble-bot {background:var(--soft);color:var(--ink);padding:.75rem 1rem;border-radius:16px 16px 16px 4px;
+  margin:.48rem auto .3rem 0;max-width:90%;width:fit-content;white-space:pre-wrap;}
+.welcome-note,.quick-label {font-size:.72rem;color:var(--muted);margin:.4rem 0 .55rem;}
+.quick-label {font-weight:700;color:var(--accent);}
+.meta {font-size:.66rem;color:#9c9188;margin:.1rem 0 .55rem;font-family:ui-monospace,monospace;}
+.cart-line {font-size:.88rem;padding:.55rem .1rem;border-bottom:1px solid #eee9e1;}
+.cart-total {font-weight:750;font-size:1.05rem;color:var(--ink);padding:.8rem 0 .15rem;}
+.pill {display:inline-block;font-size:.65rem;padding:.14rem .48rem;border-radius:999px;background:#eee8df;color:#67564d;margin-right:.25rem;}
+.pill-rule {background:#e9efe7;color:#476047;}.pill-vec {background:#e9edf1;color:#4b5965;}.pill-cut {background:#f3e6e2;color:#884c3b;}
+.stButton > button {border:1px solid #dcd4ca;border-radius:10px;background:#fff;color:var(--ink);font-weight:650;
+  box-shadow:none;transition:.15s ease;min-height:2.45rem;}
+.stButton > button:hover {border-color:#a87359;color:var(--accent);background:#fbf7f1;transform:translateY(-1px);}
+[data-testid="stChatInput"] {border:1px solid #ddd5cb;border-radius:13px;background:#fff;box-shadow:0 6px 18px rgba(50,38,31,.055);}
+[data-testid="stMetric"] {background:#fff;border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem;}
+
+/* 첫 접속 때만 나타나는 한옥 미닫이문 인트로 */
+.entry-overlay {position:fixed;inset:0;z-index:999999;background:#e8dfd0;overflow:hidden;
+  animation:entry-away .55s ease 2.5s forwards;pointer-events:none;}
+.entry-courtyard {position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#f9f4eb;
+  background:radial-gradient(circle at 50% 52%,#9a694c 0,#51372d 42%,#211713 100%);}
+.entry-courtyard::before {content:"";position:absolute;left:15%;right:15%;top:18%;height:16px;background:#1f1613;
+  box-shadow:0 8px 0 #a06d48,0 16px 0 #1f1613;clip-path:polygon(0 100%,8% 0,92% 0,100% 100%);}
+.entry-copy {position:relative;z-index:2;animation:entry-copy 2.35s ease forwards;}
+.entry-copy b {display:block;font-size:1.65rem;letter-spacing:.28em;margin-right:-.28em;}
+.entry-copy small {display:block;margin-top:.55rem;letter-spacing:.14em;color:#d8bf9f;font-size:.68rem;}
+.hanok-door {position:absolute;top:0;width:50.3%;height:100%;z-index:3;background:#3a251d;
+  border:14px solid #241713;box-shadow:0 0 35px rgba(0,0,0,.35);}
+.hanok-door::before {content:"";position:absolute;inset:6%;border:9px solid #5b3928;
+  background-color:#eadfca;background-image:linear-gradient(#6a4633 4px,transparent 4px),linear-gradient(90deg,#6a4633 4px,transparent 4px);
+  background-size:100% 25%,25% 100%;box-shadow:inset 0 0 0 3px #2a1b16;}
+.hanok-door::after {content:"";position:absolute;top:48%;width:13px;height:28px;border-radius:8px;background:#b78a50;box-shadow:0 0 0 4px #2a1b16;}
+.door-left {left:0;transform-origin:left center;animation:door-left 1.55s cubic-bezier(.65,0,.25,1) .45s forwards;}
+.door-right {right:0;transform-origin:right center;animation:door-right 1.55s cubic-bezier(.65,0,.25,1) .45s forwards;}
+.door-left::after {right:8%;}.door-right::after {left:8%;}
+@keyframes door-left {to{transform:translateX(-96%);}}
+@keyframes door-right {to{transform:translateX(96%);}}
+@keyframes entry-copy {0%,28%{opacity:0;transform:translateY(7px)}55%,88%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes entry-away {to{opacity:0;visibility:hidden;}}
+@media (prefers-reduced-motion:reduce){.entry-overlay{animation:entry-away .1s linear .5s forwards}.hanok-door{animation-duration:.1s}}
+@media (max-width:760px){.hanok-hero{padding:1.4rem 1.15rem;min-height:125px}.hanok-hero h1{font-size:1.7rem}
+  .moki-mark{width:62px;height:62px}.block-container{padding-left:.75rem;padding-right:.75rem}.section-head span{display:none}}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
 
+if not st.session_state.get("_entry_seen"):
+    st.session_state["_entry_seen"] = True
+    st.markdown(
+        '<div class="entry-overlay"><div class="entry-courtyard">'
+        '<div class="entry-copy"><b>모키 커피바</b><small>MOKI · HANOK COFFEE BAR</small></div>'
+        '</div><div class="hanok-door door-left"></div>'
+        '<div class="hanok-door door-right"></div></div>',
+        unsafe_allow_html=True,
+    )
+
 
 @st.cache_resource(show_spinner="메뉴 인덱스를 불러오는 중...")
-def get_store():
+def get_store(mock_mode: bool):
     return load_index()
 
 
@@ -121,41 +138,60 @@ if "turns" not in st.session_state:
     st.session_state.turns = []          # TurnResult 보관 (검색 내역 표시용)
 if "llm_calls" not in st.session_state:
     st.session_state.llm_calls = 0
+if "_use_mock" not in st.session_state:
+    st.session_state._use_mock = MOCK
 
 cart: Cart = st.session_state.cart
 
 # ── 사이드바 ────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
-        '<div class="side-brand"><div class="stamp">☕</div>'
-        '<b>모키 커피바</b><small>MOKI · HANOK COFFEE BAR</small></div>',
+        '<div class="side-brand"><div class="brand-row"><div class="stamp">모키</div><div>'
+        '<b>모키 커피바</b><small>MOKI COFFEE BAR</small></div></div></div>',
         unsafe_allow_html=True)
 
     cart.table_id = st.selectbox("좌석 번호", TABLES,
                                  index=TABLES.index(cart.table_id or 5))
-    st.divider()
 
-    st.markdown("**직원 확인** (주류 주문 시)")
-    cart.staff_checked = st.toggle(
-        "나이 확인 완료", value=cart.staff_checked,
-        help="매장정책 P15 — 손님의 자기신고는 확인이 아닙니다. 직원이 확인한 경우에만 켭니다.")
-
-    st.divider()
-    st.markdown("**실행 상태**")
     _s = secret_status()
-    st.caption(f"모델 {ROUTER_MODEL}")
-    st.caption(f"인덱스 {'있음' if (active_index_dir() / 'index.faiss').exists() else '없음'}")
-    if _s["key_found"]:
-        st.caption(f"API 키 ✅ {_s['key_head']} ({_s['key_source']})")
+    with st.expander("🔑 API 연결", expanded=not _s["key_found"]):
+        if _s["key_found"]:
+            st.success(f"연결됨 · {_s['key_head']} ({_s['key_source']})")
+        else:
+            st.caption("OpenAI API 키를 입력하면 실제 AI 답변을 사용할 수 있어요.")
+
+        entered_key = st.text_input(
+            "OpenAI API key", type="password", placeholder="sk-...",
+            key="_api_key_input",
+        )
+        if st.button("키 적용", key="apply_api_key", use_container_width=True):
+            cleaned_key = entered_key.strip()
+            if not cleaned_key.startswith("sk-"):
+                st.error("`sk-`로 시작하는 OpenAI API 키를 입력해 주세요.")
+            else:
+                st.session_state._openai_api_key = cleaned_key
+                st.session_state._use_mock = False
+                st.rerun()
+        st.caption("입력한 키는 저장소나 파일에 저장하지 않습니다.")
+
+    st.toggle(
+        "데모 모드 (API 비용 없음)", key="_use_mock",
+        help="끄면 연결된 OpenAI API 키로 실제 답변과 검색을 사용합니다.",
+    )
+    if not is_mock() and not ensure_api_key():
+        st.error("실제 AI 모드에는 API 키가 필요합니다.", icon="🔑")
+    elif is_mock():
+        st.caption("현재는 API를 호출하지 않는 화면 체험 모드입니다.")
     else:
-        st.error("API 키를 찾지 못했습니다. Secrets 에 OPENAI_API_KEY 를 넣어주세요.", icon="🔑")
-    if not _s["password_set"]:
-        st.warning("비밀번호 미설정 — 누구나 들어올 수 있습니다. "
-                   "Secrets 에 MOKI_PASSWORD 를 넣어주세요.", icon="🔓")
-    if MOCK:
-        st.warning("MOCK 모드 — API를 호출하지 않습니다", icon="🧪")
-    st.metric("이번 세션 LLM 호출", st.session_state.llm_calls)
-    st.caption("캐시에 있는 질문은 호출 0회입니다.")
+        st.caption(f"실제 AI · {ROUTER_MODEL}")
+
+    st.divider()
+    st.markdown("**매장 설정**")
+    cart.staff_checked = st.toggle(
+        "직원 나이 확인 완료", value=cart.staff_checked,
+        help="주류 주문은 직원 확인 후에만 확정됩니다.")
+    index_ready = (active_index_dir() / "index.faiss").exists()
+    st.caption(f"검색 인덱스 {'준비됨' if index_ready else '첫 질문 때 생성'} · LLM {st.session_state.llm_calls}회")
 
     st.divider()
     if st.button("대화·장바구니 초기화", use_container_width=True):
@@ -166,12 +202,16 @@ with st.sidebar:
 
 # ── 헤더 ────────────────────────────────────────────────────
 st.markdown(
+    '<div class="masthead"><div class="mast-brand">MOKI COFFEE BAR</div>'
+    f'<div class="table-chip">TABLE {cart.table_id:02d}</div></div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
     '<div class="hanok-hero"><div class="hero-copy">'
-    '<div class="hero-kicker">MOKI · HANOK COFFEE BAR</div>'
-    '<h1>오늘도, 모키에서</h1>'
-    f'<p>따뜻한 한옥 카페바 · 좌석 {cart.table_id}번에서 편하게 주문하세요.</p>'
-    '</div><div class="moki-mark"><div class="face">ᘏ⑅ᘏ ☕</div>'
-    '<small>귀 기울여 듣는 모키</small></div></div>',
+    '<div class="hero-kicker">A QUIET CUP IN HANOK</div>'
+    '<h1>오늘의 한 잔을<br>천천히 골라보세요.</h1>'
+    '<p>메뉴 추천부터 주문 옵션까지, 모키가 차분히 도와드릴게요.</p>'
+    '</div><div class="moki-mark"><div class="face">ᘏ⑅ᘏ<small>모키</small></div></div></div>',
     unsafe_allow_html=True)
 
 left, right = st.columns([1.45, 1])
@@ -282,8 +322,10 @@ with right:
             st.caption("대화를 시작하면 어떤 문서를 근거로 답했는지 여기에 보입니다.")
 
 # ── 입력 처리 ───────────────────────────────────────────────
-if prompt:
-    store = get_store()
+if prompt and not is_mock() and not ensure_api_key():
+    st.error("먼저 왼쪽의 **API 연결**에서 키를 입력하거나 데모 모드를 켜주세요.", icon="🔑")
+elif prompt:
+    store = get_store(is_mock())
     st.session_state.history.append({"role": "user", "content": prompt})
     with st.spinner("모키가 메뉴를 찾는 중..."):
         res = handle(prompt, store, cart, st.session_state.history[:-1])

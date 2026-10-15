@@ -12,7 +12,8 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.embeddings import Embeddings
 
 from .config import (EMBED_MODEL, INDEX_DIR, CACHE_DIR, QUERY_EMBED_CACHE,
-                     MOCK, TOP_K, DISTANCE_THRESHOLD, RAG_JSONL)
+                     TOP_K, DISTANCE_THRESHOLD, RAG_JSONL,
+                     current_api_key, is_mock)
 from .documents import build_documents
 
 
@@ -58,13 +59,14 @@ class CachedEmbeddings(Embeddings):
 
 
 def get_embeddings() -> Embeddings:
-    inner = _MockEmbeddings() if MOCK else OpenAIEmbeddings(model=EMBED_MODEL)
+    inner = (_MockEmbeddings() if is_mock()
+             else OpenAIEmbeddings(model=EMBED_MODEL, api_key=current_api_key()))
     return CachedEmbeddings(inner)
 
 
 def active_index_dir() -> Path:
     """가짜 임베딩 인덱스가 운영용 인덱스를 덮어쓰지 않게 분리한다."""
-    return INDEX_DIR.parent / ("faiss_mock" if MOCK else INDEX_DIR.name)
+    return INDEX_DIR.parent / ("faiss_mock" if is_mock() else INDEX_DIR.name)
 
 
 def _source_signature(doc_count: int) -> dict:
@@ -74,7 +76,7 @@ def _source_signature(doc_count: int) -> dict:
     return {
         "source_sha256": source_hash,
         "document_count": doc_count,
-        "embedding": "mock-sha256-v1" if MOCK else EMBED_MODEL,
+        "embedding": "mock-sha256-v1" if is_mock() else EMBED_MODEL,
     }
 
 

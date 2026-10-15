@@ -2,8 +2,8 @@
 from __future__ import annotations
 import json, hashlib
 from langchain_openai import ChatOpenAI
-from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, MOCK, CACHE_DIR,
-                     ANSWER_CACHE, HISTORY_TURNS)
+from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, CACHE_DIR,
+                     ANSWER_CACHE, HISTORY_TURNS, current_api_key, is_mock)
 
 from .prompts import load as load_prompt
 from .few_shot import render_examples
@@ -62,7 +62,7 @@ def answer(user_input: str, context: str, calc: str = "",
             convo += f"{who}: {m['content'][:150]}\n"
     user = (convo + "손님: " + user_input) if convo else user_input
 
-    if MOCK:
+    if is_mock():
         return f"[MOCK] {user_input} 에 대한 가짜 응답입니다. 검색 문서 {context.count('---') + 1}건.", True
 
     cache = _cache_load()
@@ -70,7 +70,8 @@ def answer(user_input: str, context: str, calc: str = "",
     if key in cache:
         return cache[key], True
 
-    llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3, max_tokens=ANSWER_MAX_TOKENS)
+    llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3,
+                     max_tokens=ANSWER_MAX_TOKENS, api_key=current_api_key())
     text = llm.invoke([{"role": "system", "content": system},
                        {"role": "user", "content": user}]).content.strip()
     cache[key] = text

@@ -14,7 +14,8 @@ from typing import Any
 from jsonschema import ValidationError, validate
 from langchain_openai import ChatOpenAI
 
-from .config import ROUTER_MODEL, ROUTER_MAX_TOKENS, MOCK, HISTORY_TURNS
+from .config import (ROUTER_MODEL, ROUTER_MAX_TOKENS, HISTORY_TURNS,
+                     current_api_key, is_mock)
 from .prompts import load as load_prompt, load_schema
 
 REWRITE_PROMPT = load_prompt("rewrite")
@@ -28,6 +29,7 @@ def _llm():
         model=ROUTER_MODEL,
         temperature=0,
         max_tokens=ROUTER_MAX_TOKENS,
+        api_key=current_api_key(),
     )
 
 
@@ -128,7 +130,7 @@ def _mock_plan(user_input: str, rewrite_result: dict) -> dict:
 
 def rewrite(user_input: str, history: list[dict] | None = None,
             session_state: dict | None = None) -> dict:
-    if MOCK:
+    if is_mock():
         return _mock_rewrite(user_input)
     payload = {
         "user_message": user_input,
@@ -145,7 +147,7 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
              history: list[dict] | None = None,
              session_state: dict | None = None,
              catalog_aliases: list[tuple[str, str]] | None = None) -> dict:
-    if MOCK:
+    if is_mock():
         return _mock_plan(user_input, rewrite_result)
     payload = {
         "user_message": user_input,

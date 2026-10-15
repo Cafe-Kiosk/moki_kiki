@@ -23,19 +23,21 @@ def _secret(name: str, default: str = "") -> str:
         return default
 
 
-def ensure_api_key() -> bool:
-    """시크릿·환경변수에서 키를 찾아 환경변수에 넣는다. 호출할 때마다 확인한다.
+def current_api_key() -> str:
+    """브라우저 세션 입력을 우선하고, 환경변수·Secrets 순서로 키를 찾는다."""
+    try:
+        import streamlit as st
+        session_key = str(st.session_state.get("_openai_api_key", "")).strip()
+        if session_key:
+            return session_key
+    except Exception:
+        pass
+    return _secret("OPENAI_API_KEY")
 
-    import 시점에 한 번만 읽으면, 배포 후에 시크릿을 추가했을 때
-    프로세스가 옛 값을 들고 있어 반영되지 않는다.
-    """
-    if os.getenv("OPENAI_API_KEY"):
-        return True
-    k = _secret("OPENAI_API_KEY")
-    if k:
-        os.environ["OPENAI_API_KEY"] = k
-        return True
-    return False
+
+def ensure_api_key() -> bool:
+    """브라우저 세션·환경변수·Secrets 중 API 키가 있는지 확인한다."""
+    return bool(current_api_key())
 
 
 def app_password() -> str:
@@ -45,9 +47,19 @@ def app_password() -> str:
 
 def secret_status() -> dict:
     """화면에 표시할 진단 정보. 키 값 자체는 노출하지 않는다."""
-    k = os.getenv("OPENAI_API_KEY") or _secret("OPENAI_API_KEY")
+    try:
+        import streamlit as st
+        session_key = str(st.session_state.get("_openai_api_key", "")).strip()
+    except Exception:
+        session_key = ""
+    k = session_key or os.getenv("OPENAI_API_KEY") or _secret("OPENAI_API_KEY")
     pw = _secret("MOKI_PASSWORD")
-    src = "환경변수(.env)" if os.getenv("OPENAI_API_KEY") else ("시크릿" if k else "없음")
+    if session_key:
+        src = "현재 세션"
+    elif os.getenv("OPENAI_API_KEY"):
+        src = "환경변수(.env)"
+    else:
+        src = "Secrets" if k else "없음"
     return {"key_found": bool(k), "key_head": (k[:7] + "...") if k else "",
             "key_source": src, "password_set": bool(pw)}
 
@@ -59,6 +71,15 @@ EMBED_MODEL  = os.getenv("MOKI_EMBED_MODEL",  "text-embedding-3-small")
 # ── 비용 제어 ────────────────────────────────────────────────
 # 화면 작업 중에는 MOKI_MOCK=1 로 두면 API를 한 번도 호출하지 않는다.
 MOCK = os.getenv("MOKI_MOCK", "0") == "1"
+
+
+def is_mock() -> bool:
+    """화면에서 선택한 실행 모드를 우선하고 기본값은 MOKI_MOCK를 따른다."""
+    try:
+        import streamlit as st
+        return bool(st.session_state.get("_use_mock", MOCK))
+    except Exception:
+        return MOCK
 
 ANSWER_MAX_TOKENS = int(os.getenv("MOKI_ANSWER_MAX_TOKENS", "500"))
 ROUTER_MAX_TOKENS = int(os.getenv("MOKI_ROUTER_MAX_TOKENS", "1200"))

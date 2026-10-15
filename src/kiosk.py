@@ -11,7 +11,7 @@ from .retrieve import hybrid_search_rewrite, as_context, _alias_map
 from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    variant_by_id, validate_item_options)
-from .config import MOCK
+from .config import is_mock
 from .quick_replies import build_quick_replies, is_choice_prompt
 
 
@@ -88,7 +88,7 @@ def handle(user_input: str, store, cart: Cart,
     plan = classify(user_input, rewritten, context, history, state, _alias_map())
     r = adapt_plan(user_input, rewritten, plan)
     intent, rq, lang = r["intent"], r["rewritten_query"], r["language"]
-    calls = 0 if MOCK else 2
+    calls = 0 if is_mock() else 2
 
     # 새 프롬프트 계약: 미해결 대상이나 필수값이 있으면 쓰기 작업 전체를 보류한다.
     if plan.get("needs_clarification"):
