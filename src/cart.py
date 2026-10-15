@@ -5,15 +5,13 @@
 매장정책 P15: 주류가 있으면 직원 확인 전까지 pending_staff_check
 """
 from __future__ import annotations
-import openpyxl, random, string
+import openpyxl, random, re, string
 from dataclasses import dataclass, field
 from functools import lru_cache
 from .config import DATA_XLSX, MIN_QTY, MAX_QTY
 from .documents import _sheet_rows
 
-BEAN_SURCHARGE = {"B01": 0, "B02": 1000, "B03": 700}
-MILK_SURCHARGE = {"dairy": 0, "lowfat": 0, "oat": 500, "soy": 500}
-SHOT_PRICE = 600
+OPTION_KEYS = ("bean", "extra_shots", "milk", "sweetness", "ice", "warming")
 
 
 @lru_cache(maxsize=1)
@@ -23,15 +21,184 @@ def _tables():
     variants = {}
     for v in _sheet_rows(wb, "가격영양"):
         variants[str(v["주문 단위 ID"])] = v
-    return menus, variants
+    policies = {p["정책 ID"]: str(p.get("내용", "")) for p in _sheet_rows(wb, "매장정책")}
+    return menus, variants, _parse_options(_sheet_rows(wb, "옵션규칙")), policies
+
+
+def _parse_options(rows) -> dict:
+    """옵션규칙 시트 → {옵션 ID: 규칙}. 추가금도 여기서 읽는다 (하드코딩 금지).
+
+    choice  : "B02: 에티오피아 싱글오리진 +1000원" 한 줄에 선택값 하나
+    integer : "0~2, 회당 600원"
+    """
+    out = {}
+    for o in rows:
+        raw = str(o.get("선택값과 추가금", ""))
+        rule = {"name": str(o["옵션명"]), "default": str(o.get("기본값", "")).strip(),
+                "menus": {x.strip() for x in str(o.get("적용 메뉴 ID", "")).split(",") if x.strip()},
+                "limit": str(o.get("제한", "")).strip(), "kind": str(o.get("입력 형식", ""))}
+        if rule["kind"] == "integer":
+            lo, hi, price = map(int, re.search(r"(\d+)\s*~\s*(\d+).*?(\d+)\s*원", raw).groups())
+            rule.update(range=(lo, hi), price=price, choice_text=raw)
+        else:
+            rule["choices"], rule["labels"] = {}, {}
+            for ln in raw.splitlines():
+                mt = re.match(r"\s*(\w+)\s*:\s*(.*?)\s*\+\s*(\d+)\s*원", ln)
+                if mt:
+                    rule["choices"][mt[1]] = int(mt[3])
+                    rule["labels"][mt[1]] = mt[2]
+        out[str(o["옵션 ID"])] = rule
+    return out
 
 
 def menu_by_id(mid): return _tables()[0].get(mid)
 def variant_by_id(vid): return _tables()[1].get(vid)
+def option_rules() -> dict: return _tables()[2]
+def policy_text(pid: str) -> str: return _tables()[3].get(pid, "")
+
+
+def unit_label(menu_id: str, qty: int) -> str | None:
+    """메뉴명에 개수가 들어간 품목은 판매 단위로 센다 (P17).
+
+    '약과 2개' ×2 → '약과(2개입) 2접시'. 수량 1이 '2개 1접시'라서 '약과 2개 ×2'는 4개인지 헷갈린다.
+    해당하지 않으면 None.
+    """
+    m = menu_by_id(menu_id) or {}
+    name = re.match(r"^(.*?)\s*(\d+)\s*개$", str(m.get("메뉴명", "")))
+    unit = re.search(r"\d+\s*개\s*1\s*(\S+)$", str(m.get("판매 단위", "")))
+    if not (name and unit):
+        return None
+    return f"{name[1]}({name[2]}개입) {qty}{unit[1]}"
+
+
+def is_alcohol(menu_id: str) -> bool:
+    m = menu_by_id(menu_id) or {}
+    return str(m.get("주류 구분", "")).startswith("주류 포함")
+
+
+def option_fee_table() -> dict:
+    """옵션별 추가금 (엑셀 기준). 샷은 1회 가격."""
+    out = {}
+    for oid, r in option_rules().items():
+        out[oid] = r["price"] if r["kind"] == "integer" else dict(r["choices"])
+    return out
+
+
+def _alcohol_reason() -> str:
+    """P15 본문에서 '고정 레시피' 문장을 사유로 쓴다."""
+    for sent in re.split(r"\.\s+", policy_text("P15")):
+        if "고정 레시피" in sent:
+            return sent.strip().rstrip(".") + "."
+    return "주류는 고정 레시피·제공 단위라 옵션을 바꿀 수 없습니다."
+
+
+def _as_int(v):
+    """정수만 받는다. True·1.5·'두' 같은 값은 None."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    if isinstance(v, str) and re.fullmatch(r"-?\d+", v.strip()):
+        return int(v.strip())
+    return None
+
+
+def validate_options(menu_id: str, variant: dict | None, options: dict):
+    """옵션 적용 가능 여부를 검사한다. (허용된 옵션, 거부 목록[(옵션, 사유)])
+
+    - 사유는 옵션규칙 시트의 '제한' 문구를 그대로 쓴다
+    - 기본값과 같은 값(B01·dairy·샷 0 ...)은 옵션이 아닌 것으로 본다
+    - ice 는 ICED 주문 단위에만, extra_shots 는 0~2 정수만
+    - 주류는 모든 옵션 거부 (P15)
+    """
+    rules = option_rules()
+    temp = str((variant or {}).get("온도", "")).upper()
+    allowed, rejected = {}, []
+    for key, val in (options or {}).items():
+        if val is None or val == "":
+            continue
+        rule = rules.get(key)
+        if rule is None:
+            rejected.append((key, "지원하지 않는 옵션입니다."))
+            continue
+        if rule["kind"] == "integer":
+            n = _as_int(val)
+            if n is None or not (rule["range"][0] <= n <= rule["range"][1]):
+                rejected.append((key, f"{rule['name']} 횟수는 {rule['choice_text']} 범위의 정수만 가능합니다."))
+                continue
+            if str(n) == rule["default"]:
+                continue
+            val = n
+        else:
+            val = str(val).strip()
+            if val == rule["default"]:
+                continue
+            if val not in rule["choices"]:
+                opts = ", ".join(f"{k}({v})" for k, v in rule["labels"].items())
+                rejected.append((key, f"{rule['name']} 선택값은 {opts} 중 하나입니다."))
+                continue
+        if is_alcohol(menu_id):
+            rejected.append((key, _alcohol_reason()))
+        elif menu_id not in rule["menus"]:
+            rejected.append((key, f"이 메뉴는 {rule['name']} 적용 대상이 아닙니다. {rule['limit']}"))
+        elif key == "ice" and temp != "ICED":
+            rejected.append((key, rule["limit"]))
+        else:
+            allowed[key] = val
+    return allowed, rejected
+
+
+def option_label(key: str, val) -> str:
+    """'원두 선택 콜롬비아 디카페인' 처럼 손님에게 보일 이름."""
+    r = option_rules().get(key)
+    if not r:
+        return f"{key}={val}"
+    if r["kind"] == "integer":
+        return f"{r['name']} {val}회"
+    return f"{r['name']} {r['labels'].get(str(val), val)}"
+
+
+def option_alternatives(menu_id: str, key: str, val) -> list[str]:
+    """옵션을 못 쓰는 메뉴 대신 고를 만한 메뉴 이름.
+
+    같은 분류에서 그 옵션을 쓸 수 있는 메뉴를 맛 점수가 가까운 순으로 고른다.
+    디카페인 원두를 원했다면 디카페인 메뉴(M12 등)도 함께 낸다.
+    자동으로 담지 않는다 — 손님 확인용 안내일 뿐이다 (P03).
+    """
+    m = menu_by_id(menu_id)
+    rule = option_rules().get(key)
+    if not m or not rule or is_alcohol(menu_id):
+        return []
+    if menu_id in rule["menus"] and key != "ice":     # 메뉴가 아니라 값이 문제인 경우
+        return []
+    cols = ["단맛 1~5", "산미 1~5", "쓴맛 1~5", "바디 1~5"]
+    tags = {t.strip() for t in str(m.get("추천 태그", "")).split(",")}
+
+    def dist(o):
+        shared = tags & {t.strip() for t in str(o.get("추천 태그", "")).split(",")}
+        return sum(abs((o.get(c) or 0) - (m.get(c) or 0)) for c in cols) - 2 * len(shared)
+
+    pool = [menu_by_id(x) for x in rule["menus"] if x != menu_id and menu_by_id(x)]
+    pool = [o for o in pool if o["분류"] == m["분류"]]
+    if key == "ice":                         # HOT 이라서 거부 → 같은 메뉴 ICED 가 있으면 그것
+        if any(str(v.get("온도")).upper() == "ICED" for v in find_variants(menu_id)):
+            return [f"{m['메뉴명']} ICED"]
+    pool.sort(key=dist)
+    decaf_bean = key == "bean" and str(val) == "B03"
+    prefix = "디카페인 " if decaf_bean else ""
+    suffix = "" if decaf_bean else f"({option_label(key, val)})"
+    out = [prefix + str(o["메뉴명"]) + suffix for o in pool[:1 if decaf_bean else 2]]
+    if decaf_bean:
+        out += [str(x["메뉴명"]) for x in _tables()[0].values()
+                if x["분류"] == m["분류"] and x["메뉴 ID"] != menu_id
+                and "디카페인" in str(x["메뉴명"])]
+    return out
 
 
 def find_variants(menu_id: str) -> list[dict]:
-    _, variants = _tables()
+    variants = _tables()[1]
     return [v for k, v in variants.items() if k.startswith(menu_id + "-")]
 
 
@@ -63,6 +230,14 @@ def resolve_variant(menu_id: str, temp: str | None = None, size: str | None = No
     return None, vs
 
 
+QTY_MSG = f"수량은 {MIN_QTY}~{MAX_QTY} 사이의 정수만 가능합니다."
+
+
+def valid_qty(qty) -> bool:
+    return (isinstance(qty, int) and not isinstance(qty, bool)
+            and MIN_QTY <= qty <= MAX_QTY)
+
+
 @dataclass
 class CartItem:
     menu_id: str
@@ -83,14 +258,18 @@ class CartItem:
     def base_price(self) -> int:
         return int(variant_by_id(self.variant_id)["가격(원)"])
 
+    def options(self) -> dict:
+        return {k: getattr(self, k) for k in OPTION_KEYS}
+
     @property
     def option_fee(self) -> int:
+        fees = option_fee_table()
         fee = 0
-        if self.bean:
-            fee += BEAN_SURCHARGE.get(self.bean, 0)
-        if self.milk:
-            fee += MILK_SURCHARGE.get(self.milk, 0)
-        fee += SHOT_PRICE * max(0, int(self.extra_shots))
+        for k, v in self.options().items():
+            if k == "extra_shots":
+                fee += fees[k] * max(0, int(v or 0))
+            elif v is not None:
+                fee += fees.get(k, {}).get(v, 0)
         return fee
 
     @property
@@ -100,6 +279,16 @@ class CartItem:
     @property
     def subtotal(self) -> int:
         return self.unit_price * self.qty
+
+    def label(self) -> str:
+        """가격 없이 품목·구성·수량. 장바구니·[담기완료]·앱이 같은 형식을 쓴다."""
+        counted = unit_label(self.menu_id, self.qty)
+        if counted:
+            return counted
+        unit = "/".join(x for x in (self.temp, self.size) if x not in ("NA", "ONE", "None", ""))
+        opt = self.option_text()
+        return (f"{self.name}" + (f" {unit}" if unit else "")
+                + (f" ({opt})" if opt else "") + f" ×{self.qty}")
 
     def option_text(self) -> str:
         bits = []
@@ -122,24 +311,41 @@ class CartItem:
 class Cart:
     table_id: int | None = None
     items: list[CartItem] = field(default_factory=list)
-    order_no: str | None = None
+    order_no: str | None = None      # 마지막으로 확정한 주문번호
     staff_checked: bool = False      # P15 직원 나이 확인
+    # 확인 대기: None | "confirm"(이대로 확정할까요?) | "copy"(직전 주문을 새 장바구니로?) (P05·P06·Q19·Q23)
+    pending: str | None = None
+    confirmed_orders: list = field(default_factory=list)   # 확정한 주문 — 바꾸지 않는다
 
     def add(self, item: CartItem) -> tuple[bool, str]:
-        if not (MIN_QTY <= item.qty <= MAX_QTY):
-            return False, f"수량은 {MIN_QTY}~{MAX_QTY} 사이의 정수만 가능합니다."
+        """검증을 통과한 품목만 담는다 (P11: 유효성 검증 전 장바구니 변경 금지)."""
+        if not valid_qty(item.qty):
+            return False, QTY_MSG
+        _, rejected = validate_options(item.menu_id, variant_by_id(item.variant_id),
+                                       item.options())
+        if rejected:
+            return False, " / ".join(f"{option_label(k, getattr(item, k, ''))}: {why}"
+                                     for k, why in rejected)
         self.items.append(item)
+        self._changed()
         return True, ""
 
     def remove(self, idx: int):
         if 0 <= idx < len(self.items):
             self.items.pop(idx)
+            self._changed()
 
     def set_qty(self, idx: int, qty: int) -> tuple[bool, str]:
-        if not (MIN_QTY <= qty <= MAX_QTY):
-            return False, f"수량은 {MIN_QTY}~{MAX_QTY} 사이의 정수만 가능합니다."
+        if not valid_qty(qty):
+            return False, QTY_MSG
         self.items[idx].qty = qty
+        self._changed()
         return True, ""
+
+    def _changed(self):
+        """확인받은 요약과 장바구니가 달라졌으니 확정 대기는 풀린다."""
+        if self.pending == "confirm":
+            self.pending = None
 
     @property
     def total(self) -> int:
@@ -154,25 +360,44 @@ class Cart:
             return "pending_staff_check"
         return "ready"
 
-    def confirm(self) -> tuple[bool, str]:
+    def can_confirm(self) -> tuple[bool, str]:
         if not self.items:
             return False, "장바구니가 비어 있습니다."
         if self.table_id is None:
             return False, "좌석 번호를 먼저 확인해 주세요."
         if self.status() == "pending_staff_check":
             return False, "주류가 포함되어 있어 직원의 나이 확인 전에는 확정할 수 없습니다."
-        self.order_no = "M" + "".join(random.choices(string.digits, k=4))
-        return True, self.order_no
+        return True, ""
+
+    def confirm(self) -> tuple[bool, str]:
+        """확정하면 주문을 confirmed_orders 에 보존하고 장바구니를 비운다.
+
+        추가 주문은 같은 좌석의 새 주문이 된다. 직원 나이 확인은 이 주문에만 쓰고
+        다음 주문에 재사용하지 않는다 (Q23).
+        """
+        ok, msg = self.can_confirm()
+        if not ok:
+            return False, msg
+        taken = {o["order_no"] for o in self.confirmed_orders}
+        while True:
+            no = "M" + "".join(random.choices(string.digits, k=4))
+            if no not in taken:
+                break
+        self.confirmed_orders.append({
+            "order_no": no, "table_id": self.table_id, "items": list(self.items),
+            "total": self.total, "text": self.as_text(), "staff_checked": self.staff_checked})
+        self.order_no = no
+        self.items = []
+        self.staff_checked = False
+        self.pending = None
+        return True, no
 
     def as_text(self) -> str:
         if not self.items:
             return "장바구니가 비어 있습니다."
         lines = []
         for i, it in enumerate(self.items, 1):
-            opt = it.option_text()
-            lines.append(f"{i}. {it.name} {it.temp}/{it.size}"
-                         + (f" ({opt})" if opt else "")
-                         + f" ×{it.qty}  {it.subtotal:,}원")
+            lines.append(f"{i}. {it.label()}  {it.subtotal:,}원")
         lines.append(f"합계 {self.total:,}원")
         if self.status() == "pending_staff_check":
             lines.append("※ 주류 포함 — 직원 확인 대기")

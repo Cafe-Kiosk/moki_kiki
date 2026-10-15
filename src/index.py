@@ -16,8 +16,12 @@ from .documents import build_documents
 
 
 class _MockEmbeddings(Embeddings):
-    """MOKI_MOCK=1 일 때 쓰는 가짜 임베딩. API를 부르지 않는다."""
-    DIM = 256
+    """MOKI_MOCK=1 일 때 쓰는 가짜 임베딩. API를 부르지 않는다.
+
+    저장소의 인덱스(text-embedding-3-small, 1536차원)와 차원을 맞춰야
+    MOCK 모드에서도 FAISS 검색이 멈추지 않는다.
+    """
+    DIM = 1536
 
     def _vec(self, text: str) -> list[float]:
         h = hashlib.sha256(text.encode()).digest()
@@ -57,8 +61,9 @@ class CachedEmbeddings(Embeddings):
 
 
 def get_embeddings() -> Embeddings:
-    inner = _MockEmbeddings() if MOCK else OpenAIEmbeddings(model=EMBED_MODEL)
-    return CachedEmbeddings(inner)
+    if MOCK:                     # 가짜 벡터는 디스크 캐시에 남기지 않는다 (실제 모드 오염 방지)
+        return _MockEmbeddings()
+    return CachedEmbeddings(OpenAIEmbeddings(model=EMBED_MODEL))
 
 
 def build_index(verbose: bool = True) -> FAISS:

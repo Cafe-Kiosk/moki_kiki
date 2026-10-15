@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL, INDEX_DIR,
                         ensure_api_key, secret_status)
 from src.index import load_index
-from src.cart import Cart
+from src.cart import Cart, unit_label
 from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
@@ -140,11 +140,13 @@ with right:
         for idx, it in enumerate(cart.items):
             c1, c2 = st.columns([5, 1])
             opt = it.option_text()
+            counted = unit_label(it.menu_id, it.qty)      # '약과(2개입) 2접시' (P17)
+            unit = "/".join(x for x in (it.temp, it.size) if x not in ("NA", "ONE"))
             c1.markdown(
-                f'<div class="cart-line"><b>{html.escape(it.name)}</b> '
-                f'<span class="pill">{it.temp}/{it.size}</span>'
+                f'<div class="cart-line"><b>{html.escape(counted or it.name)}</b> '
+                + (f'<span class="pill">{unit}</span>' if unit and not counted else "")
                 + (f'<br><span style="color:#8A7A70;font-size:.82rem">{html.escape(opt)}</span>' if opt else "")
-                + f'<br>×{it.qty} · {it.subtotal:,}원</div>',
+                + (f'<br>{it.subtotal:,}원' if counted else f'<br>×{it.qty} · {it.subtotal:,}원') + '</div>',
                 unsafe_allow_html=True)
             if c2.button("✕", key=f"del{idx}", help="빼기"):
                 cart.remove(idx); st.rerun()
@@ -152,8 +154,18 @@ with right:
                     unsafe_allow_html=True)
         if cart.status() == "pending_staff_check":
             st.warning("주류 포함 — 직원 나이 확인 대기", icon="🪪")
-        if cart.order_no:
-            st.success(f"주문번호 {cart.order_no} (시연용)", icon="✅")
+    if cart.pending == "confirm":
+        st.info("확정 확인 대기 — '네'라고 하면 확정됩니다", icon="⏳")
+    elif cart.pending == "copy":
+        st.info("직전 주문 다시 담기 확인 대기 — '네'라고 하면 담습니다", icon="⏳")
+
+    # 확정한 주문은 장바구니와 따로 보존한다. 추가 주문은 같은 좌석의 새 주문 (P06·Q19)
+    if cart.confirmed_orders:
+        st.markdown("#### ✅ 확정된 주문 (시연용)")
+        for o in reversed(cart.confirmed_orders):
+            st.markdown(
+                f'<div class="cart-line"><b>{o["order_no"]}</b> · 좌석 {o["table_id"]}번 · '
+                f'{len(o["items"])}개 품목 · {o["total"]:,}원</div>', unsafe_allow_html=True)
 
     st.divider()
     st.markdown("#### 🔍 방금 검색한 근거")
@@ -162,7 +174,7 @@ with right:
         if last["rewritten"] != last["user"]:
             st.caption(f"재작성: {last['rewritten']}")
         for how, name, score in last["trace"][:7]:
-            cls = "pill-cut" if "초과" in how else ("pill-rule" if "규칙" in how or "맛" in how else "pill-vec")
+            cls = "pill-cut" if ("초과" in how or "실패" in how) else ("pill-rule" if "규칙" in how or "맛" in how else "pill-vec")
             st.markdown(
                 f'<span class="pill {cls}">{how}</span> {html.escape(str(name))}'
                 + (f' <span style="color:#A2928A;font-size:.78rem">{score}</span>' if score is not None else ""),
