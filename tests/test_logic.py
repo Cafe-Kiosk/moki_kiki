@@ -680,4 +680,25 @@ check("모든 손님 발화에 기대 처리",
       all(tn["expect"] for s in scs for tn in s["turns"] if "say" in tn), True)
 check("S08 에 직원확인 단계", any(tn.get("staff_check") for tn in scs[7]["turns"]), True)
 
+print("\n【 ⚠️/🧾 줄은 코드만 붙인다 (S02·S03 중복) 】")
+from src.kiosk import strip_footer_lines
+check("모델이 쓴 ⚠️/🧾 줄 제거, 본문은 유지",
+      strip_footer_lines("루이보스티 담았습니다.\n⚠️ 카페인 0mg  \n🧾 합계 5,000원"), "루이보스티 담았습니다.")
+check("⚠️/🧾 로 시작하지 않는 줄은 그대로", strip_footer_lines("합계는 아래에 있어요"), "합계는 아래에 있어요")
+c = Cart(table_id=1)
+saved = K.route, K.answer, K.hybrid_search
+K.route = lambda *a, **k: {"intent": "장바구니", "rewritten_query": "x", "language": "ko", "errors": [],
+                           "order_items": [{"action": "add", "menu_name": "루이보스티", "temp": "HOT", "qty": 1}]}
+K.answer = lambda *a, **k: ("담았습니다.\n⚠️ 카페인 0mg\n🧾 합계 5,000원", True)
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    r = K.handle("루이보스티 따뜻하게 하나", None, c)
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("답변 끝 🧾 줄은 코드 것 하나뿐, 0mg ⚠️ 없음",
+      (r.reply.count("🧾"), "⚠️" in r.reply, r.reply.splitlines()[-1]), (1, False, "🧾 합계 5,000원"))
+import src.prompts as _sp
+check("system.md 에 ⚠️/🧾 형식 설명 없음",
+      any(m in _sp.load("system") for m in ("⚠️", "🧾")), False)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

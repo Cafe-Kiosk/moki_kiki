@@ -156,6 +156,15 @@ def receipt_line(cart: Cart) -> str:
     return line
 
 
+FOOTER_MARKS = ("⚠️", "⚠", "🧾")
+
+
+def strip_footer_lines(reply: str) -> str:
+    """모델이 흉내 낸 ⚠️/🧾 줄을 지운다. 이 줄은 코드만 붙인다 (S02·S03·Q34 중복)."""
+    kept = [ln for ln in reply.splitlines() if not ln.lstrip().startswith(FOOTER_MARKS)]
+    return "\n".join(kept).rstrip()
+
+
 def footer_lines(cart: Cart) -> list[str]:
     """장바구니가 바뀐 턴에 답변 끝에 붙는 줄들: 품목별 ⚠️ 주류·카페인, 마지막에 🧾 합계."""
     lines = []
@@ -267,7 +276,8 @@ def handle(user_input: str, store, cart: Cart,
     trace = router_trace + trace
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
+    reply = strip_footer_lines(reply)
     if cart_signature(cart) != before:
-        reply = reply.rstrip() + "\n\n" + "\n".join(footer_lines(cart))
+        reply = reply + "\n\n" + "\n".join(footer_lines(cart))
     return TurnResult(reply, intent, rq, lang, docs, trace,
                       "\n".join(calc_lines), cached, calls + (0 if cached else 1))
