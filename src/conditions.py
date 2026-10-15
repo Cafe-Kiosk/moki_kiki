@@ -10,7 +10,9 @@ from __future__ import annotations
 import re
 from .cart import menu_by_id, find_variants, option_rules, is_alcohol, CartItem
 from .retrieve import (match_menus, wants_no_caffeine, filter_by_caffeine,
-                       _menu_caffeine, _menu_tastes, DRINK_CATEGORIES)
+                       _menu_caffeine, _menu_tastes, DRINK_CATEGORIES,
+                       wants_decaf, decaf_bean_caffeine, caffeine_with_bean,
+                       taste_candidates)
 
 NO_MILK_WORDS = ["우유 빼", "우유빼", "우유 없", "우유없", "우유 알레르기", "우유알레르기",
                  "유당", "유제품", "비건", "dairy free", "dairy-free", "no milk",
@@ -165,6 +167,28 @@ def screen(user_text: str, order_items: list[dict] | None = None) -> tuple[list[
     return lines, blocked
 
 
+def decaf_notes(text: str) -> list[str]:
+    """디카페인 질문이면 메뉴별 디카페인 카페인을 계산해 넘긴다. 0이라고 말하지 않게 한다 (Q09·P10)."""
+    if not wants_decaf(text):
+        return []
+    mids = [m for m in match_menus(text)[0] if menu_by_id(m)
+            and menu_by_id(m)["분류"] in DRINK_CATEGORIES]
+    mids = mids or taste_candidates(text)
+    fee = option_rules()["bean"]["choices"].get("B03", 0)
+    caf = _menu_caffeine()
+    out = []
+    for mid in mids:
+        name = menu_by_id(mid)["메뉴명"]
+        n = decaf_bean_caffeine(mid)
+        if "디카페인" in name:
+            out.append(f"{name}: 카페인 {caf.get(mid)}mg (0은 아님, P10)")
+        elif n is not None:
+            out.append(f"{name}: 디카페인 원두 선택 시 약 {n}mg (0은 아님, P10) · 원두 변경 +{fee:,}원")
+        elif caf.get(mid, 0) > 0:
+            out.append(f"{name}: 디카페인 원두 선택 불가 — 카페인 {caf[mid]}mg")
+    return out
+
+
 def added_item_caution(item: CartItem) -> str | None:
     """담긴 품목이 주류이거나 카페인이 있으면 [주의] 한 줄 (Q34)."""
     from .cart import variant_by_id
@@ -176,9 +200,15 @@ def added_item_caution(item: CartItem) -> str | None:
         abv = v.get("도수(계산 기준)")
         bits.append("주류 포함" + (f"·도수 {round(abv * 100, 1)}%"
                                   if isinstance(abv, (int, float)) else ""))
-    if mg > 0:
-        changed = (item.bean not in (None, "B01")) or item.extra_shots
-        bits.append(f"카페인 {mg}mg" + (" (원두·샷 변경 전 기준, P10 별도 계산)" if changed else ""))
+    bean = item.bean or v.get("원두 ID")
+    if mg > 0 and (item.bean not in (None, "B01") or item.extra_shots):
+        est = caffeine_with_bean(v, bean, item.extra_shots) if bean else None
+        if est is not None:                    # P10: 원두·샷을 바꾸면 카페인은 별도 계산
+            bits.append(f"카페인 약 {est}mg" + (" (디카페인 원두, 0은 아님, P10)" if bean == "B03" else ""))
+        else:
+            bits.append(f"카페인 {mg}mg (원두·샷 변경 전 기준)")
+    elif mg > 0:
+        bits.append(f"카페인 {mg}mg")
     if item.is_alcohol:
         bits.append("직원 확인 대기")
     if not bits:

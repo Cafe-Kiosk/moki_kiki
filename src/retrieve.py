@@ -77,6 +77,26 @@ def _alias_map() -> list[tuple[str, str]]:
     return sorted(set(pairs), key=lambda p: -len(p[0]))
 
 
+# 데이터상 한 메뉴의 별칭이지만 실제로는 두 메뉴를 다 가리키는 말 (Q16).
+# 엑셀은 그대로 두고 코드에서 되묻기 대상으로 만든다. 더 긴 별칭('디카페인 드립')이
+# 먼저 걸리므로 그쪽은 계속 한 메뉴로 확정된다.
+AMBIGUOUS_ALIASES = {
+    "필터커피": ("M11", "M12"), "드립": ("M11", "M12"), "드립커피": ("M11", "M12"),
+    "핸드드립": ("M11", "M12"), "filtercoffee": ("M11", "M12"),
+    "dripcoffee": ("M11", "M12"), "drip": ("M11", "M12"),
+}
+
+# 2글자 이하 별칭은 공백을 지운 문자열에서 찾지 않고 원문의 단어 경계에서만 찾는다.
+# 뒤에 조사가 붙는 것은 경계로 본다 ('모카는', '라떼랑 약과'). 단독 '요'는 빼서 '바라요'(동사)를 막는다.
+SHORT_ALIAS_LEN = 2
+_JOSA = "이랑|랑|하고|이나|나|도|는|은|이|가|을|를|으로|로|만|와|과|에|의"
+
+
+def _short_alias_re(alias: str) -> re.Pattern:
+    return re.compile(rf"(?<![가-힣a-z0-9]){re.escape(alias)}"
+                      rf"(?=$|[^가-힣a-z0-9]|(?:{_JOSA})(?:요)?(?![가-힣]))")
+
+
 @lru_cache(maxsize=1)
 def _alias_index() -> list[tuple[str, tuple[str, ...]]]:
     """정규화한 별칭 → 메뉴 ID들. 긴 것부터.
@@ -88,6 +108,8 @@ def _alias_index() -> list[tuple[str, tuple[str, ...]]]:
         n = _norm(alias)
         if len(n) >= 2:
             idx.setdefault(n, set()).add(mid)
+    for alias, mids in AMBIGUOUS_ALIASES.items():
+        idx[_norm(alias)] = set(mids)
     return sorted(((a, tuple(sorted(ids))) for a, ids in idx.items()),
                   key=lambda p: -len(p[0]))
 
@@ -119,16 +141,33 @@ def match_menus(text: str) -> tuple[list[str], dict]:
     '에스프레소 마티니'가 에스프레소로, '콜드브루 라떼'가 카페 라떼로 같이 걸리던 문제.
     돌려주는 값: (메뉴·원두 ID 목록, 별칭이 정해 주는 속성 {temp, bean})
     """
-    t = _norm(text)
     ids: list[str] = []
     attrs: dict = {}
-    for alias, mids in _alias_index():
-        if alias not in t:
-            continue
+    for alias, mids in alias_hits(text):
         ids += [m for m in mids if m not in ids]
         attrs.update(_alias_attrs().get(alias, {}))
-        t = t.replace(alias, "\0" * len(alias))
     return ids, attrs
+
+
+def alias_hits(text: str) -> list[tuple[str, tuple[str, ...]]]:
+    """원문에 걸린 (별칭, 메뉴 ID들). 메뉴가 둘 이상인 별칭은 되묻기 대상이다 (Q47)."""
+    t = _norm(text)
+    raw = str(text).lower()          # 짧은 별칭은 공백이 남은 원문에서 찾는다
+    hits = []
+    for alias, mids in _alias_index():
+        if len(alias) <= SHORT_ALIAS_LEN:
+            pat = _short_alias_re(alias)
+            if not pat.search(raw):
+                continue
+            raw = pat.sub("\0" * len(alias), raw)
+        else:
+            if alias not in t:
+                continue
+            t = t.replace(alias, "\0" * len(alias))
+            # 원문에서도 지워서 그 안의 짧은 별칭이 다시 걸리지 않게 한다
+            raw = re.sub(r"\s*".join(map(re.escape, alias)), "\0", raw)
+        hits.append((alias, mids))
+    return hits
 
 
 def rule_hits(query: str) -> tuple[set[str], set[str]]:
@@ -167,6 +206,42 @@ LOW_CAFFEINE_WORDS = ["카페인 적", "카페인적", "카페인 낮", "카페�
 DRINK_CATEGORIES = ("커피", "차/논커피")
 # 라우터가 "카페인 없는" 을 "카페인이 없는" 으로 바꿔 쓰면 위 단어 목록이 놓친다 (Q08)
 NO_CAFFEINE_RE = re.compile(r"카페인\s*(?:이|은|가|도)?\s*(?:없|안\s*들|빼|0\s*mg)")
+
+
+DECAF_WORDS = ["디카페인", "decaf"]
+
+
+def wants_decaf(text: str) -> bool:
+    q = str(text).lower()
+    return any(w in q for w in DECAF_WORDS)
+
+
+@lru_cache(maxsize=1)
+def _bean_caffeine() -> dict[str, int]:
+    """원두 시트의 샷당 카페인(mg)."""
+    wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
+    return {b["원두 ID"]: int(b["카페인(mg/샷)"]) for b in _sheet_rows(wb, "원두")}
+
+
+def caffeine_with_bean(variant: dict, bean: str, extra_shots: int = 0) -> int | None:
+    """원두를 바꿨을 때 카페인 = 샷당 카페인 × (기본 샷 + 추가 샷) + 에스프레소 외 카페인 (P10).
+
+    기본 구성(B01·샷 2)으로 계산하면 가격영양 시트 값(120mg)과 같다.
+    """
+    shots, other = variant.get("기본 샷"), variant.get("에스프레소 외 카페인(mg)")
+    if not isinstance(shots, (int, float)):
+        return None
+    return _bean_caffeine()[bean] * (int(shots) + int(extra_shots or 0)) + int(other or 0)
+
+
+def decaf_bean_caffeine(menu_id: str) -> int | None:
+    """원두 선택이 되는 메뉴를 디카페인 원두(B03)로 바꿨을 때 가장 낮은 카페인. 안 되면 None."""
+    from .cart import option_rules, find_variants
+    if menu_id not in option_rules()["bean"]["menus"]:
+        return None
+    vals = [caffeine_with_bean(v, "B03") for v in find_variants(menu_id)]
+    vals = [v for v in vals if v is not None]
+    return min(vals) if vals else None
 
 
 def wants_no_caffeine(text: str) -> bool:
@@ -265,7 +340,16 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         return s
 
     rows.sort(key=score, reverse=True)
-    if low_caffeine:
+    if low_caffeine and wants_decaf(q):
+        # 디카페인 요청에는 일반 원두 커피(120mg 등)를 넣지 않는다 (Q09).
+        # 디카페인 메뉴(M12)와, 원두를 B03 으로 바꿀 수 있는 커피만 B03 기준 카페인으로 줄 세운다.
+        eff = {r["menu_id"]: (caf[r["menu_id"]] if _is_decaf(r) else decaf_bean_caffeine(r["menu_id"]))
+               for r in rows if r["category"] == "커피"}
+        rows = [r for r in rows if eff.get(r["menu_id"]) is not None]
+        rows.sort(key=lambda r: eff[r["menu_id"]])          # 안정 정렬: 같은 mg 안에서는 맛 점수 순
+        decaf = [r for r in rows if _is_decaf(r)]
+        rows = (decaf + [r for r in rows if not _is_decaf(r)])[:limit]
+    elif low_caffeine:
         rows.sort(key=lambda r: caf[r["menu_id"]])          # 안정 정렬: 같은 mg 안에서는 맛 점수 순
         decaf = [r for r in rows if _is_decaf(r)]
         if decaf:                                            # 디카페인 메뉴는 꼭 넣는다

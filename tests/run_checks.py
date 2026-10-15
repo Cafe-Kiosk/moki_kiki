@@ -3,6 +3,7 @@
     python tests/run_checks.py            # 앞 5개만 (기본, 비용 절약)
     python tests/run_checks.py --all      # 47개 전부 (LLM 약 90회)
     python tests/run_checks.py --ids Q01 Q04 Q47
+    python tests/run_checks.py --ids Q09 --out tests/results_a.md   # 다른 파일에 저장
 
 프롬프트 팀이 실패 사례를 기록해 발표 4번(약점) 자료로 쓰기로 한 그 표다.
 결과는 tests/results.md 로 저장된다.
@@ -30,6 +31,7 @@ def main():
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ids", nargs="*")
     ap.add_argument("--limit", type=int, default=5)
+    ap.add_argument("--out", default="tests/results.md")
     a = ap.parse_args()
 
     qs = load_questions()
@@ -67,8 +69,8 @@ def main():
             "**판정** (직접 적기: 통과 / 실패 / 부분)",
         ]
 
-    (ROOT / "tests" / "results.md").write_text("\n".join(out), encoding="utf-8")
-    print(f"저장: tests/results.md")
+    (ROOT / a.out).write_text("\n".join(out), encoding="utf-8")
+    print(f"저장: {a.out}")
 
 
 if __name__ == "__main__":

@@ -255,7 +255,14 @@ c, s = safe(lambda: calc("에스프레소 마티니 하나랑 치즈케이크 �
                          {"menu_name": "치즈케이크", "qty": 1}))
 check("Q34 [담기완료] 두 품목",
       ("[담기완료] 에스프레소 마티니" in s, "[담기완료] 바스크 치즈케이크" in s), (True, True))
-check("Q34 [합계] 18,800원", "[합계] 18,800원" in s, True)
+check("Q34 calc 에 합계 없음 (모델이 말하지 않음)", "합계" in s.replace("직원 나이", ""), False)
+from src.kiosk import receipt_line, cart_signature
+check("Q34 영수증 줄 = 🧾 합계 18,800원 · 직원 확인 대기",
+      safe(lambda: receipt_line(c)), "🧾 합계 18,800원 · 직원 확인 대기")
+c2 = Cart(table_id=1); add(c2, "M28")
+check("주류 없으면 직원 확인 문구 없음", safe(lambda: receipt_line(c2)), "🧾 합계 4,500원")
+sig = cart_signature(c2); c2.set_qty(0, 2)
+check("수량을 바꾸면 장바구니 변경으로 인식", cart_signature(c2) != sig, True)
 check("Q34 [주의] 주류·도수·카페인 70mg·직원 확인 대기",
       "[주의] 에스프레소 마티니 주류 포함·도수 16.7%, 카페인 70mg, 직원 확인 대기" in s, True)
 check("치즈케이크엔 [주의] 없음", "[주의] 바스크 치즈케이크" in s, False)
@@ -271,5 +278,78 @@ _, s = safe(lambda: calc("아메리카노 0잔, 라떼 -1잔 담아줘", "장바
                          {"menu_name": "라떼", "temp": None, "size": None, "qty": -1}))
 check("Q14 온도·크기 null 이어도 수량부터 거부 (구성 묻지 않음)",
       (s.count("요청 수량"), "구성을 하나 골라야" in s), (2, False))
+
+print("\n【 묶음 A-1 디카페인 추천 — 일반 원두 커피 제외, B03 카페인 계산 (Q09 · P10) 】")
+from src.retrieve import decaf_bean_caffeine, match_menus
+dec = taste_candidates("디카페인 커피 추천")
+check("'디카페인 커피 추천' → 디카페인 필터커피 포함", "M12" in dec, True)
+check("'디카페인 커피 추천' → 원두 고정 일반 커피(콜드브루·에티오피아 필터) 없음",
+      any(m in dec for m in ["M09", "M10", "M11"]), False)
+check("후보는 전부 디카페인 메뉴이거나 원두 선택 가능 메뉴",
+      all(m == "M12" or decaf_bean_caffeine(m) is not None for m in dec), True)
+check("아메리카노 B03 = 4mg × 2샷 = 8mg", safe(lambda: decaf_bean_caffeine("M02")), 8)
+check("Q09 모카 B03 = 4mg × 2샷 + 카카오 12mg = 20mg", safe(lambda: decaf_bean_caffeine("M08")), 20)
+check("콜드브루는 원두 선택 불가 → None", safe(lambda: decaf_bean_caffeine("M09")), None)
+_, s = safe(lambda: calc("디카페인 모카는 카페인 0이죠?", "메뉴질문"))
+check("Q09 calc: 디카페인 원두 선택 시 약 20mg (0은 아님, P10)",
+      "다크 카페 모카: 디카페인 원두 선택 시 약 20mg (0은 아님, P10)" in s, True)
+_, s = safe(lambda: calc("디카페인 커피 추천해줘", "추천"))
+check("디카페인 추천 calc 에 '120mg' 없음, 디카페인 필터커피 8mg",
+      ("120mg" in s, "디카페인 필터커피: 카페인 8mg (0은 아님, P10)" in s), (False, True))
+c, s = safe(lambda: calc("디카페인 카페라떼 HOT S 하나", "장바구니",
+                         {"menu_name": "디카페인 카페라떼", "temp": "HOT", "size": "S", "qty": 1}))
+check("디카페인 라떼 담으면 [주의] 카페인 약 8mg (변경 전 120mg 아님)",
+      "[주의] 카페 라떼 카페인 약 8mg (디카페인 원두, 0은 아님, P10)" in s, True)
+check("카페인 적은 음료 추천은 기존대로 (무카페인 차 포함)",
+      "M17" in taste_candidates("카페인 적은 음료 추천"), True)
+
+print("\n【 묶음 A-2 필터커피·드립 되묻기 (Q16 · Q47 방식) 】")
+for w in ["필터커피", "드립", "핸드드립", "드립커피", "이 필터커피 원두도 한 봉지 주세요"]:
+    check(f"'{w}' → M11·M12 둘 다", sorted(match_menus(w)[0]), ["M11", "M12"])
+check("'에티오피아 필터커피' → M11만", match_menus("에티오피아 필터커피")[0], ["M11"])
+check("'디카페인 드립' → M12만", match_menus("디카페인 드립")[0], ["M12"])
+c, s = safe(lambda: apply({"menu_name": "필터커피", "temp": "HOT", "size": None, "qty": 1}))
+check("필터커피 담기 → 담지 않고 둘 중 확인",
+      (len(c.items), "에티오피아 필터커피 또는 디카페인 필터커피" in s), (0, True))
+
+print("\n【 묶음 A-3 2글자 별칭은 원문 단어 경계에서만 】")
+for text, want in [("아아 하나", ["M02"]), ("에쏘 한 잔", ["M01"]), ("뜨아 주세요", ["M02"]),
+                   ("디카페인 모카는 카페인 0이죠?", ["M08"]), ("라떼랑 약과", ["M03", "M28"]),
+                   ("아이스 바라 하나", ["M06"]), ("잘 되길 바라요", []), ("모카포트 팔아요?", []),
+                   ("와인잔 있어요?", []), ("에쏘아아", []), ("바닐라라떼", ["M06"])]:
+    check(f"'{text}' → {want}", sorted(match_menus(text)[0]), want)
+
+_, s = safe(lambda: calc("하이볼 하나 주세요", "메뉴질문"))
+check("Q47 담기 의도가 아니어도 calc 에 되묻기",
+      "유자 소주 하이볼 또는 위스키 하이볼 중 어느 것인지 확인" in s, True)
+import src.kiosk as K
+
+def handle_stub(text, router_out, cart=None):
+    """라우터·검색·답변 모델을 가짜로 바꿔 handle 의 코드 경로만 돌린다 (API 0회)."""
+    saved = K.route, K.answer, K.hybrid_search
+    K.route = lambda *a, **k: dict({"rewritten_query": text, "language": "ko",
+                                    "order_items": []}, **router_out)
+    K.answer = lambda *a, **k: ("(모델 답변)", True)
+    K.hybrid_search = lambda *a, **k: ([], [])
+    try:
+        return K.handle(text, None, cart or Cart(table_id=1))
+    finally:
+        K.route, K.answer, K.hybrid_search = saved
+
+r = safe(lambda: handle_stub("하이볼 하나 주세요", {"intent": "범위밖"}))
+check("Q47 라우터가 범위밖이라 해도 메뉴명이 있으면 메뉴질문으로",
+      (r.intent, "확인이 필요" in r.calc) if hasattr(r, "intent") else r, ("메뉴질문", True))
+r = safe(lambda: handle_stub("오늘 날씨 어때요", {"intent": "범위밖"}))
+check("메뉴명이 없는 범위밖은 그대로", getattr(r, "intent", r), "범위밖")
+c = Cart(table_id=1)
+r = safe(lambda: handle_stub("에스프레소 마티니 하나랑 치즈케이크 한 조각 주세요",
+                             {"intent": "장바구니", "order_items": [
+                                 {"menu_name": "에스프레소 마티니", "qty": 1},
+                                 {"menu_name": "치즈케이크", "qty": 1}]}, c))
+check("Q34 장바구니가 바뀐 턴엔 답변 마지막 줄이 🧾 합계",
+      getattr(r, "reply", r).splitlines()[-1] if hasattr(r, "reply") else r,
+      "🧾 합계 18,800원 · 직원 확인 대기")
+r = safe(lambda: handle_stub("말차 라떼 카페인 얼마나 돼요?", {"intent": "메뉴질문"}, c))
+check("장바구니가 안 바뀐 턴엔 🧾 줄 없음", "🧾" in getattr(r, "reply", ""), False)
 
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

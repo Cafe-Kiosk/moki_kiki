@@ -7,12 +7,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .router import route
-from .retrieve import hybrid_search, as_context, match_menus
+from .retrieve import hybrid_search, as_context, match_menus, alias_hits
 from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
-from .conditions import screen, alternatives_line, added_item_caution
+from .conditions import screen, alternatives_line, added_item_caution, decaf_notes
 
 
 def _menu_candidates(text: str) -> tuple[list[str], dict]:
@@ -91,19 +91,37 @@ def apply_order_items(order_items: list[dict], cart: Cart,
                       blocked: set[str] = frozenset()) -> list[str]:
     """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
     lines = [_add_one(it, cart, blocked) for it in order_items]
-    if cart.items:
-        lines.append(f"[합계] {cart.total:,}원")
     if cart.status() == "pending_staff_check":
         lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
     return lines
+
+
+def cart_signature(cart: Cart) -> tuple:
+    """장바구니가 이번 턴에 바뀌었는지 비교하는 데 쓴다."""
+    return tuple((i.variant_id, i.qty, tuple(i.options().items())) for i in cart.items)
+
+
+def receipt_line(cart: Cart) -> str:
+    """합계는 모델이 말하지 않고 코드가 답변 마지막 줄에 붙인다 (Q34)."""
+    line = f"🧾 합계 {cart.total:,}원"
+    if cart.status() == "pending_staff_check":
+        line += " · 직원 확인 대기"
+    return line
 
 
 def build_calc(user_input: str, intent: str, order_items: list[dict] | None,
                cart: Cart) -> list[str]:
     """모델에게 넘길 계산 결과. 판단은 여기서 끝내고 태그로 적는다. LLM 호출 없음."""
     lines, blocked = screen(user_input, order_items)
+    lines += decaf_notes(user_input)
     if intent == "장바구니" and order_items:
         lines = apply_order_items(order_items, cart, blocked) + lines
+    else:
+        # 담기가 아니어도 '하이볼'처럼 두 메뉴에 걸리는 말은 되묻게 한다 (Q47)
+        for alias, mids in alias_hits(user_input):
+            names = [str(menu_by_id(m)["메뉴명"]) for m in mids if menu_by_id(m)]
+            if len(names) > 1:
+                lines.append(f"'{alias}' 은 {' 또는 '.join(names)} 중 어느 것인지 확인이 필요합니다.")
     return lines
 
 
@@ -126,6 +144,9 @@ def handle(user_input: str, store, cart: Cart,
     r = route(user_input, history)
     intent, rq, lang = r["intent"], r["rewritten_query"], r["language"]
     calls = 1
+    # 메뉴 이름이 걸렸는데 범위밖·잡담으로 분류되면 코드가 뒤집는다 (Q47: '하이볼'을 범위밖으로 봄)
+    if intent in ("범위밖", "잡담") and any(menu_by_id(m) for m in match_menus(user_input)[0]):
+        intent = "메뉴질문"
 
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
@@ -150,11 +171,14 @@ def handle(user_input: str, store, cart: Cart,
         return TurnResult(reply, intent, rq, lang, calc=cart.as_text(), llm_calls=calls)
 
     # ── 장바구니 담기 ──────────────────────────────────────
+    before = cart_signature(cart)
     calc_lines = build_calc(user_input, intent, r.get("order_items"), cart)
 
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
+    if cart_signature(cart) != before:
+        reply = reply.rstrip() + "\n\n" + receipt_line(cart)
     return TurnResult(reply, intent, rq, lang, docs, trace,
                       "\n".join(calc_lines), cached, calls + (0 if cached else 1))
