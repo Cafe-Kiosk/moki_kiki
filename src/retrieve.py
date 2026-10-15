@@ -165,6 +165,13 @@ NO_CAFFEINE_WORDS = ["카페인 없", "카페인없", "무카페인", "노카페
 LOW_CAFFEINE_WORDS = ["카페인 적", "카페인적", "카페인 낮", "카페인 약", "저카페인", "디카페인",
                       "decaf", "low caffeine", "less caffeine"]
 DRINK_CATEGORIES = ("커피", "차/논커피")
+# 라우터가 "카페인 없는" 을 "카페인이 없는" 으로 바꿔 쓰면 위 단어 목록이 놓친다 (Q08)
+NO_CAFFEINE_RE = re.compile(r"카페인\s*(?:이|은|가|도)?\s*(?:없|안\s*들|빼|0\s*mg)")
+
+
+def wants_no_caffeine(text: str) -> bool:
+    q = str(text).lower()
+    return any(w in q for w in NO_CAFFEINE_WORDS) or bool(NO_CAFFEINE_RE.search(q))
 
 
 @lru_cache(maxsize=1)
@@ -179,6 +186,18 @@ def _menu_caffeine() -> dict[str, int]:
         mid = str(v["주문 단위 ID"]).split("-")[0]
         out[mid] = min(out.get(mid, int(c)), int(c))
     return out
+
+
+def filter_by_caffeine(rows: list[dict], no_caffeine: bool = False) -> list[dict]:
+    """카페인 실측(시연)값이 있는 메뉴만 남기고, no_caffeine 이면 0mg 만 남긴다.
+
+    추천(taste_candidates)과 조건충돌 대안(conditions.alternatives)이 같이 쓴다.
+    """
+    caf = _menu_caffeine()
+    rows = [r for r in rows if r["menu_id"] in caf]
+    if no_caffeine:
+        rows = [r for r in rows if caf[r["menu_id"]] == 0]
+    return rows
 
 
 def _is_decaf(r: dict) -> bool:
@@ -213,7 +232,7 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         wants.add("차/논커피")
 
     # 카페인 조건 — "없는"은 0mg만, "적은·디카페인"은 낮은 순
-    no_caffeine = any(w in q for w in NO_CAFFEINE_WORDS)
+    no_caffeine = wants_no_caffeine(q)
     low_caffeine = not no_caffeine and any(w in q for w in LOW_CAFFEINE_WORDS)
 
     conds = []
@@ -233,11 +252,9 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
         filtered = [r for r in rows if r["category"] in wants]
         rows = filtered or rows
     if no_caffeine or low_caffeine:
-        rows = [r for r in rows if r["menu_id"] in caf]
+        rows = filter_by_caffeine(rows, no_caffeine)
         if not wants:                         # "마실 만한 거" — 음료만
             rows = [r for r in rows if r["category"] in DRINK_CATEGORIES]
-    if no_caffeine:
-        rows = [r for r in rows if caf[r["menu_id"]] == 0]
 
     def score(r):
         s = 0.0

@@ -12,6 +12,7 @@ from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
+from .conditions import screen, alternatives_line, added_item_caution
 
 
 def _menu_candidates(text: str) -> tuple[list[str], dict]:
@@ -24,8 +25,11 @@ def _menu_candidates(text: str) -> tuple[list[str], dict]:
     return [i for i in ids if menu_by_id(i)], attrs
 
 
-def _add_one(it: dict, cart: Cart) -> str:
-    """주문 항목 하나를 검증해 담고, 모델에게 넘길 계산 줄을 돌려준다."""
+def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset()) -> str:
+    """주문 항목 하나를 검증해 담고, 모델에게 넘길 계산 줄을 돌려준다.
+
+    blocked 는 손님 조건과 충돌한 메뉴다. 담지 않고 온도·크기도 묻지 않는다 (Q08).
+    """
     name = it.get("menu_name", "")
     cands, alias_attrs = _menu_candidates(name)
     if not cands:
@@ -35,6 +39,15 @@ def _add_one(it: dict, cart: Cart) -> str:
         return f"'{name}' 은 {names} 중 어느 것인지 확인이 필요합니다. 담지 않았습니다."
     mid = cands[0]
     m = menu_by_id(mid)
+    if mid in blocked:
+        return f"{m['메뉴명']}: 담지 않았습니다 (조건충돌)."
+    # 수량이 없을 때만 1잔. 0·음수·비정수는 고치지 않고 검증에서 거부한다 (Q14·P11)
+    # 온도·크기를 묻기 전에 본다. 0잔을 두고 구성부터 고르게 하지 않는다.
+    qty = it.get("qty")
+    if qty is None:
+        qty = 1
+    if not valid_qty(qty):
+        return f"{m['메뉴명']}: 담지 않았습니다. 요청 수량 {qty!r} — {QTY_MSG}"
     # 라우터가 null 로 준 값은 별칭이 정해 주는 값으로 채운다 ('아아' → ICED)
     temp = it.get("temp") or alias_attrs.get("temp")
     v, all_v = resolve_variant(mid, temp, it.get("size"))
@@ -54,14 +67,11 @@ def _add_one(it: dict, cart: Cart) -> str:
             alt = option_alternatives(mid, k, options[k])
             bits.append(f"{option_label(k, options[k])} 불가 — {why}"
                         + (f" 대안: {' · '.join(alt)} (손님 확인 후 담기)" if alt else ""))
-        return f"{m['메뉴명']}: 담지 않았습니다. " + " / ".join(bits)
+        line = f"{m['메뉴명']}: 담지 않았습니다. " + " / ".join(bits)
+        if any(k == "milk" for k, _ in rejected):          # 우유 변경 불가 → 우유 없는 음료 (Q10)
+            line += "\n" + alternatives_line({"no_milk"}, mid)
+        return line
 
-    # 수량이 없을 때만 1잔. 0·음수·비정수는 고치지 않고 검증에서 거부한다 (Q14·P11)
-    qty = it.get("qty")
-    if qty is None:
-        qty = 1
-    if not valid_qty(qty):
-        return f"{m['메뉴명']}: 담지 않았습니다. 요청 수량 {qty!r} — {QTY_MSG}"
     item = CartItem(
         menu_id=mid, variant_id=str(v["주문 단위 ID"]), name=str(m["메뉴명"]),
         temp=str(v.get("온도")), size=str(v.get("크기")), qty=qty,
@@ -69,19 +79,31 @@ def _add_one(it: dict, cart: Cart) -> str:
     ok, err = cart.add(item)
     if not ok:
         return f"{m['메뉴명']}: {err}"
-    return (f"{item.name} {item.temp}/{item.size}"
+    line = (f"[담기완료] {item.name} {item.temp}/{item.size}"
             + (f" ({item.option_text()})" if item.option_text() else "")
-            + f" ×{qty} = {item.subtotal:,}원 "
+            + f" ×{qty} · {item.subtotal:,}원 "
               f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
+    caution = added_item_caution(item)
+    return line + (f"\n{caution}" if caution else "")
 
 
-def apply_order_items(order_items: list[dict], cart: Cart) -> list[str]:
+def apply_order_items(order_items: list[dict], cart: Cart,
+                      blocked: set[str] = frozenset()) -> list[str]:
     """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
-    lines = [_add_one(it, cart) for it in order_items]
+    lines = [_add_one(it, cart, blocked) for it in order_items]
     if cart.items:
-        lines.append(f"현재 합계 {cart.total:,}원")
+        lines.append(f"[합계] {cart.total:,}원")
     if cart.status() == "pending_staff_check":
         lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
+    return lines
+
+
+def build_calc(user_input: str, intent: str, order_items: list[dict] | None,
+               cart: Cart) -> list[str]:
+    """모델에게 넘길 계산 결과. 판단은 여기서 끝내고 태그로 적는다. LLM 호출 없음."""
+    lines, blocked = screen(user_input, order_items)
+    if intent == "장바구니" and order_items:
+        lines = apply_order_items(order_items, cart, blocked) + lines
     return lines
 
 
@@ -128,9 +150,7 @@ def handle(user_input: str, store, cart: Cart,
         return TurnResult(reply, intent, rq, lang, calc=cart.as_text(), llm_calls=calls)
 
     # ── 장바구니 담기 ──────────────────────────────────────
-    calc_lines = []
-    if intent == "장바구니" and r.get("order_items"):
-        calc_lines = apply_order_items(r["order_items"], cart)
+    calc_lines = build_calc(user_input, intent, r.get("order_items"), cart)
 
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)

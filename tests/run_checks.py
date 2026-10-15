@@ -49,11 +49,19 @@ def main():
         print(f"[{q['질문 ID']}] {q['유형']} · {q['테스트 질문']}")
         print(f"   검색 : {found}")
         print(f"   답변 : {res.reply[:150]}\n")
+        # 검색에서 빠진 건지, 들어왔는데 모델이 무시한 건지 가리려면 전체가 필요하다
+        trace = "\n".join(f"- {how} · {name}" + (f" ({score})" if score is not None else "")
+                          for how, name, score in res.trace) or "(검색 안 함)"
+        sent = ", ".join(d.metadata.get("name", "?") for d in res.docs) or "(없음)"
         out += [
             f"\n## {q['질문 ID']} · {q['유형']}",
             f"**질문** {q['테스트 질문']}",
             f"**기대** {q['기대 처리']}",
+            f"**의도** {res.intent} · 재작성: {res.rewritten}",
             f"**검색** {found}",
+            f"**검색 전체 trace**\n{trace}",
+            f"**모델에 넘긴 문서** {sent}",
+            f"**calc**\n```\n{res.calc or '(없음)'}\n```",
             f"**답변** {res.reply}",
             f"**장바구니** {cart.as_text()}",
             "**판정** (직접 적기: 통과 / 실패 / 부분)",

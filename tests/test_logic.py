@@ -209,4 +209,67 @@ for q in [0, -1, 1.5, "두"]:
 r = safe(lambda: apply({"menu_name": "아메리카노", "temp": "ICED", "size": "S", "qty": None}))
 check("qty=None → 1잔", [i.qty for i in r[0].items] if isinstance(r, tuple) else r, [1])
 
+print("\n【 calc 태그 — 판단은 코드, 모델은 전달 (Q08 · Q10 · Q34) 】")
+def calc(text, intent="장바구니", *items):
+    """라우터 결과를 손으로 넣고 모델에게 갈 calc 문자열을 만든다 (LLM 없이)."""
+    from src.kiosk import build_calc
+    c = Cart(table_id=1)
+    return c, "\n".join(build_calc(text, intent, list(items), c))
+
+c, s = safe(lambda: calc("카페인 없는 말차라떼 주세요", "장바구니",
+                         {"menu_name": "말차 라떼", "temp": None, "size": None, "qty": 1}))
+check("Q08 [조건충돌] 말차 라떼 카페인 70mg", "[조건충돌] 말차 라떼 카페인 70mg" in s, True)
+check("Q08 담지 않음", len(c.items), 0)
+check("Q08 온도·크기 묻지 않음 (구성 선택 줄 없음)", "구성을 하나 골라야" in s, False)
+check("Q08 [대안]에 유자티·루이보스티 (0mg)",
+      all(w in s for w in ["[대안]", "유자티 (카페인 0mg", "루이보스티 (카페인 0mg"]), True)
+check("Q08 [대안]에 카페인 있는 메뉴 없음",
+      "보성 홍차 밀크티" not in s and "말차 라떼 (" not in s, True)
+_, s = safe(lambda: calc("카페인이 없는 말차 라떼 주문", "메뉴질문"))
+check("라우터 재작성 '카페인이 없는'도 조건으로 인식", "[조건충돌] 말차 라떼" in s, True)
+check("재작성 문장으로도 무카페인 추천이 나옴",
+      sorted(taste_candidates("카페인이 없는 말차 라떼 주문"))[:2], ["M16", "M17"])
+
+c, s = safe(lambda: calc("우유 알레르기 있는데 크림 라떼를 오트로 바꿔줘", "옵션"))
+check("Q10 [조건충돌] 크림 라떼 우유 변경 미지원",
+      "[조건충돌] 고운결 크림 라떼 우유 포함 — 우유 변경 미지원" in s, True)
+check("Q10 [대안] 우유 없는 음료만", "[대안]" in s and "알레르기 유발 재료: 우유" not in s, True)
+check("Q10 [주의] 공용 기구 교차접촉(P09)",
+      "[주의] 공용 기구 교차접촉 가능(P09) — 바리스타 확인 권장" in s, True)
+c, s = safe(lambda: calc("우유 알레르기 있는데 크림 라떼를 오트로 바꿔줘", "장바구니",
+                         {"menu_name": "크림 라떼", "milk": "oat", "qty": 1}))
+check("Q10 담기 흐름도 담지 않음 + [대안]", (len(c.items), "[대안]" in s), (0, True))
+c, s = safe(lambda: calc("크림 라떼 오트로 바꿔줘", "장바구니",
+                         {"menu_name": "크림 라떼", "milk": "oat", "qty": 1}))
+check("알레르기 없이 우유 변경 불가 → [대안], [주의] 없음",
+      ("[대안] 조건(우유 없음)" in s, "[주의]" in s), (True, False))
+c, s = safe(lambda: calc("우유 알레르기인데 말차라떼 오트로 주세요", "장바구니",
+                         {"menu_name": "말차라떼", "temp": "HOT", "milk": "oat", "qty": 1}))
+check("우유 변경 가능한 메뉴는 오트로 담김 + 알레르기 [주의]",
+      (len(c.items), "[조건충돌]" in s, "교차접촉" in s), (1, False, True))
+_, s = safe(lambda: calc("견과류 알레르기 있어요 뭐가 안전해요?", "메뉴질문"))
+check("알레르기 질문이면 항상 [주의]", "[주의] 공용 기구 교차접촉 가능(P09)" in s, True)
+
+c, s = safe(lambda: calc("에스프레소 마티니 하나랑 치즈케이크 한 조각 주세요", "장바구니",
+                         {"menu_name": "에스프레소 마티니", "qty": 1},
+                         {"menu_name": "치즈케이크", "qty": 1}))
+check("Q34 [담기완료] 두 품목",
+      ("[담기완료] 에스프레소 마티니" in s, "[담기완료] 바스크 치즈케이크" in s), (True, True))
+check("Q34 [합계] 18,800원", "[합계] 18,800원" in s, True)
+check("Q34 [주의] 주류·도수·카페인 70mg·직원 확인 대기",
+      "[주의] 에스프레소 마티니 주류 포함·도수 16.7%, 카페인 70mg, 직원 확인 대기" in s, True)
+check("치즈케이크엔 [주의] 없음", "[주의] 바스크 치즈케이크" in s, False)
+_, s = safe(lambda: calc("술 없이 유자 하이볼 주세요", "장바구니",
+                         {"menu_name": "유자 소주 하이볼", "qty": 1}))
+check("술 없이 → [조건충돌] + 대안 첫째 유자티",
+      ("[조건충돌] 유자 소주 하이볼 주류 포함" in s, "메뉴: 유자티" in s), (True, True))
+_, s = safe(lambda: calc("아메리카노 0잔 담아줘", "장바구니",
+                         {"menu_name": "아메리카노", "temp": "ICED", "size": "S", "qty": 0}))
+check("Q14 잘못된 수량엔 [담기완료] 없음", "[담기완료]" in s, False)
+_, s = safe(lambda: calc("아메리카노 0잔, 라떼 -1잔 담아줘", "장바구니",
+                         {"menu_name": "아메리카노", "temp": None, "size": None, "qty": 0},
+                         {"menu_name": "라떼", "temp": None, "size": None, "qty": -1}))
+check("Q14 온도·크기 null 이어도 수량부터 거부 (구성 묻지 않음)",
+      (s.count("요청 수량"), "구성을 하나 골라야" in s), (2, False))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
