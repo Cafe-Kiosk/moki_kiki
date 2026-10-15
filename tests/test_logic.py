@@ -668,4 +668,16 @@ check("추가 주문은 같은 좌석의 새 주문 (주문번호 다름)",
       (len(c.confirmed_orders), c.confirmed_orders[1]["table_id"],
        c.confirmed_orders[0]["order_no"] != c.confirmed_orders[1]["order_no"]), (2, 5, True))
 
+print("\n【 시연 시나리오 파일 형식 (tests/demo_scenarios.md) 】")
+import importlib.util, re as _re
+spec = importlib.util.spec_from_file_location("run_checks", pathlib.Path(__file__).parent / "run_checks.py")
+rc = importlib.util.module_from_spec(spec); spec.loader.exec_module(rc)
+scs = rc.parse_scenarios((pathlib.Path(__file__).parent / "demo_scenarios.md").read_text(encoding="utf-8"))
+check("시나리오 10개 (S01~S10)", [s["id"] for s in scs], [f"S{i:02d}" for i in range(1, 11)])
+check("모든 시나리오에 HTI 말단 과업 ID", all(_re.search(r"[A-F]\d", s["hti"]) for s in scs), True)
+check("모든 시나리오에 검증질문 ID", all(_re.search(r"Q\d{2}", s["qids"]) for s in scs), True)
+check("모든 손님 발화에 기대 처리",
+      all(tn["expect"] for s in scs for tn in s["turns"] if "say" in tn), True)
+check("S08 에 직원확인 단계", any(tn.get("staff_check") for tn in scs[7]["turns"]), True)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
