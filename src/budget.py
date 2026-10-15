@@ -220,32 +220,45 @@ def wants_dessert_in(text: str) -> bool:
     return any(w in str(text) for w in ["간식", "디저트", "빵", "케이크", "다과", "snack", "dessert"])
 
 
-def budget_lines(user_input: str, router: dict | None = None) -> list[str]:
-    """[예산안] 줄. 예산·인원은 코드가 원문에서 읽은 값을 먼저 쓰고, 없으면 라우터 값을 쓴다."""
+def budget_result(user_input: str, router: dict | None = None) -> tuple[list[str], list[str]]:
+    """(모델에게 넘길 calc 줄, 답변 끝에 코드가 붙일 표).
+
+    안별 구성·합계·잔액은 모델이 옮기다 빠뜨리므로(S02 T1) ⚠️/🧾 줄처럼 코드가 붙인다.
+    모델은 어떤 안을 고를지 묻는 한두 문장만 쓴다.
+    예산·인원은 코드가 원문에서 읽은 값을 먼저 쓰고, 없으면 라우터 값을 쓴다.
+    """
     router = router or {}
     budget = parse_budget(user_input) or router.get("budget")
     people = parse_people(user_input) or router.get("people") or 1
     wants = router.get("wants") or []
     want_dessert = "디저트" in wants or wants_dessert_in(user_input)
     if not isinstance(budget, int) or budget <= 0:
-        return ["[예산안] 예산 금액을 알 수 없습니다 — 손님에게 예산을 묻기"]
+        return ["[예산안] 예산 금액을 알 수 없습니다 — 손님에게 예산을 묻기"], []
     if not isinstance(people, int) or people < 1:
         people = 1
     if people > MAX_PEOPLE:
-        return [f"[예산안] {people}명은 한 번에 계산하지 않습니다 — {MAX_PEOPLE}명 이하로 나눠 묻기"]
+        return [f"[예산안] {people}명은 한 번에 계산하지 않습니다 — {MAX_PEOPLE}명 이하로 나눠 묻기"], []
     what = "음료" + ("+디저트" if want_dessert else "")
     head = f"[예산안] 조건: 예산 {budget:,}원 · {people}명 · {what} · 주류 제외 · 장바구니에 담지 않음"
+    title = f"📋 예산 {budget:,}원 · {people}명 · {what} (장바구니에 담지 않음)"
     ps = plans(budget, people, want_dessert)
     if not ps:
         lo, how = minimum(people, want_dessert)
-        return [head, f"[예산안] 조합 없음 — {people}명 {what} 최소 {lo:,}원 ({how}). "
-                      f"예산보다 {lo - budget:,}원 부족"]
-    lines = [head]
-    for i, pl in enumerate(ps, 1):
-        lines.append(f"[예산안] {i}안: {pl.text()} = 합계 {pl.total:,}원 · 잔액 {budget - pl.total:,}원")
-    # 모델이 괄호 속 잔액을 빠뜨리던 문제 (S02 T1) — 안별 잔액을 한 줄로 따로 넘긴다
-    lines.append("[예산안] 잔액(코드 계산, 안마다 말하기): "
-                 + " · ".join(f"{i}안 {budget - pl.total:,}원" for i, pl in enumerate(ps, 1)))
+        return ([head, "[예산안] 조합 없음 — 최소 금액은 코드가 답변 끝에 붙임. "
+                       "예산 안에서는 조합이 없다는 것과 다른 예산을 묻는 한두 문장만 쓰기"],
+                [title, f"조합 없음 · 최소 {lo:,}원 ({how}) · 예산보다 {lo - budget:,}원 부족"])
+    calc = [head, f"[예산안] {len(ps)}개 안의 구성·합계·잔액 표는 코드가 답변 끝에 붙임 — "
+                  "메뉴·금액을 다시 나열하지 말고 어떤 안을 고를지 묻는 한두 문장만 쓰기"]
+    table = [title] + [f"{i}안 · {pl.text()} → 합계 {pl.total:,}원 · 잔액 {budget - pl.total:,}원"
+                       for i, pl in enumerate(ps, 1)]
     if any(p.label for pl in ps for p in pl.drinks + pl.desserts):
-        lines.append("[예산안] '가장 싼 구성'은 크기가 여럿인 메뉴를 가장 싼 크기로 계산한 것 — 다른 크기면 금액이 바뀜")
-    return lines
+        table.append("※ '가장 싼 구성'은 크기가 여럿인 메뉴를 가장 싼 크기로 계산한 금액입니다")
+    return calc, table
+
+
+def budget_lines(user_input: str, router: dict | None = None) -> list[str]:
+    return budget_result(user_input, router)[0]
+
+
+def budget_table(user_input: str, router: dict | None = None) -> list[str]:
+    return budget_result(user_input, router)[1]

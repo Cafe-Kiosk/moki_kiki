@@ -420,7 +420,7 @@ finally:
 check("앱 기본값은 캐시 사용", chain.USE_CACHE, True)
 
 print("\n【 묶음 B 예산 추천 (교수님 시나리오 · P12) 】")
-from src.budget import plans, budget_lines, parse_budget, parse_people
+from src.budget import plans, budget_lines, budget_table, parse_budget, parse_people
 from src.cart import is_alcohol
 ps = safe(lambda: plans(20000, 2, True))
 check("20,000원·2명·음료+디저트 → 2~3안", 2 <= len(ps) <= 3 if isinstance(ps, list) else ps, True)
@@ -432,21 +432,25 @@ check("모든 안 음료 정확히 2개 (1인당 1개)",
 check("모든 안 디저트 1개 이상", all(len(p.desserts) >= 1 for p in ps), True)
 check("안끼리 음료가 겹치지 않음",
       len({x.menu_id for p in ps for x in p.drinks}) == sum(len({x.menu_id for x in p.drinks}) for p in ps), True)
-s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
-check("calc 형식 '[예산안] 1안: ... = 합계 N원 · 잔액 M원'",
-      bool(__import__("re").search(r"\[예산안\] 1안: .+ = 합계 [\d,]+원 · 잔액 [\d,]+원", s)), True)
+Q_BUDGET = "2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"
+tb = budget_table(Q_BUDGET)
 _ps = plans(20000, 2, True)
-check("안별 잔액 줄 = 예산 − 합계 (S02 T1)",
-      "[예산안] 잔액(코드 계산, 안마다 말하기): " + " · ".join(f"{i}안 {20000 - p.total:,}원"
-                                                       for i, p in enumerate(_ps, 1)) in s, True)
-check("calc 에 '인기' 없음 (P12)", "인기" in s, False)
-s = "\n".join(budget_lines("5000원으로 두 명 음료랑 디저트"))
-check("5,000원·2명 → 조합 없음 + 최소 금액 10,800원 안내",
-      ("조합 없음" in s, "최소 10,800원" in s, "1안" in s), (True, True, False))
-s = "\n".join(budget_lines("3만원으로 혼자 커피랑 케이크"))
+check("표 머리: 예산·인원·구성·담지 않음", tb[0], "📋 예산 20,000원 · 2명 · 음료+디저트 (장바구니에 담지 않음)")
+check("표: 안마다 구성 → 합계 · 잔액 (잔액 = 예산 − 합계, S02 T1)",
+      tb[1:1 + len(_ps)], [f"{i}안 · {p.text()} → 합계 {p.total:,}원 · 잔액 {20000 - p.total:,}원"
+                           for i, p in enumerate(_ps, 1)])
+s = "\n".join(budget_lines(Q_BUDGET))
+check("모델 calc 엔 안 목록·금액 없음 (한두 문장만 쓰게)",
+      ("1안" in s, bool(__import__("re").search(r"[\d,]+원", s.replace("20,000원", ""))), "한두 문장" in s),
+      (False, False, True))
+check("표·calc 에 '인기' 없음 (P12)", "인기" in s + "\n".join(tb), False)
+tb = budget_table("5000원으로 두 명 음료랑 디저트")
+check("5,000원·2명 → 표에 조합 없음 + 최소 10,800원, 안 없음",
+      ("조합 없음" in tb[1], "최소 10,800원" in tb[1], any("1안" in x for x in tb)), (True, True, False))
+tb = budget_table("3만원으로 혼자 커피랑 케이크")
 check("가격이 갈리는 메뉴는 '가장 싼 구성'으로 표시",
       all(("(가장 싼 구성)" in ln) == any(n in ln for n in ["아메리카노", "카페 라떼", "바닐라 라떼"])
-          for ln in s.splitlines() if "안:" in ln), True)
+          for ln in tb if "안 ·" in ln), True)
 check("같은 메뉴 2잔 조합 허용", any(len({x.menu_id for x in p.drinks}) == 1
                                 for p in plans(9000, 2, False, limit=50)), True)
 for text, want in [("2만 원", 20000), ("1만 2천원", 12000), ("만오천원", 15000),
@@ -460,6 +464,20 @@ r = safe(lambda: handle_stub("2만 원밖에 없는데 두 사람 음료랑 간�
                               "wants": ["음료", "디저트"]}, c))
 check("예산추천 → 장바구니에 담지 않음, 🧾 줄 없음",
       (len(c.items), "🧾" in getattr(r, "reply", "")), (0, False))
+check("예산추천 → 답변 끝에 코드가 붙인 예산안 표",
+      getattr(r, "reply", "").splitlines()[-len(budget_table(Q_BUDGET)):], budget_table(Q_BUDGET))
+saved = K.route, K.answer, K.hybrid_search
+K.route = lambda *a, **k: {"intent": "예산추천", "rewritten_query": "x", "language": "ko", "errors": [],
+                           "order_items": [], "budget": 20000, "people": 2, "wants": ["음료", "디저트"]}
+K.answer = lambda *a, **k: ("세 가지 안을 준비했어요.\n1안: 플랫화이트 + 유자티 = 20,000원\n2. 2안 에스프레소…\n어느 안으로 할까요?", True)
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    r = K.handle(Q_BUDGET, None, Cart(table_id=1))
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("모델이 안을 나열해도 지우고 코드 표만 남김",
+      (r.reply.splitlines()[:2], sum(1 for ln in r.reply.splitlines() if "1안" in ln)),
+      (["세 가지 안을 준비했어요.", "어느 안으로 할까요?"], 1))
 r = safe(lambda: handle_stub("만 원으로 혼자 마실 거 추천", {"intent": "추천"}))
 check("라우터가 '추천'이라 해도 금액이 있으면 예산추천", getattr(r, "intent", r), "예산추천")
 
@@ -476,7 +494,7 @@ check("[담기완료] 줄도 판매 단위",
 check("장바구니 줄도 판매 단위", c.as_text().splitlines()[:2],
       ["1. 약과(2개입) 2접시  9,000원", "2. 쑥인절미(4개입) 1접시  5,500원"])
 check("장바구니에 '약과 2개 ×' 형식 없음", "약과 2개 ×" in c.as_text(), False)
-s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
+s = "\n".join(budget_table("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
 check("예산안도 판매 단위 ('약과 2개' 원래 이름 없음)",
       ("약과(2개입)" in s, "약과 2개" in s), (True, False))
 

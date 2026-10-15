@@ -4,6 +4,7 @@
 턴당 LLM 호출은 최대 2회이며, 범위 밖 질문은 검색을 건너뛴다.
 """
 from __future__ import annotations
+import re
 from dataclasses import dataclass, field
 
 from .router import route
@@ -12,7 +13,7 @@ from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
-from .budget import budget_lines, parse_budget
+from .budget import budget_lines, budget_table, parse_budget
 from .cart_edit import remove_item, update_item
 from . import orders
 from .leaks import sanitize_reply
@@ -158,12 +159,17 @@ def receipt_line(cart: Cart) -> str:
     return line
 
 
-FOOTER_MARKS = ("⚠️", "⚠", "🧾")
+FOOTER_MARKS = ("⚠️", "⚠", "🧾", "📋")
+PLAN_LINE_RE = re.compile(r"^\s*(?:[-*•]|\d+[.)])?\s*\**\s*[1-9]\s*안\b")
 
 
-def strip_footer_lines(reply: str) -> str:
-    """모델이 흉내 낸 ⚠️/🧾 줄을 지운다. 이 줄은 코드만 붙인다 (S02·S03·Q34 중복)."""
-    kept = [ln for ln in reply.splitlines() if not ln.lstrip().startswith(FOOTER_MARKS)]
+def strip_footer_lines(reply: str, plans: bool = False) -> str:
+    """모델이 흉내 낸 ⚠️/🧾/📋 줄을 지운다. 이 줄은 코드만 붙인다 (S02·S03·Q34 중복).
+
+    plans=True(예산추천)면 '1안 …'처럼 안을 나열한 줄도 지운다 — 표는 코드가 붙인다.
+    """
+    kept = [ln for ln in reply.splitlines() if not ln.lstrip().startswith(FOOTER_MARKS)
+            and not (plans and PLAN_LINE_RE.match(ln))]
     return "\n".join(kept).rstrip()
 
 
@@ -286,7 +292,9 @@ def handle(user_input: str, store, cart: Cart,
     trace = router_trace + trace
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
-    reply = sanitize_reply(strip_footer_lines(reply))      # 모델이 옮겨 적은 태그·내부 ID 제거
+    reply = sanitize_reply(strip_footer_lines(reply, plans=intent == "예산추천"))  # 태그·내부 ID 제거
+    if intent == "예산추천" and (table := budget_table(user_input, r)):
+        reply = reply + "\n\n" + "\n".join(table)           # 안별 구성·합계·잔액은 코드가 붙인다
     if cart_signature(cart) != before:
         reply = reply + "\n\n" + "\n".join(footer_lines(cart))
     return TurnResult(reply, intent, rq, lang, docs, trace,
