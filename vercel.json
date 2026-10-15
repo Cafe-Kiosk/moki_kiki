@@ -3,6 +3,7 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 60,
+      "includeFiles": "{src/**,data/**,prompts/**,public/**}",
       "excludeFiles": "{tests/**,docs/**,.venv/**,.cache/**,__pycache__/**,index/**}"
     }
   }
