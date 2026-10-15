@@ -22,7 +22,18 @@ from src.documents import _sheet_rows
 from src.index import load_index
 from src.cart import Cart
 from src.kiosk import handle
+from src.leaks import find_leaks
 import src.chain as chain
+
+MANUAL = "**판정** (직접 적기: 통과 / 실패 / 부분)"
+
+
+def verdict_line(res) -> tuple[str, bool]:
+    """답변에 [태그]·내부 ID 가 남아 있으면 사람 판정 없이 자동 실패 (손님 화면 노출)."""
+    leaks = find_leaks(res.reply)
+    if leaks:
+        return f"**판정** 실패 (자동 — 내부 값 노출: {', '.join(leaks)})", True
+    return MANUAL, False
 
 
 def load_questions():
@@ -78,7 +89,7 @@ def run_scenarios(path: str, only: list[str] | None, out_path: str, use_cache: b
     store = load_index()
     out = ["# 시연 시나리오 실행 결과\n",
            f"실행 {datetime.date.today()} · {len(scs)}개 · 답변 캐시 {'사용' if use_cache else '끔'}\n"]
-    total_calls = 0
+    total_calls, leak_fails = 0, []
     for s in scs:
         cart, history = Cart(table_id=5), []          # 시나리오 안에서는 장바구니·대화가 이어진다
         out += [f"\n## {s['id']} · {s['title']}", f"- HTI: {s['hti']}", f"- 검증질문: {s['qids']}"]
@@ -94,10 +105,15 @@ def run_scenarios(path: str, only: list[str] | None, out_path: str, use_cache: b
             print(f"[{s['id']}-{i}] {tn['say']}\n   답변 : {res.reply[:120]}\n")
             out += [f"\n### {i}. 손님: {tn['say']}", f"**기대** {tn['expect'] or '-'}"]
             out += record(res, cart)
-            out.append("**판정** (직접 적기: 통과 / 실패 / 부분)")
-    out.insert(2, f"LLM 호출 합계 {total_calls}회\n")
+            line, leaked = verdict_line(res)
+            out.append(line)
+            if leaked:
+                leak_fails.append(f"{s['id']}-{i}")
+                print(f"   ⛔ 내부 값 노출 → 자동 실패: {', '.join(find_leaks(res.reply))}")
+    out.insert(2, f"LLM 호출 합계 {total_calls}회 · 내부 값 노출 자동 실패 {len(leak_fails)}건"
+                  + (f" ({', '.join(leak_fails)})" if leak_fails else "") + "\n")
     (ROOT / out_path).write_text("\n".join(out), encoding="utf-8")
-    print(f"LLM 호출 {total_calls}회 · 저장: {out_path}")
+    print(f"LLM 호출 {total_calls}회 · 노출 자동 실패 {len(leak_fails)}건 · 저장: {out_path}")
 
 
 def main():
@@ -131,20 +147,26 @@ def main():
     out = [f"# 검증질문 실행 결과\n",
            f"실행 {datetime.date.today()} · {len(qs)}개 · 답변 캐시 {'사용' if a.use_cache else '끔'}\n"]
 
+    leak_fails = []
     for q in qs:
         cart = Cart(table_id=5)          # 질문마다 새 장바구니
         res = handle(str(q["테스트 질문"]), store, cart, [])
         print(f"[{q['질문 ID']}] {q['유형']} · {q['테스트 질문']}")
         print(f"   검색 : {', '.join(n for _, n, _ in res.trace[:4])}")
         print(f"   답변 : {res.reply[:150]}\n")
+        line, leaked = verdict_line(res)
+        if leaked:
+            leak_fails.append(str(q["질문 ID"]))
+            print(f"   ⛔ 내부 값 노출 → 자동 실패: {', '.join(find_leaks(res.reply))}")
         out += [
             f"\n## {q['질문 ID']} · {q['유형']}",
             f"**질문** {q['테스트 질문']}",
             f"**기대** {q['기대 처리']}",
-        ] + record(res, cart) + ["**판정** (직접 적기: 통과 / 실패 / 부분)"]
+        ] + record(res, cart) + [line]
 
+    out.insert(2, f"내부 값 노출 자동 실패 {len(leak_fails)}건" + (f" ({', '.join(leak_fails)})" if leak_fails else "") + "\n")
     (ROOT / a.out).write_text("\n".join(out), encoding="utf-8")
-    print(f"저장: {a.out}")
+    print(f"노출 자동 실패 {len(leak_fails)}건 · 저장: {a.out}")
 
 
 if __name__ == "__main__":

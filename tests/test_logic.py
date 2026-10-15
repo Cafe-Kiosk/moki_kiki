@@ -775,4 +775,11 @@ check("handle 최종 답변에 노출 없음 + 🧾 줄 유지",
       (find_leaks(r.reply), r.reply.splitlines()[0], r.reply.splitlines()[-1]),
       ([], "약과 2접시 담았습니다.", "🧾 합계 9,000원"))
 
+print("\n【 run_checks 노출 자동 실패 】")
+_R = type("R", (), {})
+r1 = _R(); r1.reply = "약과 담았습니다. #M28-NA-ONE"
+r2 = _R(); r2.reply = "주문번호는 M0057 입니다.\n🧾 합계 4,500원"
+check("노출 있으면 자동 실패 판정", rc.verdict_line(r1), ("**판정** 실패 (자동 — 내부 값 노출: 주문 단위 ID #M28-NA-ONE)", True))
+check("주문번호·🧾 만 있으면 사람 판정으로 남김", rc.verdict_line(r2), (rc.MANUAL, False))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
