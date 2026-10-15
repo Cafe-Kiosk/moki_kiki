@@ -2,7 +2,7 @@
 from __future__ import annotations
 import json, hashlib
 from langchain_openai import ChatOpenAI
-from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, MOCK, CACHE_DIR,
+from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, ANSWER_TEMPERATURE, MOCK, CACHE_DIR,
                      ANSWER_CACHE, HISTORY_TURNS)
 
 from .prompts import load as load_prompt
@@ -48,7 +48,7 @@ def answer(user_input: str, context: str, calc: str = "",
     if key in cache:
         return cache[key], True
 
-    llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3, max_tokens=ANSWER_MAX_TOKENS)
+    llm = ChatOpenAI(model=ANSWER_MODEL, temperature=ANSWER_TEMPERATURE, max_tokens=ANSWER_MAX_TOKENS)
     text = llm.invoke([{"role": "system", "content": system},
                        {"role": "user", "content": user}]).content.strip()
     if USE_CACHE:

@@ -61,6 +61,8 @@ EMBED_MODEL  = os.getenv("MOKI_EMBED_MODEL",  "text-embedding-3-small")
 MOCK = os.getenv("MOKI_MOCK", "0") == "1"
 
 ANSWER_MAX_TOKENS = int(os.getenv("MOKI_ANSWER_MAX_TOKENS", "500"))
+# 답변 temperature. 0 이면 같은 입력에 같은 답이 나오기 쉬워 시연·검증이 안정된다 (예전 고정값 0.3)
+ANSWER_TEMPERATURE = float(os.getenv("MOKI_ANSWER_TEMPERATURE", "0"))
 ROUTER_MAX_TOKENS = int(os.getenv("MOKI_ROUTER_MAX_TOKENS", "400"))
 HISTORY_TURNS     = int(os.getenv("MOKI_HISTORY_TURNS", "4"))   # 최근 N턴만 프롬프트에 넣음
 

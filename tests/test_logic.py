@@ -727,4 +727,20 @@ _sp.load.cache_clear(); _sys = _sp.load("system")
 check("system.md: [담기완료] 면 '담아 드릴까요?' 묻지 않는 규칙 (S09 T3)",
       "[담기완료] 가 있으면 그 품목은 이번 턴에 이미 장바구니에 담겼다" in _sys and "담아 드릴까요?" in _sys, True)
 
+print("\n【 답변 temperature 환경변수 】")
+import subprocess, os as _os
+def _temp(env_val):
+    env = dict(_os.environ, MOKI_MOCK="1")
+    env.pop("MOKI_ANSWER_TEMPERATURE", None)
+    if env_val is not None:
+        env["MOKI_ANSWER_TEMPERATURE"] = env_val
+    out = subprocess.run([sys.executable, "-c", "from src.config import ANSWER_TEMPERATURE as t; print(t)"],
+                         cwd=str(pathlib.Path(__file__).resolve().parent.parent), env=env,
+                         capture_output=True, text=True)
+    return out.stdout.strip().splitlines()[-1] if out.stdout.strip() else out.stderr[-200:]
+check("기본값 0", _temp(None), "0.0")
+check("MOKI_ANSWER_TEMPERATURE=0.3 → 0.3", _temp("0.3"), "0.3")
+check("chain 이 설정값을 씀 (0.3 고정값 없음)",
+      "temperature=0.3" in (pathlib.Path(__file__).resolve().parent.parent / "src/chain.py").read_text(), False)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
