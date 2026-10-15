@@ -40,6 +40,11 @@ def menu_by_id(mid): return _tables()[0].get(mid)
 def variant_by_id(vid): return _tables()[1].get(vid)
 
 
+def list_menus() -> list[dict]:
+    """엑셀에 정의된 판매 메뉴를 원본 순서대로 돌려준다."""
+    return list(_tables()[0].values())
+
+
 def find_variants(menu_id: str) -> list[dict]:
     _, variants = _tables()
     return [v for k, v in variants.items() if k.startswith(menu_id + "-")]

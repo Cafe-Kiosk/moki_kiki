@@ -34,6 +34,17 @@ class ArtifactIntegrationTests(unittest.TestCase):
             {"menu": 66, "bean": 6, "policy": 38, "glossary": 12},
         )
 
+    def test_all_menu_images_are_extracted_from_workbook(self):
+        image_dir = Path(__file__).resolve().parent.parent / "assets" / "menu"
+        menu_ids = {
+            doc.metadata["entity_id"]
+            for doc in self.documents
+            if doc.metadata["type"] == "menu"
+        }
+        images = {path.stem for path in image_dir.glob("M*.jpg")}
+        self.assertEqual(images, menu_ids)
+        self.assertEqual(len(images), 33)
+
     def test_prompts_and_schemas_load(self):
         system = load("system")
         self.assertIn("자연어 테이블 주문 도우미", system)

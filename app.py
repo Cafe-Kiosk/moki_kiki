@@ -11,7 +11,7 @@ import streamlit.components.v1 as components
 from src.config import (TABLES, MOCK, ROUTER_MODEL,
                         ensure_api_key, is_mock, secret_status)
 from src.index import load_index, active_index_dir
-from src.cart import Cart
+from src.cart import Cart, find_variants, list_menus
 from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
@@ -31,6 +31,7 @@ def _asset_uri(filename: str) -> str:
 
 HANOK_HERO_URI = _asset_uri("hanok-cafe-hero-v2.jpg")
 MOKI_MASCOT_URI = _asset_uri("moki-mascot.png")
+MOKI_CHAT_AVATAR_URI = _asset_uri("moki-listening-avatar.png")
 
 CSS = """
 <style>
@@ -88,6 +89,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background:var(--card)!importan
 .mode-notice {margin:0 0 .8rem;padding:.7rem .85rem;border:1px solid #e8d3ae;border-radius:12px;
   background:#fff8e9;color:#73552f;font-size:.76rem;line-height:1.55;}
 .mode-notice b {color:#5e4224;}
+.menu-note {font-size:.73rem;color:var(--muted);margin:.1rem 0 .75rem;}
+.menu-title {font-size:.9rem;font-weight:760;color:var(--ink);margin:.12rem 0 0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.menu-en {font-size:.67rem;color:var(--muted);height:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.menu-price {font-size:.78rem;color:var(--accent);font-weight:720;margin:.16rem 0 .42rem;}
 .meta {font-size:.66rem;color:#9c9188;margin:.1rem 0 .55rem;font-family:ui-monospace,monospace;}
 .cart-line {font-size:.88rem;padding:.55rem .1rem;border-bottom:1px solid #eee9e1;}
 .cart-total {font-weight:750;font-size:1.05rem;color:var(--ink);padding:.8rem 0 .15rem;}
@@ -148,8 +154,8 @@ ASSET_CSS = """
 .entry-moki {width:190px;height:205px;margin-bottom:.25rem;background:url("__MOKI__") center bottom/contain no-repeat;
   filter:drop-shadow(0 10px 14px rgba(0,0,0,.24));}
 .bot-row {display:flex;align-items:flex-end;gap:.55rem;margin:.45rem 0 .55rem;max-width:94%;}
-.moki-avatar {flex:0 0 52px;width:52px;height:58px;background:url("__MOKI__") center bottom/contain no-repeat;
-  filter:drop-shadow(0 3px 5px rgba(48,30,20,.14));transform-origin:center bottom;}
+.moki-avatar {flex:0 0 58px;width:58px;height:58px;background:#fff4e5 url("__CHAT_AVATAR__") center/110% no-repeat;
+  border:1px solid #ead7bd;border-radius:50%;filter:drop-shadow(0 3px 5px rgba(48,30,20,.12));transform-origin:center bottom;}
 .bot-content {min-width:0;max-width:calc(100% - 60px);}
 .moki-name {display:flex;align-items:center;gap:.38rem;margin:0 0 .22rem .2rem;font-size:.68rem;font-weight:750;
   color:#775441;letter-spacing:.04em;}
@@ -161,9 +167,11 @@ ASSET_CSS = """
 @keyframes moki-talk {0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(-3px) rotate(-1.2deg)}70%{transform:translateY(-1px) rotate(1deg)}}
 @keyframes moki-dot {0%,65%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-2px)}}
 @media (max-width:760px){.hanok-hero{min-height:270px;padding:.8rem;background-position:center}.hero-copy{max-width:78%;padding:.8rem .9rem}
-  .hero-mascot{right:.4rem;width:110px;height:132px}.moki-avatar{flex-basis:44px;width:44px;height:50px}.entry-moki{width:150px;height:165px}}
+  .hero-mascot{right:.4rem;width:110px;height:132px}.moki-avatar{flex-basis:48px;width:48px;height:48px}.entry-moki{width:150px;height:165px}}
 </style>
-""".replace("__HERO__", HANOK_HERO_URI).replace("__MOKI__", MOKI_MASCOT_URI)
+""".replace("__HERO__", HANOK_HERO_URI).replace("__MOKI__", MOKI_MASCOT_URI).replace(
+    "__CHAT_AVATAR__", MOKI_CHAT_AVATAR_URI
+)
 st.markdown(CSS + ASSET_CSS, unsafe_allow_html=True)
 
 if not st.session_state.get("_entry_seen"):
@@ -268,8 +276,53 @@ st.markdown(
     '</div><div class="hero-mascot" role="img" aria-label="손을 흔들며 커피를 든 모키"></div></div>',
     unsafe_allow_html=True)
 
-left, right = st.columns([1.45, 1])
 selected_quick: str | None = None
+
+
+def _menu_price(menu_id: str) -> str:
+    prices = sorted({int(row["가격(원)"]) for row in find_variants(menu_id)})
+    if not prices:
+        return "가격 확인 필요"
+    return f"{prices[0]:,}원" if len(prices) == 1 else f"{prices[0]:,}원부터"
+
+
+# ── 데이터 파일의 대표 사진 메뉴판 ─────────────────────────
+with st.expander("📸 사진 메뉴판 · 33개 메뉴", expanded=True):
+    st.markdown(
+        '<div class="menu-note">데이터 파일의 ‘사진메뉴판’ 시트에 포함된 대표 AI 연출 이미지입니다. '
+        '온도·크기·옵션에 따라 실제 모습은 달라질 수 있습니다.</div>',
+        unsafe_allow_html=True,
+    )
+    categories = ["커피", "차/논커피", "디저트", "주류", "원두"]
+    category = st.radio(
+        "분류", categories, horizontal=True, label_visibility="collapsed",
+        key="menu_photo_category",
+    )
+    visible_menus = [menu for menu in list_menus() if menu.get("분류") == category]
+    menu_columns = st.columns(4)
+    for menu_index, menu in enumerate(visible_menus):
+        menu_id = str(menu["메뉴 ID"])
+        menu_name = str(menu["메뉴명"])
+        with menu_columns[menu_index % len(menu_columns)]:
+            with st.container(border=True):
+                st.image(
+                    str(ASSET_DIR / "menu" / f"{menu_id}.jpg"),
+                    width="stretch",
+                    alt=str(menu.get("사진 설명") or menu_name),
+                )
+                st.markdown(
+                    f'<div class="menu-title">{html.escape(menu_name)}</div>'
+                    f'<div class="menu-en">{html.escape(str(menu.get("영문명") or ""))}</div>'
+                    f'<div class="menu-price">{_menu_price(menu_id)}</div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    "모키에게 물어보기", key=f"ask_menu_{menu_id}",
+                    use_container_width=True,
+                ):
+                    selected_quick = f"{menu_name}에 대해 자세히 알려주세요"
+
+left, right = st.columns([1.45, 1])
 
 # ── 왼쪽: 대화 ──────────────────────────────────────────────
 with left:
