@@ -19,7 +19,11 @@
       <span class="brand-seal">모키</span>
       <span><b>MOKI COFFEE BAR</b><small>한옥에서 천천히 고르는 한 잔</small></span>
     </a>
-    <div class="connection" id="connectionStatus"><i></i><span>콘텐츠 확인 중</span></div>
+    <div class="topbar-actions">
+      <div class="connection" id="connectionStatus"><i></i><span>콘텐츠 확인 중</span></div>
+      <button class="api-key-button" id="apiKeyButton" type="button"
+              aria-haspopup="dialog" aria-controls="apiKeyModal">API 키</button>
+    </div>
   </header>
 
   <main id="top">
@@ -64,9 +68,13 @@
           <div class="panel-heading compact"><h2>이용 설정</h2></div>
           <label>좌석 번호<select id="tableSelect"></select></label>
           <label>매장 접속 비밀번호<input id="passwordInput" type="password" autocomplete="current-password" placeholder="설정한 경우에만 입력"></label>
-          <label>직원 확인 코드<input id="staffPasswordInput" type="password" autocomplete="off" placeholder="주류 주문 시 직원이 입력"></label>
-          <button class="secondary-button" id="staffVerifyButton" type="button">주류 나이 확인</button>
-          <p class="setting-note" id="staffStatus">주류는 직원 확인 전까지 주문을 확정할 수 없습니다.</p>
+          <div class="staff-verification" id="staffVerification" hidden>
+            <label for="staffPasswordInput">직원 확인 코드</label>
+            <input id="staffPasswordInput" type="password" autocomplete="off"
+                   placeholder="직원이 직접 입력해 주세요">
+            <button class="secondary-button" id="staffVerifyButton" type="button">직원 확인</button>
+            <p class="setting-note" id="staffStatus" aria-live="polite"></p>
+          </div>
           <button class="secondary-button" id="resetButton" type="button">대화와 장바구니 초기화</button>
         </section>
 
@@ -84,6 +92,25 @@
       </aside>
     </section>
   </main>
+
+  <dialog class="api-key-modal" id="apiKeyModal" aria-labelledby="apiKeyTitle"
+          aria-describedby="apiKeyDescription">
+    <form class="api-key-card" id="apiKeyForm">
+      <span class="eyebrow">PRIVATE SESSION</span>
+      <h2 id="apiKeyTitle">OpenAI API 키 연결</h2>
+      <p id="apiKeyDescription">대화를 시작하려면 API 키를 입력해 주세요. 키는 현재 페이지 메모리에만 두고, 대화 요청 때 같은 출처의 서버로 전달한 뒤 저장하지 않습니다.</p>
+      <label for="apiKeyInput">OpenAI API 키</label>
+      <input id="apiKeyInput" type="password" autocomplete="off" autocapitalize="none"
+             spellcheck="false" maxlength="512" required placeholder="sk-…"
+             aria-describedby="apiKeyPrivacy apiKeyError">
+      <p class="api-key-error" id="apiKeyError" role="alert"></p>
+      <p class="api-key-privacy" id="apiKeyPrivacy">페이지를 새로고침하거나 닫으면 키가 사라집니다. 공용 기기에서는 사용하지 마세요. 운영 배포에는 서버 환경변수 설정을 권장합니다.</p>
+      <div class="api-key-actions">
+        <button class="quiet-button" id="apiKeyCancel" type="button" hidden>취소</button>
+        <button class="primary-button" type="submit">이 키로 시작하기</button>
+      </div>
+    </form>
+  </dialog>
 
   <footer>모키 커피바 · AI 응용 팀 프로젝트 · 가격과 영양 정보는 시연용 가상 설정입니다.</footer>
   <script src="/app.js" defer></script>

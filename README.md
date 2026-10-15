@@ -36,9 +36,14 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 `public/assets/menu/`로 추출해 표시합니다. 원본 엑셀이 바뀌면 `python scripts/extract_menu_images.py`를
 실행해 웹 자산을 다시 만들 수 있습니다.
 
-첫 접속에는 한옥 미닫이문 인트로가 재생됩니다. 실행 후 왼쪽 사이드바의 **API 연결**에서
-OpenAI API 키를 입력하면 현재 브라우저 세션에만 적용되며, **데모 모드**를 켜면 API 비용
-없이 화면과 기본 흐름을 확인할 수 있습니다.
+첫 접속에는 한옥 미닫이문 인트로와 **OpenAI API 키 연결** 창이 표시됩니다. 웹 화면에서
+입력한 키는 `localStorage`·쿠키·파일에 저장하지 않고 현재 페이지 메모리에만 둔 뒤, 대화 요청을
+처리할 때 같은 출처의 서버 함수로만 전달합니다. 새로고침하거나 탭을 닫으면 키가 사라집니다.
+공용 기기에서는 이 방식을 사용하지 말고, 운영 배포에는 서버 환경변수를 권장합니다.
+
+주류 메뉴명·별칭·도수·주류 추천처럼 주류와 관련된 질문은 답변보다 먼저
+“직원 확인이 필요한 내용입니다. 직원을 부르겠습니다.”라고 안내하고 직원 코드 입력창을
+표시합니다. 직원이 `MOKI_STAFF_PASSWORD`를 입력해 확인하면 보류한 질문을 자동으로 다시 처리합니다.
 
 히어로 배경은 “Make a nice house with a modern interpretation of the hanok house in the Joseon
 Dynasty in Korea”를 바탕으로 생성한, 여백이 넉넉한 현대 한옥 카페입니다. 한복을 입은 모키 마스코트는
@@ -158,21 +163,29 @@ Vercel에서는 `pyproject.toml`이 `api.index:app`을 FastAPI 진입점으로 �
 정적 웹 화면을 함께 제공합니다. 프로젝트 루트는 저장소 최상위로 두고 별도의 Build Command나
 Output Directory를 지정하지 않습니다. `pyproject.toml`에는 서버리스 실행에 필요한 최소 패키지만,
 `requirements.txt`에는 Streamlit·FAISS를 포함한 전체 로컬 개발 패키지를 둡니다. Project Settings →
-Environment Variables에 다음 값을 등록한 뒤 재배포합니다.
+Environment Variables에 다음 값을 등록한 뒤 재배포합니다. 웹 방문자가 첫 화면에서 자신의 키를
+입력하는 구성에서는 `OPENAI_API_KEY`가 선택 사항이지만, 운영용 공유 배포에서는 브라우저 입력보다
+서버 환경변수 사용을 권장합니다.
 
 ```text
-OPENAI_API_KEY=실제 OpenAI API 키
+OPENAI_API_KEY=실제 OpenAI API 키 (운영 권장, 방문자 키 입력 방식에서는 선택)
 MOKI_MOCK=0
 MOKI_PASSWORD=공개 데모 접속 비밀번호
 MOKI_STAFF_PASSWORD=직원만 아는 주류 확인 코드
-MOKI_STATE_SECRET=길고 무작위인 상태 서명 비밀값
+MOKI_STATE_SECRET=32자 이상의 별도 무작위 상태 서명 비밀값
 ```
 
-`OPENAI_API_KEY`는 웹 화면에 입력하는 값이 아니라 Vercel 프로젝트의 서버 환경변수입니다.
-`MOKI_PASSWORD`와 `MOKI_STAFF_PASSWORD`도 공개 화면에 노출하지 마세요. `MOKI_STATE_SECRET`은
-브라우저가 주문번호나 직원 확인 상태를 위조하지 못하도록 상태를 서명하며, 운영 환경에서는 별도의
-충분히 긴 무작위 값으로 설정하는 것을 권장합니다. 선택 설정인 `MOKI_OPENAI_TIMEOUT_SECONDS`와
+웹에서 입력한 `OPENAI_API_KEY`는 요청 동안만 사용되고 저장되지 않습니다. 서버 환경변수를 설정하면
+브라우저 밖에서 호출하는 API 요청의 기본 키로도 사용할 수 있습니다. `MOKI_PASSWORD`와
+`MOKI_STAFF_PASSWORD`는 공개 화면이나 저장소에 노출하지 마세요. `MOKI_STATE_SECRET`은
+브라우저가 주문번호나 직원 확인 상태를 위조하지 못하도록 상태를 서명합니다. 직원 코드와 같은 값을
+재사용하지 말고 반드시 별도의 32자 이상 무작위 값으로 설정해야 합니다. 선택 설정인
+`MOKI_OPENAI_TIMEOUT_SECONDS`와
 `MOKI_OPENAI_MAX_RETRIES`의 기본값은 각각 15초와 1회입니다.
+
+```bash
+openssl rand -hex 32  # MOKI_STATE_SECRET 생성 예시
+```
 
 `/api/health`는 엑셀 메뉴 33개, RAG 문서 122개, 사진 33개와 AI 연결 상태를 반환합니다.
 Vercel 함수는 읽기 전용 번들에서 실행되므로 검색은 JSONL 기반 서버리스 검색기를 사용하며,

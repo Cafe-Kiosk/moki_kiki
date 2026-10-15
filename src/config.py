@@ -5,10 +5,30 @@
 """
 from __future__ import annotations
 import os, pathlib
+from contextlib import contextmanager
+from contextvars import ContextVar
+from collections.abc import Iterator
 from dotenv import load_dotenv
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
+
+# ASGI 요청은 동시에 처리될 수 있으므로 환경변수를 바꾸어서는 안 된다.
+# ContextVar는 현재 요청의 실행 문맥에만 키를 보이게 하고, 요청이 끝나면
+# 즉시 원래 상태로 복원한다. 값을 파일·세션·로그에 저장하지 않는다.
+_REQUEST_API_KEY: ContextVar[str | None] = ContextVar(
+    "moki_request_openai_api_key", default=None)
+
+
+@contextmanager
+def request_api_key(value: str | None) -> Iterator[None]:
+    """선택적 요청 API 키를 현재 실행 문맥에만 적용한다."""
+    normalized = str(value or "").strip() or None
+    token = _REQUEST_API_KEY.set(normalized)
+    try:
+        yield
+    finally:
+        _REQUEST_API_KEY.reset(token)
 
 
 def _secret(name: str, default: str = "") -> str:
@@ -27,6 +47,9 @@ def _secret(name: str, default: str = "") -> str:
 
 def current_api_key() -> str:
     """브라우저 세션 입력을 우선하고, 환경변수·Secrets 순서로 키를 찾는다."""
+    request_key = _REQUEST_API_KEY.get()
+    if request_key:
+        return request_key
     if os.getenv("VERCEL"):
         return os.getenv("OPENAI_API_KEY", "")
     try:
