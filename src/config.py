@@ -61,7 +61,7 @@ EMBED_MODEL  = os.getenv("MOKI_EMBED_MODEL",  "text-embedding-3-small")
 MOCK = os.getenv("MOKI_MOCK", "0") == "1"
 
 ANSWER_MAX_TOKENS = int(os.getenv("MOKI_ANSWER_MAX_TOKENS", "500"))
-ROUTER_MAX_TOKENS = int(os.getenv("MOKI_ROUTER_MAX_TOKENS", "400"))
+ROUTER_MAX_TOKENS = int(os.getenv("MOKI_ROUTER_MAX_TOKENS", "1200"))
 HISTORY_TURNS     = int(os.getenv("MOKI_HISTORY_TURNS", "4"))   # 최근 N턴만 프롬프트에 넣음
 
 # ── 검색 ─────────────────────────────────────────────────────
@@ -72,6 +72,7 @@ DISTANCE_THRESHOLD = float(os.getenv("MOKI_DISTANCE_THRESHOLD", "1.15"))
 
 # ── 경로 ─────────────────────────────────────────────────────
 DATA_XLSX   = ROOT / "data" / "moki_data.xlsx"
+RAG_JSONL   = ROOT / "data" / "rag_documents.jsonl"
 INDEX_DIR   = ROOT / "index" / "faiss"
 CACHE_DIR   = ROOT / ".cache"
 ANSWER_CACHE = CACHE_DIR / "answers.json"

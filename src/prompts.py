@@ -4,6 +4,7 @@
 파일 맨 위의 설명 블록(--- 윗부분, > 로 시작하는 줄, # 제목)은 지우고 본문만 쓴다.
 """
 from __future__ import annotations
+import json
 import pathlib
 from functools import lru_cache
 
@@ -18,3 +19,10 @@ def load(name: str) -> str:
     lines = [ln for ln in raw.splitlines()
              if not ln.startswith("#") and not ln.lstrip().startswith(">")]
     return "\n".join(lines).strip()
+
+
+@lru_cache(maxsize=4)
+def load_schema(name: str) -> dict:
+    """프롬프트팀의 구조화 출력 JSON Schema를 읽는다."""
+    path = PROMPT_DIR / "schemas" / f"{name}.json"
+    return json.loads(path.read_text(encoding="utf-8"))

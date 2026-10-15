@@ -1,0 +1,77 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "1.0"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "en",
+        "zh",
+        "ja",
+        "other"
+      ]
+    },
+    "rewritten_utterance": {
+      "type": "string"
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "document_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "menu",
+                "bean",
+                "policy",
+                "glossary"
+              ]
+            }
+          },
+          "menu_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "document_types",
+          "menu_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resolved": {
+      "type": "boolean"
+    },
+    "unresolved_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "language",
+    "rewritten_utterance",
+    "queries",
+    "resolved",
+    "unresolved_references"
+  ],
+  "additionalProperties": false
+}

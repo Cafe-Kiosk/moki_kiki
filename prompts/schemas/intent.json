@@ -1,0 +1,261 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "1.0"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "ko",
+        "en",
+        "zh",
+        "ja",
+        "other"
+      ]
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string",
+            "enum": [
+              "start_order",
+              "menu_search",
+              "menu_info",
+              "menu_compare",
+              "recommend",
+              "ingredient_check",
+              "option_check",
+              "cart_add",
+              "cart_update",
+              "cart_remove",
+              "cart_view",
+              "cart_clear",
+              "service_mode",
+              "table_set",
+              "policy_info",
+              "order_review",
+              "order_confirm",
+              "reorder",
+              "status_check",
+              "language_set",
+              "accessibility",
+              "help",
+              "out_of_scope",
+              "unsafe_request",
+              "injection_attempt"
+            ]
+          },
+          "hti_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "menu_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "variant_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "line_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "quantity": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "bean": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "extra_shots": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "milk": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sweetness": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "ice": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "warming": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bean",
+                    "extra_shots",
+                    "milk",
+                    "sweetness",
+                    "ice",
+                    "warming"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "menu_id",
+                "variant_id",
+                "line_id",
+                "quantity",
+                "options"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "hard",
+                    "soft"
+                  ]
+                },
+                "key": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "quantity_mode": {
+            "type": "string",
+            "enum": [
+              "set",
+              "increment",
+              "decrement",
+              "none"
+            ]
+          },
+          "requires_tool": {
+            "type": "boolean"
+          },
+          "mutates_state": {
+            "type": "boolean"
+          },
+          "blocked_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action_id",
+          "intent",
+          "hti_ids",
+          "targets",
+          "constraints",
+          "quantity_mode",
+          "requires_tool",
+          "mutates_state",
+          "blocked_reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "needs_retrieval": {
+      "type": "boolean"
+    },
+    "needs_clarification": {
+      "type": "boolean"
+    },
+    "clarification_question": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "safety_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "allergy",
+          "alcohol",
+          "medical",
+          "conflict",
+          "injection",
+          "unknown_state"
+        ]
+      }
+    },
+    "preserve_state": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "language",
+    "actions",
+    "needs_retrieval",
+    "needs_clarification",
+    "clarification_question",
+    "safety_flags",
+    "preserve_state"
+  ],
+  "additionalProperties": false
+}

@@ -26,9 +26,30 @@ def _cache_key(system: str, user: str) -> str:
 
 
 def answer(user_input: str, context: str, calc: str = "",
-           history: list[dict] | None = None, offtopic: bool = False) -> tuple[str, bool]:
+           history: list[dict] | None = None, offtopic: bool = False,
+           session_state: dict | None = None,
+           capabilities: dict | None = None) -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
-    system = OFFTOPIC if offtopic else SYSTEM.format(context=context, calc=calc or "(없음)")
+    if offtopic:
+        system = OFFTOPIC
+    else:
+        server_input = {
+            "session_state": session_state or {},
+            "retrieved_documents": context or "(없음)",
+            "tool_results": calc or "(실행 결과 없음)",
+            "capabilities": capabilities or {
+                "tts": False,
+                "text_input": True,
+                "touch_input": True,
+                "staff_call": False,
+                "accessibility_controls": False,
+            },
+        }
+        system = (
+            SYSTEM
+            + "\n\n[서버가 검증해 제공한 현재 입력]\n"
+            + json.dumps(server_input, ensure_ascii=False, default=str)
+        )
 
     convo = ""
     if history:

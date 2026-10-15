@@ -15,6 +15,16 @@ BEAN_SURCHARGE = {"B01": 0, "B02": 1000, "B03": 700}
 MILK_SURCHARGE = {"dairy": 0, "lowfat": 0, "oat": 500, "soy": 500}
 SHOT_PRICE = 600
 
+OPTION_MENUS = {
+    "bean": {f"M{i:02d}" for i in range(1, 9)},
+    "extra_shots": {f"M{i:02d}" for i in range(1, 9)},
+    "milk": {"M03", "M04", "M05", "M06", "M10", "M13", "M15"},
+    "sweetness": {"M06", "M16"},
+    "ice": {"M02", "M03", "M06", "M07", "M08", "M09", "M10", "M11",
+            "M12", "M13", "M14", "M15", "M16", "M17", "M26", "M27"},
+    "warming": {"M18"},
+}
+
 
 @lru_cache(maxsize=1)
 def _tables():
@@ -116,6 +126,41 @@ class CartItem:
         if self.warming == "warm":
             bits.append("따뜻하게")
         return " · ".join(bits)
+
+
+def validate_item_options(item: CartItem) -> tuple[bool, str]:
+    """LLM이 제안한 옵션을 Excel 허용 목록과 주문 단위에 대조한다."""
+    checks = (
+        ("bean", item.bean, {"B01", "B02", "B03"}),
+        ("milk", item.milk, {"dairy", "lowfat", "oat", "soy"}),
+        ("sweetness", item.sweetness, {"normal", "less"}),
+        ("ice", item.ice, {"normal", "less"}),
+        ("warming", item.warming, {"room", "warm"}),
+    )
+    labels = {
+        "bean": "원두 선택", "milk": "우유 변경", "sweetness": "당도 변경",
+        "ice": "얼음 양 변경", "warming": "데우기",
+    }
+    for key, value, allowed in checks:
+        if value is None:
+            continue
+        if value not in allowed:
+            return False, f"{labels[key]} 값 '{value}'은 지원하지 않습니다."
+        if item.menu_id not in OPTION_MENUS[key]:
+            return False, f"{item.name}에는 {labels[key]} 옵션을 적용할 수 없습니다."
+
+    if not isinstance(item.extra_shots, int) or not 0 <= item.extra_shots <= 2:
+        return False, "추가 샷은 0~2 사이의 정수만 가능합니다."
+    if item.extra_shots and item.menu_id not in OPTION_MENUS["extra_shots"]:
+        return False, f"{item.name}에는 샷을 추가할 수 없습니다."
+    if item.ice is not None and item.temp != "ICED":
+        return False, "얼음 양 변경은 ICED 주문 단위에서만 가능합니다."
+    if item.is_alcohol and any((
+        item.bean is not None, item.extra_shots != 0, item.milk is not None,
+        item.sweetness is not None, item.ice is not None, item.warming is not None,
+    )):
+        return False, "주류는 고정 레시피라 옵션을 변경할 수 없습니다."
+    return True, ""
 
 
 @dataclass

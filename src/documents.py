@@ -13,9 +13,10 @@
 전체 본문을 넘기는 편이 정확하다.
 """
 from __future__ import annotations
+import json
 import openpyxl
 from langchain_core.documents import Document
-from .config import DATA_XLSX
+from .config import DATA_XLSX, RAG_JSONL
 
 
 def _sheet_rows(wb, name):
@@ -38,7 +39,66 @@ def _won(v):
         return "-"
 
 
-def build_documents() -> list[Document]:
+def _rag_titles() -> dict[tuple[str, str], str]:
+    """JSONL의 엔티티 ID를 사람이 읽기 좋은 이름으로 바꾼다."""
+    wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
+    titles: dict[tuple[str, str], str] = {}
+    for row in _sheet_rows(wb, "메뉴목록"):
+        titles[("menu", str(row["메뉴 ID"]))] = str(row["메뉴명"])
+    for row in _sheet_rows(wb, "원두"):
+        titles[("bean", str(row["원두 ID"]))] = str(row["원두명"])
+    for row in _sheet_rows(wb, "매장정책"):
+        titles[("policy", str(row["정책 ID"]))] = str(row["주제"])
+    return titles
+
+
+def _build_jsonl_documents() -> list[Document]:
+    """프롬프트팀이 확정한 한·영 122개 RAG 문서를 그대로 읽는다."""
+    titles = _rag_titles()
+    docs: list[Document] = []
+    with RAG_JSONL.open(encoding="utf-8") as fh:
+        for line_no, line in enumerate(fh, 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"RAG JSONL {line_no}행이 올바른 JSON이 아닙니다") from exc
+
+            missing = {"id", "entity_id", "type", "lang", "text"} - row.keys()
+            if missing:
+                raise ValueError(f"RAG JSONL {line_no}행 필드 누락: {sorted(missing)}")
+
+            kind = str(row["type"])
+            entity_id = str(row["entity_id"])
+            text = str(row["text"])
+            title = titles.get((kind, entity_id))
+            if not title:
+                title = text.splitlines()[0].split(".", 1)[0][:80]
+
+            metadata = {
+                "id": str(row["id"]),
+                "entity_id": entity_id,
+                "type": kind,
+                "lang": str(row["lang"]),
+                "image_path": row.get("image_path"),
+                "name": title,
+                "full": text,
+            }
+            id_key = {
+                "menu": "menu_id",
+                "bean": "bean_id",
+                "policy": "policy_id",
+                "glossary": "glossary_id",
+            }.get(kind)
+            if id_key:
+                metadata[id_key] = entity_id
+            docs.append(Document(page_content=text, metadata=metadata))
+    return docs
+
+
+def _build_excel_documents() -> list[Document]:
+    """이전 Excel 변환 경로. JSONL이 없을 때만 호환용으로 사용한다."""
     wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
     menus    = _sheet_rows(wb, "메뉴목록")
     variants = _sheet_rows(wb, "가격영양")
@@ -169,6 +229,12 @@ def build_documents() -> list[Document]:
                       "name": p["주제"], "full": full}))
 
     return docs
+
+
+def build_documents() -> list[Document]:
+    if RAG_JSONL.exists():
+        return _build_jsonl_documents()
+    return _build_excel_documents()
 
 
 if __name__ == "__main__":

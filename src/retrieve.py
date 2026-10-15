@@ -160,8 +160,15 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
     return [r["menu_id"] for r in rows[:limit]]
 
 
+def _preferred_lang(query: str) -> str:
+    letters = [c for c in query if c.isalpha()]
+    return "en" if letters and all(ord(c) < 128 for c in letters) else "ko"
+
+
 def hybrid_search(store, query: str, k: int = TOP_K,
-                  threshold: float = DISTANCE_THRESHOLD):
+                  threshold: float = DISTANCE_THRESHOLD,
+                  document_types: list[str] | None = None,
+                  menu_ids_filter: list[str] | None = None):
     """규칙으로 찾은 문서를 앞에 놓고, 벡터 검색 결과로 채운다.
 
     돌려주는 값: (최종 문서 목록, 디버그용 내역)
@@ -169,32 +176,56 @@ def hybrid_search(store, query: str, k: int = TOP_K,
     menu_ids, policy_ids = rule_hits(query)
     taste_ids = [t for t in taste_candidates(query) if t not in menu_ids]
 
-    by_id = {}
+    lang = _preferred_lang(query)
+    by_id: dict[tuple[str, str], object] = {}
     for doc_id, doc in store.docstore._dict.items():
         md = doc.metadata
-        key = md.get("menu_id") or md.get("policy_id") or md.get("bean_id") or md.get("option_id")
+        key = (md.get("menu_id") or md.get("policy_id") or md.get("bean_id")
+               or md.get("option_id") or md.get("glossary_id"))
         if key:
-            by_id[key] = doc
+            by_id[(str(key), str(md.get("lang", "ko")))] = doc
+
+    def exact_doc(entity_id: str):
+        return by_id.get((entity_id, lang)) or by_id.get((entity_id, "ko"))
+
+    allowed_types = set(document_types or [])
+    allowed_menus = set(menu_ids_filter or [])
+
+    def allowed(doc) -> bool:
+        md = doc.metadata
+        if allowed_types and md.get("type") not in allowed_types:
+            return False
+        if allowed_menus and md.get("type") == "menu" and md.get("menu_id") not in allowed_menus:
+            return False
+        return True
 
     picked, seen = [], set()
     trace = []
 
     for mid in menu_ids:
-        if mid in by_id and mid not in seen:
-            seen.add(mid); picked.append(by_id[mid])
-            trace.append(("규칙·별칭", by_id[mid].metadata["name"], None))
+        doc = exact_doc(mid)
+        if doc and allowed(doc) and mid not in seen:
+            seen.add(mid); picked.append(doc)
+            trace.append(("규칙·별칭", doc.metadata["name"], None))
     for pid in policy_ids:
-        if pid in by_id and pid not in seen:
-            seen.add(pid); picked.append(by_id[pid])
-            trace.append(("규칙·정책/옵션", by_id[pid].metadata["name"], None))
+        doc = exact_doc(pid)
+        if doc and allowed(doc) and pid not in seen:
+            seen.add(pid); picked.append(doc)
+            trace.append(("규칙·정책/옵션", doc.metadata["name"], None))
     for tid in taste_ids:
-        if tid in by_id and tid not in seen:
-            seen.add(tid); picked.append(by_id[tid])
-            trace.append(("맛 점수", by_id[tid].metadata["name"], None))
+        doc = exact_doc(tid)
+        if doc and allowed(doc) and tid not in seen:
+            seen.add(tid); picked.append(doc)
+            trace.append(("맛 점수", doc.metadata["name"], None))
 
-    for doc, score in store.similarity_search_with_score(query, k=k + 2):
+    for doc, score in store.similarity_search_with_score(query, k=max(k + 6, 12)):
         md = doc.metadata
-        key = md.get("menu_id") or md.get("policy_id") or md.get("bean_id") or md.get("option_id")
+        if md.get("lang") and md.get("lang") != lang:
+            continue
+        if not allowed(doc):
+            continue
+        key = (md.get("menu_id") or md.get("policy_id") or md.get("bean_id")
+               or md.get("option_id") or md.get("glossary_id") or md.get("id"))
         if key in seen:
             continue
         if score > threshold:
@@ -206,6 +237,37 @@ def hybrid_search(store, query: str, k: int = TOP_K,
             break
 
     return picked[: k + 3], trace
+
+
+def hybrid_search_rewrite(store, rewrite_result: dict, k: int = TOP_K):
+    """재작성기가 만든 복수 검색 질의를 실행하고 문서 ID 기준으로 합친다."""
+    if "queries" in rewrite_result and not rewrite_result["queries"]:
+        return [], []
+    specs = rewrite_result.get("queries") or [{
+            "query": rewrite_result.get("rewritten_utterance", ""),
+            "document_types": [],
+            "menu_ids": [],
+        }]
+    docs, trace, seen = [], [], set()
+    for spec in specs:
+        query = str(spec.get("query") or rewrite_result.get("rewritten_utterance") or "").strip()
+        if not query:
+            continue
+        found, found_trace = hybrid_search(
+            store,
+            query,
+            k=k,
+            document_types=spec.get("document_types") or None,
+            menu_ids_filter=spec.get("menu_ids") or None,
+        )
+        trace.extend(found_trace)
+        for doc in found:
+            doc_id = doc.metadata.get("id") or id(doc)
+            if doc_id in seen:
+                continue
+            seen.add(doc_id)
+            docs.append(doc)
+    return docs[: max(k + 5, 9)], trace
 
 
 def as_context(docs) -> str:

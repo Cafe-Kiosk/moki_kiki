@@ -7,9 +7,9 @@ import html, json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL, INDEX_DIR,
+from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL,
                         ensure_api_key, secret_status)
-from src.index import load_index
+from src.index import load_index, active_index_dir
 from src.cart import Cart
 from src.kiosk import handle
 
@@ -77,7 +77,7 @@ with st.sidebar:
     st.markdown("**실행 상태**")
     _s = secret_status()
     st.caption(f"모델 {ROUTER_MODEL}")
-    st.caption(f"인덱스 {'있음' if (INDEX_DIR / 'index.faiss').exists() else '없음'}")
+    st.caption(f"인덱스 {'있음' if (active_index_dir() / 'index.faiss').exists() else '없음'}")
     if _s["key_found"]:
         st.caption(f"API 키 ✅ {_s['key_head']} ({_s['key_source']})")
     else:

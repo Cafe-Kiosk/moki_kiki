@@ -1,17 +1,18 @@
 """FAISS 인덱스 — 디스크에 저장해두고 재사용한다.
 
-비용: 문서 61개 임베딩은 index/ 폴더에 한 번만 만들고 그 뒤로는 불러만 쓴다.
-앱을 켤 때마다 다시 임베딩하면 그만큼 공용 키 크레딧이 나간다.
+한·영 JSONL 122개 문서는 index/ 폴더에 한 번만 임베딩하고 그 뒤로는 불러 쓴다.
+MOCK 인덱스는 별도 경로에 저장해 운영 인덱스를 덮어쓰지 않는다.
 사용자 질문 임베딩도 캐시해서 같은 질문은 두 번 호출하지 않는다.
 """
 from __future__ import annotations
 import json, hashlib
+from pathlib import Path
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.embeddings import Embeddings
 
 from .config import (EMBED_MODEL, INDEX_DIR, CACHE_DIR, QUERY_EMBED_CACHE,
-                     MOCK, TOP_K, DISTANCE_THRESHOLD)
+                     MOCK, TOP_K, DISTANCE_THRESHOLD, RAG_JSONL)
 from .documents import build_documents
 
 
@@ -61,24 +62,58 @@ def get_embeddings() -> Embeddings:
     return CachedEmbeddings(inner)
 
 
+def active_index_dir() -> Path:
+    """가짜 임베딩 인덱스가 운영용 인덱스를 덮어쓰지 않게 분리한다."""
+    return INDEX_DIR.parent / ("faiss_mock" if MOCK else INDEX_DIR.name)
+
+
+def _source_signature(doc_count: int) -> dict:
+    source_hash = ""
+    if RAG_JSONL.exists():
+        source_hash = hashlib.sha256(RAG_JSONL.read_bytes()).hexdigest()
+    return {
+        "source_sha256": source_hash,
+        "document_count": doc_count,
+        "embedding": "mock-sha256-v1" if MOCK else EMBED_MODEL,
+    }
+
+
+def _index_is_current(path: Path, expected: dict) -> bool:
+    manifest = path / "manifest.json"
+    if not (path / "index.faiss").exists() or not manifest.exists():
+        return False
+    try:
+        return json.loads(manifest.read_text(encoding="utf-8")) == expected
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
 def build_index(verbose: bool = True) -> FAISS:
     """문서를 임베딩해 인덱스를 만들고 디스크에 저장한다. API를 쓰는 유일한 지점."""
     docs = build_documents()
     emb = get_embeddings()
     store = FAISS.from_documents(docs, emb)
-    INDEX_DIR.parent.mkdir(parents=True, exist_ok=True)
-    store.save_local(str(INDEX_DIR))
+    path = active_index_dir()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    store.save_local(str(path))
+    (path / "manifest.json").write_text(
+        json.dumps(_source_signature(len(docs)), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     if verbose:
-        print(f"인덱스 생성: 문서 {len(docs)}개 → {INDEX_DIR}")
+        print(f"인덱스 생성: 문서 {len(docs)}개 → {path}")
         print(f"임베딩 API 호출 {getattr(emb, 'api_calls', '?')}회")
     return store
 
 
 def load_index() -> FAISS:
-    """저장된 인덱스를 불러온다. 없으면 만든다."""
+    """현재 JSONL과 임베딩 설정에 맞는 인덱스를 불러오거나 다시 만든다."""
+    docs = build_documents()
+    expected = _source_signature(len(docs))
+    path = active_index_dir()
     emb = get_embeddings()
-    if (INDEX_DIR / "index.faiss").exists():
-        return FAISS.load_local(str(INDEX_DIR), emb,
+    if _index_is_current(path, expected):
+        return FAISS.load_local(str(path), emb,
                                 allow_dangerous_deserialization=True)
     return build_index(verbose=False)
 
