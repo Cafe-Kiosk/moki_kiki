@@ -13,6 +13,7 @@ from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    variant_by_id, validate_item_options)
 from .config import is_mock
 from .quick_replies import build_quick_replies, is_choice_prompt
+from .content import menu_image_cards
 
 
 def _menu_candidates(text: str) -> list[str]:
@@ -49,6 +50,7 @@ class TurnResult:
     cached: bool = False
     llm_calls: int = 0
     quick_replies: list[dict[str, str]] = field(default_factory=list)
+    menu_images: list[dict[str, str]] = field(default_factory=list)
 
 
 def _session_state(cart: Cart) -> dict:
@@ -89,20 +91,31 @@ def handle(user_input: str, store, cart: Cart,
     r = adapt_plan(user_input, rewritten, plan)
     intent, rq, lang = r["intent"], r["rewritten_query"], r["language"]
     calls = 0 if is_mock() else 2
+    menu_images = menu_image_cards(
+        docs,
+        user_message=user_input,
+        rewritten=rq,
+        history=history,
+    )
 
     # 새 프롬프트 계약: 미해결 대상이나 필수값이 있으면 쓰기 작업 전체를 보류한다.
     if plan.get("needs_clarification"):
         question = plan.get("clarification_question") or "주문 조건을 조금 더 구체적으로 알려주세요."
         quick_replies = build_quick_replies(question, plan, rewritten)
-        return TurnResult(question, intent, rq, lang, docs, trace,
-                          "상태 변경 없음 — 확인 필요", False, calls, quick_replies)
+        return TurnResult(
+            question, intent, rq, lang, docs, trace,
+            "상태 변경 없음 — 확인 필요", False, calls, quick_replies,
+            menu_images,
+        )
 
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
         reply, cached = answer(user_input, "", history=history, offtopic=True,
                                session_state=state)
-        return TurnResult(reply, intent, rq, lang, cached=cached,
-                          llm_calls=calls + (0 if cached else 1))
+        return TurnResult(
+            reply, intent, rq, lang, cached=cached,
+            llm_calls=calls + (0 if cached else 1), menu_images=menu_images,
+        )
 
     # ── 결제 : 코드가 처리하고 모델을 부르지 않는다 ─────────
     if intent == "결제":
@@ -118,7 +131,10 @@ def handle(user_input: str, store, cart: Cart,
         if unsupported:
             reply = ("기프티콘·쿠폰·적립·분할 결제는 이 키오스크에서 지원하지 않습니다.\n"
                      + reply)
-        return TurnResult(reply, intent, rq, lang, calc=cart.as_text(), llm_calls=calls)
+        return TurnResult(
+            reply, intent, rq, lang, calc=cart.as_text(), llm_calls=calls,
+            menu_images=menu_images,
+        )
 
     # ── 장바구니 담기 ──────────────────────────────────────
     calc_lines = []
@@ -191,9 +207,17 @@ def handle(user_input: str, store, cart: Cart,
     # ── 답변 생성 ──────────────────────────────────────────
     reply, cached = answer(user_input, context,
                            calc="\n".join(calc_lines), history=history,
-                           session_state=_session_state(cart), plan=plan)
+                           session_state=_session_state(cart), plan=plan,
+                           capabilities={
+                               "menu_images_attached": bool(menu_images),
+                               "menu_image_menu_ids": [
+                                   card["id"] for card in menu_images
+                               ],
+                           })
     quick_replies = (build_quick_replies(reply, plan, rewritten)
                      if is_choice_prompt(reply) else [])
-    return TurnResult(reply, intent, rq, lang, docs, trace,
-                      "\n".join(calc_lines), cached, calls + (0 if cached else 1),
-                      quick_replies)
+    return TurnResult(
+        reply, intent, rq, lang, docs, trace,
+        "\n".join(calc_lines), cached, calls + (0 if cached else 1),
+        quick_replies, menu_images,
+    )

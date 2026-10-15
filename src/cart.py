@@ -179,6 +179,8 @@ class Cart:
         if not (MIN_QTY <= item.qty <= MAX_QTY):
             return False, f"수량은 {MIN_QTY}~{MAX_QTY} 사이의 정수만 가능합니다."
         self.items.append(item)
+        if item.is_alcohol:
+            self.staff_checked = False
         return True, ""
 
     def remove(self, idx: int):
@@ -188,6 +190,8 @@ class Cart:
     def set_qty(self, idx: int, qty: int) -> tuple[bool, str]:
         if not (MIN_QTY <= qty <= MAX_QTY):
             return False, f"수량은 {MIN_QTY}~{MAX_QTY} 사이의 정수만 가능합니다."
+        if self.items[idx].is_alcohol and qty > self.items[idx].qty:
+            self.staff_checked = False
         self.items[idx].qty = qty
         return True, ""
 

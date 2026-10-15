@@ -16,7 +16,7 @@ from langchain_openai import ChatOpenAI
 
 from .config import (ROUTER_MODEL, ROUTER_MAX_TOKENS, HISTORY_TURNS,
                      OPENAI_TIMEOUT_SECONDS, OPENAI_MAX_RETRIES,
-                     current_api_key, is_mock)
+                     current_api_key, current_language, is_mock)
 from .prompts import load as load_prompt, load_schema
 
 REWRITE_PROMPT = load_prompt("rewrite")
@@ -113,7 +113,9 @@ def _empty_options() -> dict:
 
 def _mock_plan(user_input: str, rewrite_result: dict) -> dict:
     lower = user_input.lower()
-    if any(word in lower for word in ("확정", "결제", "checkout", "confirm")):
+    if any(word in lower for word in ("검토", "review")):
+        intent = "order_review"
+    elif any(word in lower for word in ("확정", "결제", "checkout", "confirm")):
         intent = "order_confirm"
     elif any(word in lower for word in ("담아", "추가", "빼", "장바구니", "cart")):
         intent = "cart_view"
@@ -131,11 +133,11 @@ def _mock_plan(user_input: str, rewrite_result: dict) -> dict:
             "targets": [],
             "constraints": [],
             "quantity_mode": "none",
-            "requires_tool": intent in {"order_confirm", "cart_view"},
+            "requires_tool": intent in {"order_review", "order_confirm", "cart_view"},
             "mutates_state": intent == "order_confirm",
             "blocked_reason": None,
         }],
-        "needs_retrieval": intent not in {"order_confirm", "cart_view"},
+        "needs_retrieval": intent not in {"order_review", "order_confirm", "cart_view"},
         "needs_clarification": False,
         "clarification_question": None,
         "safety_flags": [],
@@ -149,6 +151,7 @@ def rewrite(user_input: str, history: list[dict] | None = None,
         return _mock_rewrite(user_input)
     payload = {
         "user_message": user_input,
+        "preferred_language": current_language(),
         "conversation_summary": _history_summary(history),
         "conversation_history": _history_messages(history),
         "session_state": session_state or {},
@@ -167,6 +170,7 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
         return _mock_plan(user_input, rewrite_result)
     payload = {
         "user_message": user_input,
+        "preferred_language": current_language(),
         "rewrite_result": rewrite_result,
         "conversation_summary": _history_summary(history),
         "conversation_history": _history_messages(history),
@@ -185,7 +189,10 @@ def adapt_plan(user_input: str, rewrite_result: dict, plan: dict) -> dict:
     actions = plan.get("actions") or []
     intents = [action.get("intent") for action in actions]
 
-    if "order_confirm" in intents:
+    # order_review와 order_confirm 모두 웹에서는 구조화된 주문
+    # 검토 폼을 여는 동일한 legacy 경로로 연결된다. 실제 확정은
+    # /api/order/confirm에서 필수 선택지를 검증한 뒤에만 수행한다.
+    if any(intent in {"order_review", "order_confirm"} for intent in intents):
         legacy_intent = "결제"
     elif any(i in {"cart_add", "cart_update", "cart_remove", "cart_view", "cart_clear"}
              for i in intents):

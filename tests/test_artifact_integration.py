@@ -11,12 +11,13 @@ from unittest.mock import patch
 from src import chain
 from src.cart import CartItem, validate_item_options
 from src.chain import _conversation_messages
+from src.config import request_language
 from src.content import content_status, source_cards
 from src.documents import build_documents
 from src.few_shot import load_examples, render_examples, select_examples
 from src.index import load_index
 from src.prompts import load, load_schema
-from src.quick_replies import build_quick_replies
+from src.quick_replies import build_quick_replies, is_choice_prompt
 from src.retrieve import hybrid_search
 from src.router import _history_messages, adapt_plan
 
@@ -167,6 +168,28 @@ class ArtifactIntegrationTests(unittest.TestCase):
 
         replies = build_quick_replies("아메리카노 수량을 선택해 주세요.", plan, {})
         self.assertEqual([r["label"] for r in replies], ["1개", "2개", "3개"])
+
+    def test_quick_replies_follow_all_supported_ui_languages(self):
+        plan = {"actions": [{"targets": [{"menu_id": "M02"}]}]}
+        with request_language("en"):
+            replies = build_quick_replies("Choose a temperature and size.", plan, {})
+        self.assertEqual(replies[0]["label"], "Hot · Size S")
+        self.assertEqual(replies[0]["value"], "Hot · Size S, please")
+
+        with request_language("zh"):
+            replies = build_quick_replies("请选择温度和尺寸。", plan, {})
+        self.assertEqual(replies[0]["label"], "热饮 · S 杯型")
+        self.assertTrue(is_choice_prompt("请选择您喜欢的饮品。"))
+
+        with request_language("ja"):
+            replies = build_quick_replies("温度とサイズを選択してください。", plan, {})
+        self.assertEqual(replies[0]["label"], "ホット · S サイズ")
+        self.assertTrue(is_choice_prompt("どちらを選びますか。"))
+
+        choices = {"queries": [{"menu_ids": ["M32", "M34"]}]}
+        with request_language("zh"):
+            replies = build_quick_replies("请选择一款嗨棒。", {}, choices)
+        self.assertEqual([r["label"] for r in replies], ["柚子烧酒嗨棒", "威士忌嗨棒"])
 
 
 if __name__ == "__main__":

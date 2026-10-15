@@ -3,12 +3,12 @@
 실행:  streamlit run app.py
 """
 from __future__ import annotations
-import base64, html, json, mimetypes
+import base64, hmac, html, json, mimetypes, re
 from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-from src.config import (TABLES, MOCK, ROUTER_MODEL,
+from src.config import (STAFF_VERIFICATION_CODE, TABLES, MOCK, ROUTER_MODEL,
                         ensure_api_key, is_mock, secret_status)
 from src.index import load_index
 from src.cart import Cart, find_variants, list_menus
@@ -16,10 +16,6 @@ from src.content import content_status, source_cards
 from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
-
-from src.auth import check as _check_password
-if not _check_password():
-    st.stop()
 
 ASSET_DIR = Path(__file__).resolve().parent / "public" / "assets"
 
@@ -205,6 +201,18 @@ if "_use_mock" not in st.session_state:
 
 cart: Cart = st.session_state.cart
 
+
+def _verify_streamlit_staff_code() -> None:
+    """Streamlit 화면에서도 웹 API와 같은 시연용 직원 코드를 검사한다."""
+    entered = str(st.session_state.get("_staff_code_input", "")).strip()
+    if hmac.compare_digest(entered, STAFF_VERIFICATION_CODE):
+        st.session_state.cart.staff_checked = True
+        st.session_state._staff_code_error = ""
+    else:
+        st.session_state._staff_code_error = "직원 확인 코드를 확인해 주세요."
+    st.session_state._staff_code_input = ""
+
+
 # ── 사이드바 ────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
@@ -265,9 +273,23 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**매장 설정**")
-    cart.staff_checked = st.toggle(
-        "직원 나이 확인 완료", value=cart.staff_checked,
-        help="주류 주문은 직원 확인 후에만 확정됩니다.")
+    if not cart.has_alcohol:
+        st.session_state._staff_code_error = ""
+    if cart.has_alcohol and not cart.staff_checked:
+        st.text_input(
+            "주류 구매 직원 확인 코드", type="password", max_chars=4,
+            key="_staff_code_input", placeholder="4자리 코드",
+        )
+        st.button(
+            "직원 확인", key="verify_staff_code", use_container_width=True,
+            on_click=_verify_streamlit_staff_code,
+        )
+        if st.session_state.get("_staff_code_error"):
+            st.error(st.session_state._staff_code_error)
+    elif cart.has_alcohol:
+        st.success("직원 나이 확인이 완료되었습니다.")
+    else:
+        st.caption("직원 코드는 주류를 주문할 때만 필요합니다.")
     st.caption("메뉴 가격과 옵션은 서버가 데이터 원장과 다시 확인합니다.")
 
     st.divider()
@@ -390,6 +412,25 @@ with left:
                         unsafe_allow_html=True,
                     )
 
+                    menu_images = m.get("menu_images") or []
+                    if menu_images:
+                        image_columns = st.columns(min(len(menu_images), 3))
+                        for image_idx, card in enumerate(menu_images[:3]):
+                            menu_id = str(card.get("id") or "").upper()
+                            if not re.fullmatch(r"M\d{2}", menu_id):
+                                continue
+                            image_path = ASSET_DIR / "menu" / f"{menu_id}.jpg"
+                            if not image_path.is_file():
+                                continue
+                            name = str(card.get("name") or menu_id)
+                            image_columns[image_idx % len(image_columns)].image(
+                                image_path,
+                                caption=(f"{name} · 엑셀 사진메뉴판의 AI 연출 "
+                                         "대표 이미지"),
+                                alt=f"{name} 대표 이미지",
+                                use_container_width=True,
+                            )
+
                     replies = m.get("quick_replies") or []
                     if i == len(st.session_state.history) - 1 and replies:
                         st.markdown('<div class="quick-label">아래에서 선택해 주세요</div>',
@@ -466,6 +507,7 @@ elif prompt:
     st.session_state.history.append({
         "role": "assistant", "content": res.reply,
         "quick_replies": res.quick_replies,
+        "menu_images": res.menu_images,
     })
     st.session_state.llm_calls += res.llm_calls
     st.session_state.turns.append({

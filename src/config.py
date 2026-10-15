@@ -18,6 +18,8 @@ load_dotenv(ROOT / ".env")
 # 즉시 원래 상태로 복원한다. 값을 파일·세션·로그에 저장하지 않는다.
 _REQUEST_API_KEY: ContextVar[str | None] = ContextVar(
     "moki_request_openai_api_key", default=None)
+_REQUEST_LANGUAGE: ContextVar[str] = ContextVar(
+    "moki_request_language", default="ko")
 
 
 @contextmanager
@@ -29,6 +31,23 @@ def request_api_key(value: str | None) -> Iterator[None]:
         yield
     finally:
         _REQUEST_API_KEY.reset(token)
+
+
+@contextmanager
+def request_language(value: str | None) -> Iterator[None]:
+    """선택한 UI 언어를 현재 요청의 라우터·답변 문맥에만 적용한다."""
+    normalized = str(value or "ko").strip().lower()
+    if normalized not in {"ko", "en", "zh", "ja"}:
+        normalized = "ko"
+    token = _REQUEST_LANGUAGE.set(normalized)
+    try:
+        yield
+    finally:
+        _REQUEST_LANGUAGE.reset(token)
+
+
+def current_language() -> str:
+    return _REQUEST_LANGUAGE.get()
 
 
 def _secret(name: str, default: str = "") -> str:
@@ -67,11 +86,6 @@ def ensure_api_key() -> bool:
     return bool(current_api_key())
 
 
-def app_password() -> str:
-    """비어 있으면 잠그지 않는다 (로컬 개발)."""
-    return _secret("MOKI_PASSWORD")
-
-
 def secret_status() -> dict:
     """화면에 표시할 진단 정보. 키 값 자체는 노출하지 않는다."""
     try:
@@ -80,7 +94,6 @@ def secret_status() -> dict:
     except Exception:
         session_key = ""
     k = session_key or os.getenv("OPENAI_API_KEY") or _secret("OPENAI_API_KEY")
-    pw = _secret("MOKI_PASSWORD")
     if session_key:
         src = "현재 세션"
     elif os.getenv("OPENAI_API_KEY"):
@@ -88,7 +101,7 @@ def secret_status() -> dict:
     else:
         src = "Secrets" if k else "없음"
     return {"key_found": bool(k), "key_head": (k[:7] + "...") if k else "",
-            "key_source": src, "password_set": bool(pw)}
+            "key_source": src}
 
 # ── 모델 (팀 합의: gpt-4.1-mini) ──────────────────────────────
 ROUTER_MODEL = os.getenv("MOKI_ROUTER_MODEL", "gpt-4.1-mini")
@@ -133,4 +146,5 @@ QUERY_EMBED_CACHE = CACHE_DIR / "query_embeddings.json"
 
 # ── 매장 설정 (매장정책 P02) ─────────────────────────────────
 TABLES = list(range(1, 13))        # 좌석 1~12
+STAFF_VERIFICATION_CODE = "1234"  # 팀 시연용 고정 직원 코드
 MIN_QTY, MAX_QTY = 1, 10           # P11
