@@ -32,6 +32,16 @@ order_items 는 intent 가 장바구니일 때만 채운다. 아니면 빈 배�
           "milk": "dairy"|"lowfat"|"oat"|"soy"|null, "sweetness": "normal"|"less"|null,
           "ice": "normal"|"less"|null, "warming": "room"|"warm"|null}}
 손님이 말하지 않은 값은 null 로 둔다. 임의로 채우지 않는다.
+온도: "따뜻한·뜨거운·핫" → temp "HOT", "차가운·시원한·아이스" → temp "ICED". warming 은 디저트를 데워 달라는 말에만 쓴다.
+
+각 항목에 "action" 을 넣는다.
+- "add"    : 새로 담기 (기본)
+- "remove" : 빼기. qty 는 뺄 수량, 말하지 않았으면 null(그 줄 전부)
+- "update" : 이미 담긴 품목 바꾸기. 바꿀 값만 채우고 나머지는 null
+  - "match"    : 어느 품목인지 가리키는 현재 값. 예 "오트 라떼" → {{"milk":"oat"}}. 없으면 {{}}
+  - "apply_to" : 바꿀 잔 수. "하나만" → 1. 말하지 않았으면 null(그 줄 전부)
+  - "qty"      : 수량 자체를 바꿀 때만 새 수량. "라떼 3잔으로" → 3
+  - 일반 우유로 되돌리기는 "milk":"dairy", 샷 빼기는 "extra_shots":0
 
 budget · people · wants 는 intent 가 예산추천일 때만 채운다. 아니면 null, null, [] 이다.
 - budget : 원 단위 정수. "2만 원" → 20000, "만오천원" → 15000
@@ -52,10 +62,16 @@ budget · people · wants 는 intent 가 예산추천일 때만 채운다. 아�
 {{"intent":"추천","rewritten_query":"산미가 적은 커피","language":"ko","order_items":[],"budget":null,"people":null,"wants":[]}}
 
 손님: 아아 하나 주세요
-{{"intent":"장바구니","rewritten_query":"아이스 아메리카노 1잔 담기","language":"ko","order_items":[{{"menu_name":"아아","temp":"ICED","size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
+{{"intent":"장바구니","rewritten_query":"아이스 아메리카노 1잔 담기","language":"ko","order_items":[{{"action":"add","menu_name":"아아","temp":"ICED","size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
+
+손님: 오트 라떼 하나만 일반 우유로 바꿔줘
+{{"intent":"장바구니","rewritten_query":"오트 우유 카페 라떼 중 1잔을 일반 우유로 변경","language":"ko","order_items":[{{"action":"update","menu_name":"카페 라떼","match":{{"milk":"oat"}},"apply_to":1,"temp":null,"size":null,"qty":null,"bean":null,"extra_shots":null,"milk":"dairy","sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
+
+손님: 아메리카노 하나 빼 주세요
+{{"intent":"장바구니","rewritten_query":"아메리카노 1잔 빼기","language":"ko","order_items":[{{"action":"remove","menu_name":"아메리카노","match":{{}},"qty":1}}],"budget":null,"people":null,"wants":[]}}
 
 손님: 하이볼 하나 주세요
-{{"intent":"장바구니","rewritten_query":"하이볼 1잔 담기","language":"ko","order_items":[{{"menu_name":"하이볼","temp":null,"size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
+{{"intent":"장바구니","rewritten_query":"하이볼 1잔 담기","language":"ko","order_items":[{{"action":"add","menu_name":"하이볼","temp":null,"size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
 
 최근 대화:
 {history}

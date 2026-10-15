@@ -13,6 +13,7 @@ from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
 from .budget import budget_lines, parse_budget
+from .cart_edit import remove_item, update_item
 from .conditions import screen, alternatives_line, item_caution_line, decaf_notes
 
 
@@ -69,6 +70,9 @@ def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset(),
         qty = 1
     if not valid_qty(qty):
         return f"{m['메뉴명']}: 담지 않았습니다. 요청 수량 {qty!r} — {QTY_MSG}"
+    # 음료에 붙은 '데우기'는 온도 HOT 을 잘못 넣은 것이다 ('따뜻한 라떼' → warming=warm). 데우기는 디저트 옵션
+    if m.get("분류") in ("커피", "차/논커피") and it.get("warming") in ("warm", "room"):
+        it = dict(it, warming=None, temp=it.get("temp") or ("HOT" if it["warming"] == "warm" else None))
     # 라우터가 null 로 준 온도는 별칭이 정해 주는 값으로 채운다 ('아아' → ICED).
     # 라우터 메뉴명의 별칭이 먼저, 없으면 손님 원문의 별칭 (Q25)
     alias_temp = alias_attrs.get("temp") or (text_attrs or {}).get(mid, {}).get("temp")
@@ -124,7 +128,15 @@ def apply_order_items(order_items: list[dict], cart: Cart,
                       blocked: set[str] = frozenset(), user_input: str = "") -> list[str]:
     """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
     text_attrs = text_alias_attrs(user_input)
-    lines = [_add_one(it, cart, blocked, text_attrs) for it in order_items]
+    lines = []
+    for it in order_items:
+        action = (it.get("action") or "add").lower()
+        if action == "remove":
+            lines.append(remove_item(it, cart))
+        elif action == "update":
+            lines.append(update_item(it, cart))
+        else:
+            lines.append(_add_one(it, cart, blocked, text_attrs))
     if cart.status() == "pending_staff_check":
         lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
     return lines

@@ -476,4 +476,82 @@ s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식
 check("예산안도 판매 단위 ('약과 2개' 원래 이름 없음)",
       ("약과(2개입)" in s, "약과 2개" in s), (True, False))
 
+print("\n【 C-1 장바구니 빼기·수정 (Q15) 】")
+from src.kiosk import apply_order_items
+def cart_with(*specs):
+    c = Cart(table_id=1)
+    for s in specs:
+        add(c, *s[0], **s[1])
+    return c
+def run(c, *items):
+    return "\n".join(apply_order_items(list(items), c))
+
+c = cart_with((("M03", "HOT", "S"), {"qty": 2, "milk": "oat", "bean": "B03"}))
+s = run(c, {"action": "update", "menu_name": "카페 라떼", "match": {"milk": "oat"},
+            "apply_to": 1, "milk": "dairy"})
+check("Q15 오트 라떼 2잔 중 1잔만 일반 우유 → 줄 나눔",
+      [(i.qty, i.milk, i.bean) for i in c.items], [(1, "oat", "B03"), (1, None, "B03")])
+check("Q15 원두(디카페인)는 두 잔 모두 유지", all(i.bean == "B03" for i in c.items), True)
+check("Q15 합계 재계산 (6,700 + 6,200)", c.total, 12900)
+check("Q15 [수정완료] 줄", s.startswith("[수정완료]"), True)
+
+c = cart_with((("M03", "HOT", "S"), {"milk": "oat"}), (("M03", "HOT", "S"), {}))
+s = run(c, {"action": "update", "menu_name": "라떼", "match": {}, "milk": "soy"})
+check("같은 메뉴 두 줄인데 대상 불명 → 바꾸지 않고 되묻기",
+      ("어느 것인지 확인이 필요" in s, [i.milk for i in c.items]), (True, ["oat", None]))
+s = run(c, {"action": "update", "menu_name": "라떼", "match": {"milk": "dairy"}, "milk": "soy"})
+check("match 로 일반 우유 줄을 특정 → 그 줄만 두유", [i.milk for i in c.items], ["oat", "soy"])
+
+c = cart_with((("M02", "ICED", "S"), {"qty": 2}))
+s = run(c, {"action": "update", "menu_name": "아메리카노", "match": {}, "size": "L"})
+check("크기만 변경 → 수량 유지, 주문 단위 변경",
+      [(i.variant_id, i.qty) for i in c.items], [("M02-ICED-L", 2)])
+s = run(c, {"action": "update", "menu_name": "아메리카노", "match": {}, "qty": 3})
+check("수량 변경", [i.qty for i in c.items], [3])
+s = run(c, {"action": "update", "menu_name": "아메리카노", "match": {}, "qty": 0})
+check("수량 0 으로 변경 → 거부, 그대로", ([i.qty for i in c.items], "수량" in s), ([3], True))
+
+c = cart_with((("M07",), {}))
+s = run(c, {"action": "update", "menu_name": "크림 라떼", "match": {}, "milk": "oat"})
+check("수정도 옵션 검증 — 크림 라떼 오트 거부, 그대로",
+      ([i.milk for i in c.items], "바꾸지 않았습니다" in s), ([None], True))
+c = cart_with((("M04",), {}))
+s = run(c, {"action": "update", "menu_name": "카푸치노", "match": {}, "temp": "ICED"})
+check("없는 구성(카푸치노 ICED)으로 변경 → 거부", ([i.temp for i in c.items], "그 구성은 없습니다" in s),
+      (["HOT"], True))
+c = cart_with((("M02", "ICED", "S"), {"ice": "less"}))
+s = run(c, {"action": "update", "menu_name": "아메리카노", "match": {}, "temp": "HOT"})
+check("HOT 으로 바꾸면 남은 '얼음 적게'가 안 맞음 → 거부", [i.temp for i in c.items], ["ICED"])
+
+c = cart_with((("M02", "ICED", "S"), {"qty": 2}), (("M28",), {}))
+s = run(c, {"action": "remove", "menu_name": "아메리카노", "match": {}, "qty": 1})
+check("아메리카노 1잔 빼기 → 1잔 남음", [(i.menu_id, i.qty) for i in c.items], [("M02", 1), ("M28", 1)])
+s = run(c, {"action": "remove", "menu_name": "약과", "match": {}, "qty": None})
+check("약과 빼기 (수량 없음) → 줄 삭제 + [빼기완료]",
+      ([i.menu_id for i in c.items], s.startswith("[빼기완료] 약과(2개입) 1접시")), (["M02"], True))
+s = run(c, {"action": "remove", "menu_name": "치즈케이크", "match": {}})
+check("없는 품목 빼기 → 안내만", ("맞는 품목이 없습니다" in s, len(c.items)), (True, 1))
+c = cart_with((("M02", "ICED", "S"), {}), (("M02", "HOT", "S"), {}))
+s = run(c, {"action": "remove", "menu_name": "아메리카노", "match": {}})
+check("두 줄 중 대상 불명 빼기 → 되묻기 (번호 목록)",
+      ("1번 아메리카노 ICED/S ×1 / 2번 아메리카노 HOT/S ×1" in s, len(c.items)), (True, 2))
+s = run(c, {"action": "remove", "menu_name": "아메리카노", "match": {"temp": "HOT"}})
+check("match 온도로 특정해 빼기", [i.temp for i in c.items], ["ICED"])
+c = cart_with((("M02", "ICED", "S"), {}))
+r = safe(lambda: handle_stub("아메리카노 빼 주세요", {"intent": "장바구니", "order_items": [
+    {"action": "remove", "menu_name": "아메리카노", "match": {}}]}, c))
+check("빼기도 장바구니 변경 → 🧾 줄", getattr(r, "reply", "").splitlines()[-1], "🧾 합계 0원")
+c = Cart(table_id=1)
+s = run(c, {"menu_name": "아아", "size": "S", "qty": 1})
+check("action 없으면 add (기존 라우터 출력 호환)", len(c.items), 1)
+c = Cart(table_id=1)
+s = run(c, {"action": "add", "menu_name": "오트 라떼", "temp": None, "size": "S", "qty": 2,
+            "bean": "B03", "milk": "oat", "warming": "warm"})
+check("음료에 온 warming=warm 은 HOT 으로 (따뜻한 라떼)",
+      [(i.variant_id, i.qty, i.milk, i.bean, i.warming) for i in c.items],
+      [("M03-HOT-S", 2, "oat", "B03", None)])
+c = Cart(table_id=1)
+s = run(c, {"action": "add", "menu_name": "소금빵", "qty": 1, "warming": "warm"})
+check("디저트 데우기는 그대로 옵션", [i.warming for i in c.items], ["warm"])
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
