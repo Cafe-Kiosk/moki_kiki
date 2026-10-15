@@ -1378,8 +1378,11 @@ def chat(
             if staff_authorized and explicit_alcohol_purchase else []
         )
         menu_actions = _menu_actions(
-            result.docs,
-            result_menu_images,
+            # During a deferred compound order, only the validated order
+            # targets belong in the option queue.  Retrieved comparison or
+            # policy context must not become an extra menu button.
+            [] if deferred_items else result.docs,
+            [] if deferred_items else result_menu_images,
             menu_ids=[item.menu_id for item in deferred_items] + authorized_choice_ids,
         )
         open_option_menu_id = (

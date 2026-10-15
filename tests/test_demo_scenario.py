@@ -100,6 +100,10 @@ class FiveMinuteDemoTests(unittest.TestCase):
                 [item["menu_id"] for item in order_payload["deferred_cart_items"]],
                 ["M06", "M28"],
             )
+            self.assertEqual(
+                [item["menu_id"] for item in order_payload["menu_actions"]],
+                ["M06", "M28"],
+            )
             latte = order_payload["deferred_cart_items"][0]
             self.assertEqual(latte["variant_id"], "M06-ICED-S")
             self.assertEqual(
