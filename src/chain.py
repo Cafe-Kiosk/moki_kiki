@@ -22,8 +22,19 @@ def _cache_load() -> dict:
     return {}
 
 
-def _cache_key(system: str, user: str) -> str:
-    return hashlib.sha1((system + "||" + user).encode()).hexdigest()
+def _cache_key(system: str, conversation: str) -> str:
+    return hashlib.sha1((system + "||" + conversation).encode()).hexdigest()
+
+
+def _conversation_messages(history: list[dict] | None) -> list[dict[str, str]]:
+    """최근 대화를 모델의 실제 user/assistant 역할로 보존한다."""
+    messages: list[dict[str, str]] = []
+    for message in (history or [])[-HISTORY_TURNS * 2:]:
+        role = "user" if message.get("role") == "user" else "assistant"
+        content = str(message.get("content", "")).strip()
+        if content:
+            messages.append({"role": role, "content": content})
+    return messages
 
 
 def answer(user_input: str, context: str, calc: str = "",
@@ -40,7 +51,7 @@ def answer(user_input: str, context: str, calc: str = "",
             "retrieved_documents": context or "(없음)",
             "tool_results": calc or "(실행 결과 없음)",
             "capabilities": capabilities or {
-                "tts": False,
+                "tts": True,
                 "text_input": True,
                 "touch_input": True,
                 "staff_call": False,
@@ -55,25 +66,28 @@ def answer(user_input: str, context: str, calc: str = "",
             + json.dumps(server_input, ensure_ascii=False, default=str)
         )
 
-    convo = ""
-    if history:
-        for m in history[-HISTORY_TURNS * 2:]:
-            who = "손님" if m["role"] == "user" else "모키"
-            convo += f"{who}: {m['content'][:150]}\n"
-    user = (convo + "손님: " + user_input) if convo else user_input
+    messages = [
+        {"role": "system", "content": system},
+        *_conversation_messages(history),
+        {"role": "user", "content": user_input},
+    ]
 
     if is_mock():
-        return f"[MOCK] {user_input} 에 대한 가짜 응답입니다. 검색 문서 {context.count('---') + 1}건.", True
+        return (
+            "지금은 화면 체험 모드라 실제 AI 프롬프트로 답하고 있지 않아요. "
+            "왼쪽 ‘API 연결’에 키를 적용하면 모키가 앞 대화를 기억하며 자연스럽게 이어갈게요.",
+            True,
+        )
 
     cache = _cache_load()
-    key = _cache_key(system, user)
+    conversation = json.dumps(messages[1:], ensure_ascii=False, separators=(",", ":"))
+    key = _cache_key(system, conversation)
     if key in cache:
         return cache[key], True
 
     llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3,
                      max_tokens=ANSWER_MAX_TOKENS, api_key=current_api_key())
-    text = llm.invoke([{"role": "system", "content": system},
-                       {"role": "user", "content": user}]).content.strip()
+    text = llm.invoke(messages).content.strip()
     cache[key] = text
     ANSWER_CACHE.write_text(json.dumps(cache, ensure_ascii=False))
     return text, False

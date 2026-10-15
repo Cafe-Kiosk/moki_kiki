@@ -29,7 +29,7 @@ def _asset_uri(filename: str) -> str:
     return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
 
 
-HANOK_HERO_URI = _asset_uri("hanok-cafe-hero.jpg")
+HANOK_HERO_URI = _asset_uri("hanok-cafe-hero-v2.jpg")
 MOKI_MASCOT_URI = _asset_uri("moki-mascot.png")
 
 CSS = """
@@ -85,6 +85,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background:var(--card)!importan
   margin:.48rem auto .3rem 0;max-width:90%;width:fit-content;white-space:pre-wrap;}
 .welcome-note,.quick-label {font-size:.72rem;color:var(--muted);margin:.4rem 0 .55rem;}
 .quick-label {font-weight:700;color:var(--accent);}
+.mode-notice {margin:0 0 .8rem;padding:.7rem .85rem;border:1px solid #e8d3ae;border-radius:12px;
+  background:#fff8e9;color:#73552f;font-size:.76rem;line-height:1.55;}
+.mode-notice b {color:#5e4224;}
 .meta {font-size:.66rem;color:#9c9188;margin:.1rem 0 .55rem;font-family:ui-monospace,monospace;}
 .cart-line {font-size:.88rem;padding:.55rem .1rem;border-bottom:1px solid #eee9e1;}
 .cart-total {font-weight:750;font-size:1.05rem;color:var(--ink);padding:.8rem 0 .15rem;}
@@ -226,8 +229,8 @@ with st.sidebar:
         st.caption("입력한 키는 저장소나 파일에 저장하지 않습니다.")
 
     st.toggle(
-        "데모 모드 (API 비용 없음)", key="_use_mock",
-        help="끄면 연결된 OpenAI API 키로 실제 답변과 검색을 사용합니다.",
+        "화면 체험 모드 (프롬프트 미사용)", key="_use_mock",
+        help="API를 호출하지 않는 UI 시험 모드입니다. 끄면 연결된 키로 실제 프롬프트와 검색을 사용합니다.",
     )
     if not is_mock() and not ensure_api_key():
         st.error("실제 AI 모드에는 API 키가 필요합니다.", icon="🔑")
@@ -275,6 +278,13 @@ with left:
             '<div class="section-head"><b>☕ 대화 마루</b>'
             '<span>말하거나 버튼을 눌러 주문하세요</span></div>',
             unsafe_allow_html=True)
+        if is_mock():
+            st.markdown(
+                '<div class="mode-notice"><b>화면 체험 모드</b> · 이 모드에서는 시스템 프롬프트와 '
+                '실제 AI를 사용하지 않습니다. 자연스러운 대화는 왼쪽 <b>API 연결</b>에서 키를 '
+                '적용하면 시작됩니다.</div>',
+                unsafe_allow_html=True,
+            )
         box = st.container(height=410, border=False)
         with box:
             if not st.session_state.history:

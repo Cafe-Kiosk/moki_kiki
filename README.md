@@ -37,7 +37,7 @@ OpenAI API 키를 입력하면 현재 브라우저 세션에만 적용되며, **
 없이 화면과 기본 흐름을 확인할 수 있습니다.
 
 히어로 배경은 “Make a nice house with a modern interpretation of the hanok house in the Joseon
-Dynasty in Korea”를 바탕으로 생성한 현대 한옥 카페입니다. 한복을 입은 모키 마스코트는
+Dynasty in Korea”를 바탕으로 생성한, 여백이 넉넉한 현대 한옥 카페입니다. 한복을 입은 모키 마스코트는
 인트로·히어로·AI 답변 말풍선에 같은 캐릭터로 등장하며, 마지막 답변은 음성으로 들을 수 있습니다.
 
 ## 빠른 시작
@@ -60,8 +60,9 @@ API 호출 없이 화면과 규칙 검색을 개발하려면 `.env`에서 `MOKI_
 MOKI_MOCK=1 python -m streamlit run app.py
 ```
 
-MOCK는 합성 응답과 가짜 벡터를 사용하는 화면 시험 모드이며, 실제 RAG/LLM 품질의 근거로
-사용하지 않습니다. 개발용 인덱스는 `index/faiss_mock/`에 생성되어 운영 인덱스를 덮어쓰지 않습니다.
+화면 체험 모드는 시스템 프롬프트와 실제 AI를 사용하지 않는 UI 시험 모드이며, 실제 RAG/LLM
+대화 품질의 근거로 사용하지 않습니다. 자연스러운 다중 턴 대화를 확인하려면 API 키를 연결하고
+화면 체험 모드를 끄세요. 개발용 인덱스는 `index/faiss_mock/`에 생성되어 운영 인덱스를 덮어쓰지 않습니다.
 
 ## RAG 데이터와 인덱스
 

@@ -3,8 +3,14 @@ from __future__ import annotations
 
 import unittest
 from collections import Counter
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from unittest.mock import patch
 
+from src import chain
 from src.cart import CartItem, validate_item_options
+from src.chain import _conversation_messages
 from src.documents import build_documents
 from src.few_shot import load_examples, render_examples, select_examples
 from src.index import load_index
@@ -34,10 +40,40 @@ class ArtifactIntegrationTests(unittest.TestCase):
         self.assertIn("비정형·매장 재량 요청 처리 — v1.2", system)
         self.assertIn("직원 응대 필요 요청과 화면 버튼 연결 — v1.3", system)
         self.assertIn("화면 액션 출력 계약 — 개발 연동 지침", system)
+        self.assertIn("[자연스러운 대화 흐름]", system)
         self.assertIn("질의 재작성기", load("rewrite"))
         self.assertIn("의도 분류", load("intent"))
         self.assertEqual(load_schema("rewrite")["type"], "object")
         self.assertEqual(load_schema("intent")["type"], "object")
+
+    def test_conversation_history_keeps_native_roles_and_full_context(self):
+        long_detail = "산미는 싫고 고소한 맛을 좋아해요. " * 12
+        messages = _conversation_messages([
+            {"role": "user", "content": long_detail},
+            {"role": "assistant", "content": "그럼 고소한 메뉴 위주로 볼게요."},
+        ])
+        self.assertEqual([m["role"] for m in messages], ["user", "assistant"])
+        self.assertEqual(messages[0]["content"], long_detail.strip())
+
+    def test_answer_sends_history_as_native_chat_messages(self):
+        history = [
+            {"role": "user", "content": "산미 없는 걸로 추천해 주세요."},
+            {"role": "assistant", "content": "고소한 원두부터 찾아볼게요."},
+        ]
+        with TemporaryDirectory() as tmp, \
+                patch.object(chain, "ANSWER_CACHE", Path(tmp) / "answers.json"), \
+                patch.object(chain, "is_mock", return_value=False), \
+                patch.object(chain, "current_api_key", return_value="sk-test"), \
+                patch.object(chain, "ChatOpenAI") as chat_model:
+            chat_model.return_value.invoke.return_value = SimpleNamespace(content="좋아요.")
+            reply, cached = chain.answer("디카페인도 돼요?", "메뉴 근거", history=history)
+
+        sent = chat_model.return_value.invoke.call_args.args[0]
+        self.assertEqual([message["role"] for message in sent],
+                         ["system", "user", "assistant", "user"])
+        self.assertEqual(sent[-1]["content"], "디카페인도 돼요?")
+        self.assertEqual(reply, "좋아요.")
+        self.assertFalse(cached)
 
     def test_few_shot_library_is_selected_not_fully_injected(self):
         self.assertEqual(len(load_examples()), 50)
