@@ -743,4 +743,36 @@ check("MOKI_ANSWER_TEMPERATURE=0.3 → 0.3", _temp("0.3"), "0.3")
 check("chain 이 설정값을 씀 (0.3 고정값 없음)",
       "temperature=0.3" in (pathlib.Path(__file__).resolve().parent.parent / "src/chain.py").read_text(), False)
 
+print("\n【 내부 값 노출 제거 (S02 T2) 】")
+from src.leaks import sanitize_reply, find_leaks
+check("[담기완료] 태그 제거", sanitize_reply("[담기완료] 플랫화이트 HOT 1잔 담았습니다."),
+      "플랫화이트 HOT 1잔 담았습니다.")
+check("#M05-HOT-ONE 주문 단위 ID 제거",
+      sanitize_reply("약과 2접시 담았습니다. #M05-HOT-ONE #M16-HOT-ONE #M28-NA-ONE"), "약과 2접시 담았습니다.")
+check("괄호 안 메뉴 ID 제거", sanitize_reply("카페 라떼(M03)와 약과 (M28) 있어요. 디카페인 원두(B03)도 돼요"),
+      "카페 라떼와 약과 있어요. 디카페인 원두도 돼요")
+check("시연 주문번호 M0057·M6300 은 그대로",
+      sanitize_reply("주문번호는 M0057 입니다. 직전 주문 M6300 (좌석 5번)"), "주문번호는 M0057 입니다. 직전 주문 M6300 (좌석 5번)")
+check("⚠️/🧾 줄은 그대로",
+      sanitize_reply("담았습니다.\n\n⚠️ 에스프레소 마티니 — 주류 16.7% · 카페인 70mg\n🧾 합계 18,800원 · 직원 확인 대기"),
+      "담았습니다.\n\n⚠️ 에스프레소 마티니 — 주류 16.7% · 카페인 70mg\n🧾 합계 18,800원 · 직원 확인 대기")
+check("정책 표기 (P10) 은 지우지 않음", sanitize_reply("0은 아닙니다 (P10)"), "0은 아닙니다 (P10)")
+check("find_leaks 가 남은 노출을 찾음",
+      find_leaks("[담기완료] 라떼(M03) #M05-HOT-ONE, 주문번호 M0057"),
+      ["태그 [담기완료]", "주문 단위 ID #M05-HOT-ONE", "괄호 안 메뉴 ID (M03)"])
+check("find_leaks: 주문번호·⚠️/🧾 만 있으면 노출 없음",
+      find_leaks("주문번호는 M0057 입니다.\n🧾 합계 5,000원"), [])
+saved = K.route, K.answer, K.hybrid_search
+K.route = lambda *a, **k: {"intent": "장바구니", "rewritten_query": "x", "language": "ko", "errors": [],
+                           "order_items": [{"action": "add", "menu_name": "약과", "qty": 2}]}
+K.answer = lambda *a, **k: ("[담기완료] 약과 2접시 담았습니다. #M28-NA-ONE", True)
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    r = K.handle("약과 두 접시", None, Cart(table_id=1))
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("handle 최종 답변에 노출 없음 + 🧾 줄 유지",
+      (find_leaks(r.reply), r.reply.splitlines()[0], r.reply.splitlines()[-1]),
+      ([], "약과 2접시 담았습니다.", "🧾 합계 9,000원"))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

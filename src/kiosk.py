@@ -15,6 +15,7 @@ from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
 from .budget import budget_lines, parse_budget
 from .cart_edit import remove_item, update_item
 from . import orders
+from .leaks import sanitize_reply
 from .conditions import (screen, alternatives_line, item_caution_line, decaf_notes,
                          unsupported_hits, unsupported_line)
 
@@ -256,6 +257,7 @@ def handle(user_input: str, store, cart: Cart,
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
         reply, cached = answer(user_input, "", history=history, offtopic=True)
+        reply = sanitize_reply(reply)
         return TurnResult(reply, intent, rq, lang, trace=router_trace, cached=cached,
                           llm_calls=calls + (0 if cached else 1))
 
@@ -284,7 +286,7 @@ def handle(user_input: str, store, cart: Cart,
     trace = router_trace + trace
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
-    reply = strip_footer_lines(reply)
+    reply = sanitize_reply(strip_footer_lines(reply))      # 모델이 옮겨 적은 태그·내부 ID 제거
     if cart_signature(cart) != before:
         reply = reply + "\n\n" + "\n".join(footer_lines(cart))
     return TurnResult(reply, intent, rq, lang, docs, trace,
