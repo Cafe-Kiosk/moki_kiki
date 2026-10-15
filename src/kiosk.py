@@ -11,7 +11,7 @@ from .retrieve import hybrid_search, as_context, match_menus
 from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
-                   OPTION_KEYS)
+                   OPTION_KEYS, valid_qty, QTY_MSG)
 
 
 def _menu_candidates(text: str) -> tuple[list[str], dict]:
@@ -56,7 +56,12 @@ def _add_one(it: dict, cart: Cart) -> str:
                         + (f" 대안: {' · '.join(alt)} (손님 확인 후 담기)" if alt else ""))
         return f"{m['메뉴명']}: 담지 않았습니다. " + " / ".join(bits)
 
-    qty = int(it.get("qty") or 1)
+    # 수량이 없을 때만 1잔. 0·음수·비정수는 고치지 않고 검증에서 거부한다 (Q14·P11)
+    qty = it.get("qty")
+    if qty is None:
+        qty = 1
+    if not valid_qty(qty):
+        return f"{m['메뉴명']}: 담지 않았습니다. 요청 수량 {qty!r} — {QTY_MSG}"
     item = CartItem(
         menu_id=mid, variant_id=str(v["주문 단위 ID"]), name=str(m["메뉴명"]),
         temp=str(v.get("온도")), size=str(v.get("크기")), qty=qty,
