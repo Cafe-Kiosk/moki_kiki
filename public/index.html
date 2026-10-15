@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2f211b">
+  <title>모키 커피바</title>
+  <link rel="preload" as="image" href="/assets/moki-listening-avatar.png?v=20261015">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="entry" aria-hidden="true">
+    <div class="entry-scene"><span>모키 커피바</span><small>MOKI · HANOK COFFEE BAR</small></div>
+    <div class="door door-left"></div><div class="door door-right"></div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="모키 커피바 홈">
+      <span class="brand-seal">모키</span>
+      <span><b>MOKI COFFEE BAR</b><small>한옥에서 천천히 고르는 한 잔</small></span>
+    </a>
+    <div class="connection" id="connectionStatus"><i></i><span>콘텐츠 확인 중</span></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">A QUIET CUP IN HANOK</span>
+        <h1>오늘의 한 잔을<br>천천히 골라보세요.</h1>
+        <p>메뉴 추천부터 옵션과 알레르기 확인까지, 모키가 데이터에 근거해 도와드릴게요.</p>
+        <a href="#conversation" class="hero-link">모키와 대화하기 <span>→</span></a>
+      </div>
+      <img class="hero-moki" src="/assets/moki-mascot.png" alt="커피를 들고 인사하는 모키">
+    </section>
+
+    <section class="menu-section" aria-labelledby="menuTitle">
+      <div class="section-title">
+        <div><span class="eyebrow">PHOTO MENU</span><h2 id="menuTitle">사진 메뉴판</h2></div>
+        <p>데이터 파일에 포함된 대표 이미지 33장</p>
+      </div>
+      <div class="category-tabs" id="categoryTabs" role="tablist" aria-label="메뉴 분류"></div>
+      <div class="menu-grid" id="menuGrid"><div class="loading-card">메뉴를 준비하고 있어요.</div></div>
+    </section>
+
+    <section class="kiosk-grid" id="conversation">
+      <div class="chat-panel panel">
+        <div class="panel-heading">
+          <div><span class="eyebrow">CONVERSATION</span><h2>모키와 대화하기</h2></div>
+          <button class="quiet-button" id="speakButton" type="button">답변 듣기</button>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite"></div>
+        <div class="quick-replies" id="quickReplies"></div>
+        <form class="composer" id="chatForm">
+          <input id="messageInput" name="message" maxlength="2000" autocomplete="off"
+                 placeholder="예: 산미가 적고 고소한 커피를 추천해 주세요" aria-label="모키에게 보낼 메시지">
+          <button type="submit" id="sendButton">보내기</button>
+        </form>
+        <p class="helper" id="chatHelper">가격과 옵션은 서버가 메뉴 데이터와 다시 확인합니다.</p>
+      </div>
+
+      <aside class="side-stack">
+        <section class="panel settings-panel">
+          <div class="panel-heading compact"><h2>이용 설정</h2></div>
+          <label>좌석 번호<select id="tableSelect"></select></label>
+          <label>매장 접속 비밀번호<input id="passwordInput" type="password" autocomplete="current-password" placeholder="설정한 경우에만 입력"></label>
+          <label>직원 확인 코드<input id="staffPasswordInput" type="password" autocomplete="off" placeholder="주류 주문 시 직원이 입력"></label>
+          <button class="secondary-button" id="staffVerifyButton" type="button">주류 나이 확인</button>
+          <p class="setting-note" id="staffStatus">주류는 직원 확인 전까지 주문을 확정할 수 없습니다.</p>
+          <button class="secondary-button" id="resetButton" type="button">대화와 장바구니 초기화</button>
+        </section>
+
+        <section class="panel cart-panel">
+          <div class="panel-heading compact"><h2>주문 내역</h2><span id="tableBadge">TABLE 05</span></div>
+          <div id="cartItems" class="cart-items"><p class="empty">아직 담긴 메뉴가 없습니다.</p></div>
+          <div class="cart-total"><span>합계</span><strong id="cartTotal">0원</strong></div>
+          <button class="primary-button" id="confirmButton" type="button">주문 검토하기</button>
+        </section>
+
+        <section class="panel source-panel">
+          <div class="panel-heading compact"><h2>답변에 참고한 정보</h2></div>
+          <div id="sources"><p class="empty">대화를 시작하면 사용한 메뉴와 안내 자료가 표시됩니다.</p></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <footer>모키 커피바 · AI 응용 팀 프로젝트 · 가격과 영양 정보는 시연용 가상 설정입니다.</footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>

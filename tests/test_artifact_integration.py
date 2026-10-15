@@ -36,7 +36,7 @@ class ArtifactIntegrationTests(unittest.TestCase):
         )
 
     def test_all_menu_images_are_extracted_from_workbook(self):
-        image_dir = Path(__file__).resolve().parent.parent / "assets" / "menu"
+        image_dir = Path(__file__).resolve().parent.parent / "public" / "assets" / "menu"
         menu_ids = {
             doc.metadata["entity_id"]
             for doc in self.documents

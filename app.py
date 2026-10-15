@@ -21,7 +21,7 @@ from src.auth import check as _check_password
 if not _check_password():
     st.stop()
 
-ASSET_DIR = Path(__file__).resolve().parent / "assets"
+ASSET_DIR = Path(__file__).resolve().parent / "public" / "assets"
 
 
 def _asset_uri(filename: str) -> str:

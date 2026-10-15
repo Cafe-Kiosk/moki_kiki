@@ -37,7 +37,7 @@ def content_status() -> dict:
         if doc.metadata.get("type") == "menu"
     }
     image_ids = {
-        path.stem for path in (ROOT / "assets" / "menu").glob("M*.jpg")
+        path.stem for path in (ROOT / "public" / "assets" / "menu").glob("M*.jpg")
     }
     system_prompt = load_prompt("system")
     rewrite_prompt = load_prompt("rewrite")

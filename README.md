@@ -33,7 +33,7 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 온도·크기 선택지는 가능한 경우 실제 카탈로그에서 생성합니다.
 
 사진 메뉴판은 `data/moki_data.xlsx`의 **사진메뉴판** 시트에 임베드된 대표 이미지 33장을
-`assets/menu/`로 추출해 표시합니다. 원본 엑셀이 바뀌면 `python scripts/extract_menu_images.py`를
+`public/assets/menu/`로 추출해 표시합니다. 원본 엑셀이 바뀌면 `python scripts/extract_menu_images.py`를
 실행해 웹 자산을 다시 만들 수 있습니다.
 
 첫 접속에는 한옥 미닫이문 인트로가 재생됩니다. 실행 후 왼쪽 사이드바의 **API 연결**에서
@@ -153,6 +153,30 @@ Streamlit Cloud에서는 저장소 `Cafe-Kiosk/moki_kiki`, 브랜치 `main`, 진
 환경변수 또는 Streamlit Secrets에 `OPENAI_API_KEY`와 `MOKI_PASSWORD`를 설정합니다.
 `.env`·실제 키·비밀번호·개인 정보가 든 로그는 Git에 올리지 않습니다. 공개 앱은 접근 비밀번호를
 반드시 설정합니다.
+
+Vercel에서는 `pyproject.toml`이 `api.index:app`을 FastAPI 진입점으로 지정하고, `public/`의
+정적 웹 화면을 함께 제공합니다. 프로젝트 루트는 저장소 최상위로 두고 별도의 Build Command나
+Output Directory를 지정하지 않습니다. `pyproject.toml`에는 서버리스 실행에 필요한 최소 패키지만,
+`requirements.txt`에는 Streamlit·FAISS를 포함한 전체 로컬 개발 패키지를 둡니다. Project Settings →
+Environment Variables에 다음 값을 등록한 뒤 재배포합니다.
+
+```text
+OPENAI_API_KEY=실제 OpenAI API 키
+MOKI_MOCK=0
+MOKI_PASSWORD=공개 데모 접속 비밀번호
+MOKI_STAFF_PASSWORD=직원만 아는 주류 확인 코드
+MOKI_STATE_SECRET=길고 무작위인 상태 서명 비밀값
+```
+
+`OPENAI_API_KEY`는 웹 화면에 입력하는 값이 아니라 Vercel 프로젝트의 서버 환경변수입니다.
+`MOKI_PASSWORD`와 `MOKI_STAFF_PASSWORD`도 공개 화면에 노출하지 마세요. `MOKI_STATE_SECRET`은
+브라우저가 주문번호나 직원 확인 상태를 위조하지 못하도록 상태를 서명하며, 운영 환경에서는 별도의
+충분히 긴 무작위 값으로 설정하는 것을 권장합니다. 선택 설정인 `MOKI_OPENAI_TIMEOUT_SECONDS`와
+`MOKI_OPENAI_MAX_RETRIES`의 기본값은 각각 15초와 1회입니다.
+
+`/api/health`는 엑셀 메뉴 33개, RAG 문서 122개, 사진 33개와 AI 연결 상태를 반환합니다.
+Vercel 함수는 읽기 전용 번들에서 실행되므로 검색은 JSONL 기반 서버리스 검색기를 사용하며,
+기존 Streamlit 앱은 로컬 및 Streamlit Cloud에서 FAISS 인덱스를 계속 사용합니다.
 
 한국어·영어 RAG 자료와 ko/en/zh/ja 응답 지침, 좌석 1~12, 메뉴 질문과 시연 주문을 지원합니다.
 실제 결제·매장 접수·직원 인증·쿠폰·포인트·영수증은 연결하지 않았습니다. 가격·영양·도수·사진은

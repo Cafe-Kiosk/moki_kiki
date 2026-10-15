@@ -15,6 +15,7 @@ from jsonschema import ValidationError, validate
 from langchain_openai import ChatOpenAI
 
 from .config import (ROUTER_MODEL, ROUTER_MAX_TOKENS, HISTORY_TURNS,
+                     OPENAI_TIMEOUT_SECONDS, OPENAI_MAX_RETRIES,
                      current_api_key, is_mock)
 from .prompts import load as load_prompt, load_schema
 
@@ -30,6 +31,8 @@ def _llm():
         temperature=0,
         max_tokens=ROUTER_MAX_TOKENS,
         api_key=current_api_key(),
+        timeout=OPENAI_TIMEOUT_SECONDS,
+        max_retries=OPENAI_MAX_RETRIES,
     )
 
 

@@ -3,7 +3,8 @@ from __future__ import annotations
 import json, hashlib
 from langchain_openai import ChatOpenAI
 from .config import (ANSWER_MODEL, ANSWER_MAX_TOKENS, CACHE_DIR,
-                     ANSWER_CACHE, HISTORY_TURNS, current_api_key, is_mock)
+                     ANSWER_CACHE, HISTORY_TURNS, OPENAI_TIMEOUT_SECONDS,
+                     OPENAI_MAX_RETRIES, current_api_key, is_mock)
 
 from .prompts import load as load_prompt
 from .few_shot import render_examples
@@ -78,7 +79,8 @@ def answer(user_input: str, context: str, calc: str = "",
     if is_mock():
         return (
             "지금은 화면 체험 모드라 실제 AI 프롬프트로 답하고 있지 않아요. "
-            "왼쪽 ‘API 연결’에 키를 적용하면 모키가 앞 대화를 기억하며 자연스럽게 이어갈게요.",
+            "OPENAI_API_KEY를 실행 환경에 연결하고 체험 모드를 끄면 "
+            "모키가 앞 대화를 기억하며 자연스럽게 이어갈게요.",
             True,
         )
 
@@ -88,8 +90,14 @@ def answer(user_input: str, context: str, calc: str = "",
     if key in cache:
         return cache[key], True
 
-    llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3,
-                     max_tokens=ANSWER_MAX_TOKENS, api_key=current_api_key())
+    llm = ChatOpenAI(
+        model=ANSWER_MODEL,
+        temperature=0.3,
+        max_tokens=ANSWER_MAX_TOKENS,
+        api_key=current_api_key(),
+        timeout=OPENAI_TIMEOUT_SECONDS,
+        max_retries=OPENAI_MAX_RETRIES,
+    )
     text = llm.invoke(messages).content.strip()
     cache[key] = text
     ANSWER_CACHE.write_text(json.dumps(cache, ensure_ascii=False))

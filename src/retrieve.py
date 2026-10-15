@@ -52,6 +52,20 @@ TASTE_TERMS = {
     "부드러": ("쓴맛", "low"),
 }
 
+# 영문 질문에서는 부정어를 포함한 구를 먼저 정규화한다. ``bitter``만
+# 부분 일치하면 "not bitter"를 반대로 이해할 수 있어 낮은 방향의 구를 명시한다.
+ENGLISH_TASTE_PHRASES = {
+    "smooth": ("쓴맛", "low"),
+    "not bitter": ("쓴맛", "low"),
+    "less bitter": ("쓴맛", "low"),
+    "low bitterness": ("쓴맛", "low"),
+    "without much bitterness": ("쓴맛", "low"),
+    "fruity": ("산미", "high"),
+    "tangy": ("산미", "high"),
+    "full-bodied": ("바디", "high"),
+    "light-bodied": ("바디", "low"),
+}
+
 
 @lru_cache(maxsize=1)
 def _alias_map() -> list[tuple[str, str]]:
@@ -124,6 +138,9 @@ def taste_candidates(query: str, limit: int = 4) -> list[str]:
                         "디카페인", "pregnan", "caffeine free", "no caffeine", "decaf"])
 
     conds = []
+    for phrase, (col, direction) in ENGLISH_TASTE_PHRASES.items():
+        if phrase in q:
+            conds.append((col, direction == "low"))
     for term, (col, direction) in TASTE_TERMS.items():
         if term not in q:
             continue
@@ -218,7 +235,14 @@ def hybrid_search(store, query: str, k: int = TOP_K,
             seen.add(tid); picked.append(doc)
             trace.append(("맛 점수", doc.metadata["name"], None))
 
-    for doc, score in store.similarity_search_with_score(query, k=max(k + 6, 12)):
+    language_search = getattr(
+        store, "similarity_search_with_score_for_language", None)
+    if callable(language_search):
+        semantic_hits = language_search(query, language=lang, k=max(k + 6, 12))
+    else:
+        semantic_hits = store.similarity_search_with_score(query, k=max(k + 6, 12))
+
+    for doc, score in semantic_hits:
         md = doc.metadata
         if md.get("lang") and md.get("lang") != lang:
             continue

@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "data" / "moki_data.xlsx"
-OUTPUT = ROOT / "assets" / "menu"
+OUTPUT = ROOT / "public" / "assets" / "menu"
 
 NS = {
     "xdr": "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing",

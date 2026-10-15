@@ -16,6 +16,8 @@ def _secret(name: str, default: str = "") -> str:
     v = os.getenv(name)
     if v:
         return v
+    if os.getenv("VERCEL"):
+        return default
     try:                                   # 배포 환경에서만 있다
         import streamlit as st
         return str(st.secrets.get(name, default))
@@ -25,6 +27,8 @@ def _secret(name: str, default: str = "") -> str:
 
 def current_api_key() -> str:
     """브라우저 세션 입력을 우선하고, 환경변수·Secrets 순서로 키를 찾는다."""
+    if os.getenv("VERCEL"):
+        return os.getenv("OPENAI_API_KEY", "")
     try:
         import streamlit as st
         session_key = str(st.session_state.get("_openai_api_key", "")).strip()
@@ -75,6 +79,8 @@ MOCK = os.getenv("MOKI_MOCK", "0") == "1"
 
 def is_mock() -> bool:
     """화면에서 선택한 실행 모드를 우선하고 기본값은 MOKI_MOCK를 따른다."""
+    if os.getenv("VERCEL"):
+        return MOCK
     try:
         import streamlit as st
         return bool(st.session_state.get("_use_mock", MOCK))
@@ -84,6 +90,8 @@ def is_mock() -> bool:
 ANSWER_MAX_TOKENS = int(os.getenv("MOKI_ANSWER_MAX_TOKENS", "500"))
 ROUTER_MAX_TOKENS = int(os.getenv("MOKI_ROUTER_MAX_TOKENS", "1200"))
 HISTORY_TURNS     = int(os.getenv("MOKI_HISTORY_TURNS", "4"))   # 최근 N턴만 프롬프트에 넣음
+OPENAI_TIMEOUT_SECONDS = float(os.getenv("MOKI_OPENAI_TIMEOUT_SECONDS", "15"))
+OPENAI_MAX_RETRIES = int(os.getenv("MOKI_OPENAI_MAX_RETRIES", "1"))
 
 # ── 검색 ─────────────────────────────────────────────────────
 TOP_K = int(os.getenv("MOKI_TOP_K", "4"))
@@ -95,7 +103,8 @@ DISTANCE_THRESHOLD = float(os.getenv("MOKI_DISTANCE_THRESHOLD", "1.15"))
 DATA_XLSX   = ROOT / "data" / "moki_data.xlsx"
 RAG_JSONL   = ROOT / "data" / "rag_documents.jsonl"
 INDEX_DIR   = ROOT / "index" / "faiss"
-CACHE_DIR   = ROOT / ".cache"
+CACHE_DIR   = (pathlib.Path("/tmp") / "moki_cache"
+               if os.getenv("VERCEL") else ROOT / ".cache")
 ANSWER_CACHE = CACHE_DIR / "answers.json"
 QUERY_EMBED_CACHE = CACHE_DIR / "query_embeddings.json"
 
