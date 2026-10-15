@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from itertools import combinations_with_replacement
 
-from .cart import _tables, find_variants, is_alcohol, menu_by_id
+from .cart import _tables, find_variants, is_alcohol, menu_by_id, unit_label
 
 DRINK_CATS = ("커피", "차/논커피")
 MAX_PEOPLE = 4          # 조합 전체를 훑는다. 4명이면 음료 조합 약 1만 개로 충분히 빠르다
@@ -106,7 +106,15 @@ class Plan:
             seen: dict[str, list[Pick]] = {}
             for p in picks:
                 seen.setdefault(p.menu_id, []).append(p)
-            return [ps[0].text() + (f" ×{len(ps)}" if len(ps) > 1 else "") for ps in seen.values()]
+            out = []
+            for ps in seen.values():
+                counted = unit_label(ps[0].menu_id, len(ps))      # '약과(2개입) 2접시' (P17)
+                if counted:
+                    out.append(counted + (f" (접시당 {ps[0].price:,}원)" if len(ps) > 1
+                                          else f" {ps[0].price:,}원"))
+                else:
+                    out.append(ps[0].text() + (f" ×{len(ps)}" if len(ps) > 1 else ""))
+            return out
         return " + ".join(group(self.drinks) + group(self.desserts))
 
 
@@ -153,7 +161,8 @@ def minimum(people: int, want_dessert: bool) -> tuple[int, str]:
     if want_dessert:
         s = min(desserts, key=lambda p: p.price)
         total += s.price
-        parts.append(s.text())
+        counted = unit_label(s.menu_id, 1)
+        parts.append(f"{counted} {s.price:,}원" if counted else s.text())
     return total, " + ".join(parts)
 
 

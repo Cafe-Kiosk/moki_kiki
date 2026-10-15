@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 from src.config import (TABLES, MOCK, ROUTER_MODEL, ANSWER_MODEL, INDEX_DIR,
                         ensure_api_key, secret_status)
 from src.index import load_index
-from src.cart import Cart
+from src.cart import Cart, unit_label
 from src.kiosk import handle
 
 st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide")
@@ -140,11 +140,13 @@ with right:
         for idx, it in enumerate(cart.items):
             c1, c2 = st.columns([5, 1])
             opt = it.option_text()
+            counted = unit_label(it.menu_id, it.qty)      # '약과(2개입) 2접시' (P17)
+            unit = "/".join(x for x in (it.temp, it.size) if x not in ("NA", "ONE"))
             c1.markdown(
-                f'<div class="cart-line"><b>{html.escape(it.name)}</b> '
-                f'<span class="pill">{it.temp}/{it.size}</span>'
+                f'<div class="cart-line"><b>{html.escape(counted or it.name)}</b> '
+                + (f'<span class="pill">{unit}</span>' if unit and not counted else "")
                 + (f'<br><span style="color:#8A7A70;font-size:.82rem">{html.escape(opt)}</span>' if opt else "")
-                + f'<br>×{it.qty} · {it.subtotal:,}원</div>',
+                + (f'<br>{it.subtotal:,}원' if counted else f'<br>×{it.qty} · {it.subtotal:,}원') + '</div>',
                 unsafe_allow_html=True)
             if c2.button("✕", key=f"del{idx}", help="빼기"):
                 cart.remove(idx); st.rerun()

@@ -114,12 +114,9 @@ def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset(),
     ok, err = cart.add(item)
     if not ok:
         return f"{m['메뉴명']}: {err}"
-    # 디저트·주류의 NA·ONE 같은 내부 값은 모델에게 넘기지 않는다
-    unit = "/".join(x for x in (item.temp, item.size) if x not in ("NA", "ONE", "None"))
-    line = (f"[담기완료] {item.name}" + (f" {unit}" if unit else "")
-            + (f" ({item.option_text()})" if item.option_text() else "")
-            + f" ×{qty} · {item.subtotal:,}원 "
-              f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
+    # NA·ONE 같은 내부 값은 숨기고, 개수가 든 품목은 판매 단위로 센다 (P17)
+    line = (f"[담기완료] {item.label()} · {item.subtotal:,}원 "
+            f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
     return line
 
 

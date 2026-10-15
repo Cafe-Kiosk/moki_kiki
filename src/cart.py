@@ -57,6 +57,20 @@ def option_rules() -> dict: return _tables()[2]
 def policy_text(pid: str) -> str: return _tables()[3].get(pid, "")
 
 
+def unit_label(menu_id: str, qty: int) -> str | None:
+    """메뉴명에 개수가 들어간 품목은 판매 단위로 센다 (P17).
+
+    '약과 2개' ×2 → '약과(2개입) 2접시'. 수량 1이 '2개 1접시'라서 '약과 2개 ×2'는 4개인지 헷갈린다.
+    해당하지 않으면 None.
+    """
+    m = menu_by_id(menu_id) or {}
+    name = re.match(r"^(.*?)\s*(\d+)\s*개$", str(m.get("메뉴명", "")))
+    unit = re.search(r"\d+\s*개\s*1\s*(\S+)$", str(m.get("판매 단위", "")))
+    if not (name and unit):
+        return None
+    return f"{name[1]}({name[2]}개입) {qty}{unit[1]}"
+
+
 def is_alcohol(menu_id: str) -> bool:
     m = menu_by_id(menu_id) or {}
     return str(m.get("주류 구분", "")).startswith("주류 포함")
@@ -266,6 +280,16 @@ class CartItem:
     def subtotal(self) -> int:
         return self.unit_price * self.qty
 
+    def label(self) -> str:
+        """가격 없이 품목·구성·수량. 장바구니·[담기완료]·앱이 같은 형식을 쓴다."""
+        counted = unit_label(self.menu_id, self.qty)
+        if counted:
+            return counted
+        unit = "/".join(x for x in (self.temp, self.size) if x not in ("NA", "ONE", "None", ""))
+        opt = self.option_text()
+        return (f"{self.name}" + (f" {unit}" if unit else "")
+                + (f" ({opt})" if opt else "") + f" ×{self.qty}")
+
     def option_text(self) -> str:
         bits = []
         if self.bean and self.bean != "B01":
@@ -340,10 +364,7 @@ class Cart:
             return "장바구니가 비어 있습니다."
         lines = []
         for i, it in enumerate(self.items, 1):
-            opt = it.option_text()
-            lines.append(f"{i}. {it.name} {it.temp}/{it.size}"
-                         + (f" ({opt})" if opt else "")
-                         + f" ×{it.qty}  {it.subtotal:,}원")
+            lines.append(f"{i}. {it.label()}  {it.subtotal:,}원")
         lines.append(f"합계 {self.total:,}원")
         if self.status() == "pending_staff_check":
             lines.append("※ 주류 포함 — 직원 확인 대기")

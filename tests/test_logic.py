@@ -459,4 +459,21 @@ check("예산추천 → 장바구니에 담지 않음, 🧾 줄 없음",
 r = safe(lambda: handle_stub("만 원으로 혼자 마실 거 추천", {"intent": "추천"}))
 check("라우터가 '추천'이라 해도 금액이 있으면 예산추천", getattr(r, "intent", r), "예산추천")
 
+print("\n【 판매 단위 표시 — '약과(2개입) 2접시' (P17) 】")
+from src.cart import unit_label
+check("약과 ×2 → 약과(2개입) 2접시", unit_label("M28", 2), "약과(2개입) 2접시")
+check("쑥인절미 ×1 → 쑥인절미(4개입) 1접시", unit_label("M29", 1), "쑥인절미(4개입) 1접시")
+check("개수가 없는 메뉴는 해당 없음", (unit_label("M18", 2), unit_label("M02", 1)), (None, None))
+c, s = safe(lambda: calc("약과 두 접시랑 인절미 하나", "장바구니",
+                         {"menu_name": "약과", "qty": 2}, {"menu_name": "쑥인절미", "qty": 1}))
+check("[담기완료] 줄도 판매 단위",
+      ("[담기완료] 약과(2개입) 2접시 · 9,000원" in s, "[담기완료] 쑥인절미(4개입) 1접시 · 5,500원" in s),
+      (True, True))
+check("장바구니 줄도 판매 단위", c.as_text().splitlines()[:2],
+      ["1. 약과(2개입) 2접시  9,000원", "2. 쑥인절미(4개입) 1접시  5,500원"])
+check("장바구니에 '약과 2개 ×' 형식 없음", "약과 2개 ×" in c.as_text(), False)
+s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
+check("예산안도 판매 단위 ('약과 2개' 원래 이름 없음)",
+      ("약과(2개입)" in s, "약과 2개" in s), (True, False))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
