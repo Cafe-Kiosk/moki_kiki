@@ -54,6 +54,11 @@ TASTE_TERMS = {
 }
 
 
+def _norm(text) -> str:
+    """대소문자·공백을 없앤다. '바닐라 라떼'와 '바닐라라떼'를 같은 말로 본다."""
+    return re.sub(r"\s+", "", str(text).lower())
+
+
 @lru_cache(maxsize=1)
 def _alias_map() -> list[tuple[str, str]]:
     """(검색어, 메뉴 ID) 목록. 긴 별칭부터 매칭되도록 정렬한다."""
@@ -72,13 +77,64 @@ def _alias_map() -> list[tuple[str, str]]:
     return sorted(set(pairs), key=lambda p: -len(p[0]))
 
 
+@lru_cache(maxsize=1)
+def _alias_index() -> list[tuple[str, tuple[str, ...]]]:
+    """정규화한 별칭 → 메뉴 ID들. 긴 것부터.
+
+    '하이볼'처럼 한 별칭이 두 메뉴에 걸리면 ID 둘을 함께 들고 있다 (Q47).
+    """
+    idx: dict[str, set[str]] = {}
+    for alias, mid in _alias_map():
+        n = _norm(alias)
+        if len(n) >= 2:
+            idx.setdefault(n, set()).add(mid)
+    return sorted(((a, tuple(sorted(ids))) for a, ids in idx.items()),
+                  key=lambda p: -len(p[0]))
+
+
+@lru_cache(maxsize=1)
+def _alias_attrs() -> dict[str, dict]:
+    """메뉴목록 '별칭에 포함된 요청' 열. 예: 아아 → ICED, 디카페인 카페라떼 → B03."""
+    wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
+    out: dict[str, dict] = {}
+    for m in _sheet_rows(wb, "메뉴목록"):
+        for ln in str(m.get("별칭에 포함된 요청") or "").splitlines():
+            if "→" not in ln:
+                continue
+            alias, req = ln.split("→", 1)
+            attrs = {}
+            for tok in req.split():
+                if tok.upper() in ("HOT", "ICED"):
+                    attrs["temp"] = tok.upper()
+                elif re.fullmatch(r"B\d{2}", tok):
+                    attrs["bean"] = tok
+            if attrs:
+                out[_norm(alias)] = attrs
+    return out
+
+
+def match_menus(text: str) -> tuple[list[str], dict]:
+    """긴 별칭부터 찾고, 찾은 구간은 지워서 그 안의 짧은 별칭이 다시 걸리지 않게 한다.
+
+    '에스프레소 마티니'가 에스프레소로, '콜드브루 라떼'가 카페 라떼로 같이 걸리던 문제.
+    돌려주는 값: (메뉴·원두 ID 목록, 별칭이 정해 주는 속성 {temp, bean})
+    """
+    t = _norm(text)
+    ids: list[str] = []
+    attrs: dict = {}
+    for alias, mids in _alias_index():
+        if alias not in t:
+            continue
+        ids += [m for m in mids if m not in ids]
+        attrs.update(_alias_attrs().get(alias, {}))
+        t = t.replace(alias, "\0" * len(alias))
+    return ids, attrs
+
+
 def rule_hits(query: str) -> tuple[set[str], set[str]]:
     """질문에서 메뉴 ID와 정책 ID를 문자열로 찾아낸다. API 호출 없음."""
     q = query.lower()
-    menu_ids, policy_ids = set(), set()
-    for alias, mid in _alias_map():
-        if alias in q:
-            menu_ids.add(mid)
+    menu_ids, policy_ids = set(match_menus(query)[0]), set()
     for pid, words in POLICY_KEYWORDS.items():
         if any(w in q for w in words):
             policy_ids.add(pid)

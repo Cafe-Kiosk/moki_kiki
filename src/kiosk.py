@@ -7,36 +7,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .router import route
-from .retrieve import hybrid_search, as_context, _alias_map
+from .retrieve import hybrid_search, as_context, match_menus
 from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS)
 
 
-def _menu_candidates(text: str) -> list[str]:
-    """이름에 걸리는 메뉴를 모두 돌려준다.
+def _menu_candidates(text: str) -> tuple[list[str], dict]:
+    """이름에 걸리는 메뉴와, 별칭이 정해 주는 속성(온도·원두)을 돌려준다.
 
-    "하이볼"처럼 여러 메뉴의 별칭에 걸리는 말은 하나로 확정하면 안 된다.
-    확정은 손님에게 묻고 나서 한다 (검증질문 Q47).
+    긴 별칭부터 맞춘다 ('바닐라라떼'는 바닐라 라떼 하나). 그래도 둘 이상이면
+    '하이볼'처럼 진짜 모호한 것이므로 확정하지 않고 손님에게 묻는다 (Q47).
     """
-    t = str(text).lower()
-    found = []
-    for alias, mid in _alias_map():
-        if alias in t and mid not in found:
-            found.append(mid)
-    if len(found) <= 1:
-        return found
-    # 메뉴명 전체가 들어있으면 그것으로 확정한다 ("위스키 하이볼 주세요")
-    exact = [mid for mid in found
-             if str(menu_by_id(mid)["메뉴명"]).lower() in t]
-    return exact if len(exact) == 1 else found
+    ids, attrs = match_menus(text)
+    return [i for i in ids if menu_by_id(i)], attrs
 
 
 def _add_one(it: dict, cart: Cart) -> str:
     """주문 항목 하나를 검증해 담고, 모델에게 넘길 계산 줄을 돌려준다."""
     name = it.get("menu_name", "")
-    cands = _menu_candidates(name)
+    cands, alias_attrs = _menu_candidates(name)
     if not cands:
         return f"'{name}' 은 메뉴에서 찾지 못했습니다."
     if len(cands) > 1:
@@ -44,7 +35,9 @@ def _add_one(it: dict, cart: Cart) -> str:
         return f"'{name}' 은 {names} 중 어느 것인지 확인이 필요합니다. 담지 않았습니다."
     mid = cands[0]
     m = menu_by_id(mid)
-    v, all_v = resolve_variant(mid, it.get("temp"), it.get("size"))
+    # 라우터가 null 로 준 값은 별칭이 정해 주는 값으로 채운다 ('아아' → ICED)
+    temp = it.get("temp") or alias_attrs.get("temp")
+    v, all_v = resolve_variant(mid, temp, it.get("size"))
     if v is None:
         opts = " / ".join(
             f"{x.get('온도')}·{x.get('크기')} {int(x['가격(원)']):,}원" for x in all_v)
@@ -52,6 +45,8 @@ def _add_one(it: dict, cart: Cart) -> str:
 
     # 옵션 검증 — 하나라도 안 되면 그 품목은 담지 않는다. 대체도 하지 않는다 (P03).
     options = {k: it.get(k) for k in OPTION_KEYS}
+    if options["bean"] is None and alias_attrs.get("bean"):
+        options["bean"] = alias_attrs["bean"]          # '디카페인 카페라떼' → B03
     allowed, rejected = validate_options(mid, v, options)
     if rejected:
         bits = []
