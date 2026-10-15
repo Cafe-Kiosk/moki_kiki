@@ -36,6 +36,10 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 OpenAI API 키를 입력하면 현재 브라우저 세션에만 적용되며, **데모 모드**를 켜면 API 비용
 없이 화면과 기본 흐름을 확인할 수 있습니다.
 
+히어로 배경은 “Make a nice house with a modern interpretation of the hanok house in the Joseon
+Dynasty in Korea”를 바탕으로 생성한 현대 한옥 카페입니다. 한복을 입은 모키 마스코트는
+인트로·히어로·AI 답변 말풍선에 같은 캐릭터로 등장하며, 마지막 답변은 음성으로 들을 수 있습니다.
+
 ## 빠른 시작
 
 Python 3.12 또는 3.13을 권장합니다.

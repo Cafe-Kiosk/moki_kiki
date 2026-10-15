@@ -3,7 +3,8 @@
 실행:  streamlit run app.py
 """
 from __future__ import annotations
-import html, json
+import base64, html, json, mimetypes
+from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -18,6 +19,18 @@ st.set_page_config(page_title="모키 커피바", page_icon="☕", layout="wide"
 from src.auth import check as _check_password
 if not _check_password():
     st.stop()
+
+ASSET_DIR = Path(__file__).resolve().parent / "assets"
+
+
+def _asset_uri(filename: str) -> str:
+    path = ASSET_DIR / filename
+    mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+
+HANOK_HERO_URI = _asset_uri("hanok-cafe-hero.jpg")
+MOKI_MASCOT_URI = _asset_uri("moki-mascot.png")
 
 CSS = """
 <style>
@@ -111,13 +124,51 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background:var(--card)!importan
   .moki-mark{width:62px;height:62px}.block-container{padding-left:.75rem;padding-right:.75rem}.section-head span{display:none}}
 </style>
 """
-st.markdown(CSS, unsafe_allow_html=True)
+ASSET_CSS = """
+<style>
+.hanok-hero {
+  min-height:310px; align-items:flex-end; padding:1.5rem;
+  background-image:linear-gradient(90deg,rgba(25,18,14,.14),rgba(25,18,14,0) 64%),url("__HERO__");
+  background-size:cover; background-position:center 48%;
+  box-shadow:0 18px 44px rgba(42,31,24,.12);
+}
+.hanok-hero::after {display:none;}
+.hero-copy {max-width:480px;padding:1.05rem 1.2rem;border:1px solid rgba(255,255,255,.72);
+  border-radius:14px;background:rgba(255,252,245,.9);backdrop-filter:blur(10px);
+  box-shadow:0 10px 30px rgba(41,28,20,.13);}
+.hero-mascot {position:absolute;z-index:2;right:2.2rem;bottom:-1.25rem;width:190px;height:218px;
+  background:url("__MOKI__") center bottom/contain no-repeat;
+  filter:drop-shadow(0 12px 14px rgba(50,30,18,.2));}
+.entry-courtyard {background-image:linear-gradient(rgba(34,23,17,.2),rgba(34,23,17,.52)),url("__HERO__");
+  background-size:cover;background-position:center;}
+.entry-copy {display:flex;flex-direction:column;align-items:center;}
+.entry-moki {width:190px;height:205px;margin-bottom:.25rem;background:url("__MOKI__") center bottom/contain no-repeat;
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.24));}
+.bot-row {display:flex;align-items:flex-end;gap:.55rem;margin:.45rem 0 .55rem;max-width:94%;}
+.moki-avatar {flex:0 0 52px;width:52px;height:58px;background:url("__MOKI__") center bottom/contain no-repeat;
+  filter:drop-shadow(0 3px 5px rgba(48,30,20,.14));transform-origin:center bottom;}
+.bot-content {min-width:0;max-width:calc(100% - 60px);}
+.moki-name {display:flex;align-items:center;gap:.38rem;margin:0 0 .22rem .2rem;font-size:.68rem;font-weight:750;
+  color:#775441;letter-spacing:.04em;}
+.moki-status {display:inline-flex;gap:2px;align-items:center;}
+.moki-status i {width:3px;height:3px;border-radius:50%;background:#b67a58;animation:moki-dot 1.1s ease-in-out infinite;}
+.moki-status i:nth-child(2){animation-delay:.15s}.moki-status i:nth-child(3){animation-delay:.3s}
+.bot-row .bubble-bot {max-width:100%;margin:0;}
+.bot-row.speaking .moki-avatar {animation:moki-talk 1.8s ease-in-out infinite;}
+@keyframes moki-talk {0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(-3px) rotate(-1.2deg)}70%{transform:translateY(-1px) rotate(1deg)}}
+@keyframes moki-dot {0%,65%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-2px)}}
+@media (max-width:760px){.hanok-hero{min-height:270px;padding:.8rem;background-position:center}.hero-copy{max-width:78%;padding:.8rem .9rem}
+  .hero-mascot{right:.4rem;width:110px;height:132px}.moki-avatar{flex-basis:44px;width:44px;height:50px}.entry-moki{width:150px;height:165px}}
+</style>
+""".replace("__HERO__", HANOK_HERO_URI).replace("__MOKI__", MOKI_MASCOT_URI)
+st.markdown(CSS + ASSET_CSS, unsafe_allow_html=True)
 
 if not st.session_state.get("_entry_seen"):
     st.session_state["_entry_seen"] = True
     st.markdown(
         '<div class="entry-overlay"><div class="entry-courtyard">'
-        '<div class="entry-copy"><b>모키 커피바</b><small>MOKI · HANOK COFFEE BAR</small></div>'
+        '<div class="entry-copy"><div class="entry-moki" role="img" aria-label="한복을 입은 모키"></div>'
+        '<b>모키 커피바</b><small>MOKI · HANOK COFFEE BAR</small></div>'
         '</div><div class="hanok-door door-left"></div>'
         '<div class="hanok-door door-right"></div></div>',
         unsafe_allow_html=True,
@@ -211,7 +262,7 @@ st.markdown(
     '<div class="hero-kicker">A QUIET CUP IN HANOK</div>'
     '<h1>오늘의 한 잔을<br>천천히 골라보세요.</h1>'
     '<p>메뉴 추천부터 주문 옵션까지, 모키가 차분히 도와드릴게요.</p>'
-    '</div><div class="moki-mark"><div class="face">ᘏ⑅ᘏ<small>모키</small></div></div></div>',
+    '</div><div class="hero-mascot" role="img" aria-label="손을 흔들며 커피를 든 모키"></div></div>',
     unsafe_allow_html=True)
 
 left, right = st.columns([1.45, 1])
@@ -228,8 +279,11 @@ with left:
         with box:
             if not st.session_state.history:
                 st.markdown(
-                    '<div class="bubble-bot">어서 오세요. 모키가 귀를 쫑긋 세우고 주문을 듣고 있어요. ☕\n'
-                    '메뉴 추천부터 알레르기·옵션 확인까지 편하게 말씀해 주세요.</div>'
+                    '<div class="bot-row speaking"><div class="moki-avatar" role="img" aria-label="모키"></div>'
+                    '<div class="bot-content"><div class="moki-name">모키 <span class="moki-status">'
+                    '<i></i><i></i><i></i></span></div>'
+                    '<div class="bubble-bot">어서 오세요. 모키가 주문을 듣고 있어요. ☕\n'
+                    '메뉴 추천부터 알레르기·옵션 확인까지 편하게 말씀해 주세요.</div></div></div>'
                     '<div class="welcome-note">어디서 시작할지 고민되면 아래에서 골라보세요.</div>',
                     unsafe_allow_html=True)
                 starters = [
@@ -247,14 +301,23 @@ with left:
                     st.markdown(f'<div class="bubble-user">{html.escape(m["content"])}</div>',
                                 unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="bubble-bot">{html.escape(m["content"])}</div>',
-                                unsafe_allow_html=True)
                     t = next((t for t in st.session_state.turns if t["idx"] == i), None)
+                    meta_html = ""
                     if t:
-                        st.markdown(
+                        meta_html = (
                             f'<div class="meta">의도 {t["intent"]} · 검색 {t["ndocs"]}건 · '
-                            f'LLM {t["calls"]}회{" · 캐시" if t["cached"] else ""}</div>',
-                            unsafe_allow_html=True)
+                            f'LLM {t["calls"]}회{" · 캐시" if t["cached"] else ""}</div>'
+                        )
+                    latest = i == len(st.session_state.history) - 1
+                    status_html = ('<span class="moki-status"><i></i><i></i><i></i></span>'
+                                   if latest else "")
+                    row_class = "bot-row speaking" if latest else "bot-row"
+                    st.markdown(
+                        f'<div class="{row_class}"><div class="moki-avatar" role="img" aria-label="모키"></div>'
+                        f'<div class="bot-content"><div class="moki-name">모키 {status_html}</div>'
+                        f'<div class="bubble-bot">{html.escape(m["content"])}</div>{meta_html}</div></div>',
+                        unsafe_allow_html=True,
+                    )
 
                     replies = m.get("quick_replies") or []
                     if i == len(st.session_state.history) - 1 and replies:
@@ -348,7 +411,7 @@ if st.session_state.history:
     last_bot = next((m["content"] for m in reversed(st.session_state.history)
                      if m["role"] == "assistant"), "")
     with left:
-        if st.button("🔊 마지막 답변 읽어주기", use_container_width=True):
+        if st.button("🔊 모키 목소리로 마지막 답변 듣기", use_container_width=True):
             components.html(f"""
                 <script>
                   const u = new SpeechSynthesisUtterance({json.dumps(last_bot)});
