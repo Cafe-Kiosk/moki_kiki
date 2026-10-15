@@ -1,0 +1,30 @@
+{
+  "date_kst": "2026-10-15",
+  "mode": "Real API; MOKI_MOCK=0",
+  "browser_conversation_turns": 8,
+  "questions": [
+    "아메리카노랑 카푸치노 가격·진하기 차이는?",
+    "따뜻한 디카페인 라떼랑 약과 한 접시 주세요",
+    "라떼는 작은 걸로요",
+    "라떼만 하나 더",
+    "주문 내역 보여줘",
+    "그 내용으로 시연 주문 확정할게요",
+    "추가로 아이스 아메리카노 작은 거 하나 주세요",
+    "산미 적고 고소한 커피 추천해줘"
+  ],
+  "source": "Saved browser demo record; reviewed during handoff preparation, no new API calls.",
+  "implementation_commit": "bb5b0a2a8392fc59447ff5b7ced5e010ef5a299f",
+  "observed_results": {
+    "initial_order_krw": 10700,
+    "latte_addition_total_krw": 16900,
+    "preserved_order_krw": 16900,
+    "additional_order_krw": 4500,
+    "recommendation": "Cafe latte, vanilla latte, cream latte; retrieved menu evidence visible; current order unchanged"
+  },
+  "limits": [
+    "Not payment or store submission",
+    "Full 67-case suite not rerun",
+    "Future API availability not guaranteed",
+    "Source record did not embed a commit SHA; implementation identified from clean local checkout and saved presentation manifest"
+  ]
+}

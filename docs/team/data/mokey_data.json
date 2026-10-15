@@ -1,0 +1,5237 @@
+{
+  "metadata": {
+    "dataset": "모키 — 커피와 술을 함께 고르는 커피바",
+    "version": "2026-10-14-v4",
+    "adoption_status": "데이터 담당 제안 v4. 팀 확정·실제 매장 운영을 뜻하지 않음",
+    "is_fictional": true,
+    "source_workbook": "백억커피_메뉴정보_新(추가).xlsx",
+    "source_sha256": "97b23b956622ce139c7ee2c15f06a8a1aaf6909d926828269a1021402def9004",
+    "provenance": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+    "sensory_scale": "1~5, 높을수록 강함. 팀 시연용 상대 설정이며 관능평가 실측 아님",
+    "nutrition_scope": "기본 레시피 1개 기준. 원두·샷·우유·시럽 변경 후 주요 영양 null; 카페인은 별도 계산. 얼음·데우기만 바꾸면 주요 영양 유지. 주류는 고정 레시피·제공 단위이며 옵션 변경 미지원",
+    "implementation_status": "데이터 계약 작성·정적 검증. 팀 프로그램 연동과 실시간 RAG는 미검증",
+    "canonical_editing": "엑셀과 JSON은 같은 빌드의 스냅샷이다. 한쪽 수정 후 다른 쪽을 자동 갱신하지 않는다. 수정 후 같은 버전으로 재배포",
+    "quantity_min": 1,
+    "quantity_max": 10,
+    "currency": "KRW",
+    "price_includes_vat": true,
+    "serving_basis": "기존 ICED 음료와 하이볼·스프리츠의 serving_amount는 얼음 포함 컵 구성. 마티니는 얼음을 걸러 낸 액체 120ml, 맥주는 330ml, 와인은 150ml. 음식 g는 판매 단위 중량. liquid_volume_ml는 얼음을 제외한 계산 기준 액체량",
+    "image_policy": "메뉴별 대표 AI 연출 이미지 1장. 온도·크기·옵션별 실제 외관이나 실측 제공량을 보증하지 않음",
+    "asset_path_base": "이 JSON 파일이 있는 폴더",
+    "alias_resolution": "가장 구체적인 별칭을 우선 찾고 alias_attributes의 온도·원두를 함께 반영. 별칭과 명시 요청이 충돌하거나 후보가 여러 개면 확인",
+    "reference_scope": "reference_ids는 설계 아이디어의 출처이며 메뉴의 실판매·레시피·영양 출처를 뜻하지 않음",
+    "schema_version": 4,
+    "supported_locales": [
+      "ko",
+      "en"
+    ],
+    "default_locale": "ko",
+    "concept": "취향과 언어에 맞춰 커피·차·디저트·주류를 선택하는 테이블 주문 커피바",
+    "alcohol_basis": "alcohol_components의 원액별 부피×도수를 합산하고 liquid_volume_ml로 나눈 가상 도수. 하이볼·스프리츠는 추가 얼음 희석 전, 마티니는 가정한 셰이킹 희석수 20ml 포함. 맥주·와인은 설정 도수. 주류 미첨가는 잔류 알코올 0%의 분석·인증이 아님",
+    "calorie_formula": "ROUND(carbs_g*4 + protein_g*4 + fat_g*9 + ethanol_g*7). 비주류의 ethanol_g=0은 시연 계산 가정",
+    "migration": "M19/M22/M30/M31 주문 불가. menus와 variants가 현재 판매 목록이다. 메뉴·추천·사진·RAG 인덱스를 v4로 함께 교체. 기존 장바구니의 제외 ID는 자동 대체하지 말고 재선택. menu_groups는 5개 비중복 분류로 교체",
+    "temperature_codes": "HOT=따뜻하게, ICED=차갑게. ICED가 항상 제공 잔의 얼음을 의미하지 않는다. M35/M36은 얼음 없이 차갑게 제공. NA=온도 선택 없음; M37은 잔 와인 고정 제공",
+    "alcohol_component_contract": "alcohol_components가 원액 계산 입력이다. spirit_volume_ml/spirit_abv_percent는 v3 호환용 첫 증류주 값이며 두 주류를 사용하는 M35의 전체 알코올량이 아니다. 맥주·와인은 이 두 레거시 필드가 null. 모든 주류 계산은 alcohol_components를 사용",
+    "caffeine_component_contract": "caffeine_non_coffee_mg는 레거시 키 이름이며 에스프레소 외 카페인을 뜻한다. M35의 커피 리큐르 10mg도 포함. M35는 하우스 에스프레소 1샷 60mg과 합계 70mg인 가상값; 샷·디카페인 변경 미지원"
+  },
+  "menus": [
+    {
+      "id": "M01",
+      "name": "에스프레소",
+      "name_en": "Espresso",
+      "category": "커피",
+      "aliases": [
+        "에쏘",
+        "더블 에스프레소",
+        "Espresso"
+      ],
+      "description": "작은 잔에 담아 진한 향과 여운을 즐기는 더블 에스프레소입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 5,
+        "body": 5
+      },
+      "tags": [
+        "진한 커피",
+        "무가당"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M28"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M01.png",
+        "alt_text": "에스프레소, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M01-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Espresso, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A double espresso served in a small cup, with a bold aroma and lingering finish.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "진하고 묵직함",
+      "texture_en": "Short and intense",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M02",
+      "name": "아메리카노",
+      "name_en": "Americano",
+      "category": "커피",
+      "aliases": [
+        "아아",
+        "아이스 아메리카노",
+        "뜨아",
+        "Americano",
+        "iced americano",
+        "hot americano"
+      ],
+      "description": "에스프레소에 물을 더한 깔끔한 블랙커피입니다. 선택한 원두의 향과 맛을 편하게 즐길 수 있습니다.",
+      "ingredients": [
+        "커피 원두",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 2
+      },
+      "tags": [
+        "블랙커피",
+        "무가당"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1",
+        "R2"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [
+        {
+          "alias": "아아",
+          "temperature": "ICED"
+        },
+        {
+          "alias": "아이스 아메리카노",
+          "temperature": "ICED"
+        },
+        {
+          "alias": "뜨아",
+          "temperature": "HOT"
+        },
+        {
+          "alias": "iced americano",
+          "temperature": "ICED"
+        },
+        {
+          "alias": "hot americano",
+          "temperature": "HOT"
+        }
+      ],
+      "image": {
+        "path": "images/M02.png",
+        "alt_text": "아메리카노, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M02-ICED-S",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Americano, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Espresso diluted with water for a clean black coffee. Choose a bean for your preferred flavor.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "깔끔하고 가벼움",
+      "texture_en": "Clean and light",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M03",
+      "name": "카페 라떼",
+      "name_en": "Caffe Latte",
+      "category": "커피",
+      "aliases": [
+        "카페라떼",
+        "라떼",
+        "디카페인 카페라떼",
+        "Caffe Latte",
+        "latte",
+        "iced latte",
+        "decaf latte",
+        "decaf iced latte"
+      ],
+      "description": "에스프레소와 우유가 부드럽게 어우러지는 기본 라떼입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        87,
+        111
+      ],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "부드러움",
+        "우유"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M28"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [
+        {
+          "alias": "디카페인 카페라떼",
+          "options": {
+            "bean": "B03"
+          }
+        },
+        {
+          "alias": "iced latte",
+          "temperature": "ICED"
+        },
+        {
+          "alias": "decaf latte",
+          "options": {
+            "bean": "B03"
+          }
+        },
+        {
+          "alias": "decaf iced latte",
+          "temperature": "ICED",
+          "options": {
+            "bean": "B03"
+          }
+        }
+      ],
+      "image": {
+        "path": "images/M03.png",
+        "alt_text": "카페 라떼, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M03-HOT-S",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Caffe Latte, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Espresso and milk in a smooth, balanced latte.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "부드러움",
+      "texture_en": "Smooth and milky",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M04",
+      "name": "카푸치노",
+      "name_en": "Cappuccino",
+      "category": "커피",
+      "aliases": [
+        "카푸치노",
+        "Cappuccino"
+      ],
+      "description": "라떼보다 우유의 비중이 낮고, 풍성한 우유 거품이 올라가는 따뜻한 커피입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 3
+      },
+      "tags": [
+        "거품",
+        "따뜻함"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M29"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M04.png",
+        "alt_text": "카푸치노, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M04-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Cappuccino, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A warm espresso drink with less milk than a latte and a generous layer of milk foam.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "풍성한 거품",
+      "texture_en": "Foamy",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M05",
+      "name": "플랫화이트",
+      "name_en": "Flat White",
+      "category": "커피",
+      "aliases": [
+        "플랫 화이트",
+        "플랫화이트",
+        "Flat White"
+      ],
+      "description": "작은 잔에 에스프레소와 고운 우유 거품을 담아 커피 맛이 또렷한 메뉴입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 4
+      },
+      "tags": [
+        "작은 잔",
+        "진한 라떼"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M05.png",
+        "alt_text": "플랫화이트, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M05-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Flat White, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Espresso with finely textured milk in a small cup, for a more pronounced coffee taste.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "고운 거품",
+      "texture_en": "Silky",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M06",
+      "name": "바닐라 라떼",
+      "name_en": "Vanilla Latte",
+      "category": "커피",
+      "aliases": [
+        "바닐라라떼",
+        "바라",
+        "디카페인 바닐라라떼",
+        "Vanilla Latte"
+      ],
+      "description": "바닐라 향과 우유의 부드러움이 어우러지는 달콤한 라떼입니다. 덜 달게 드시려면 시럽을 절반으로 선택할 수 있습니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유",
+        "바닐라 시럽(설탕·물·바닐라향, 알코올 무첨가 설정)"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        91,
+        113
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "달콤함",
+        "바닐라"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [
+        {
+          "alias": "디카페인 바닐라라떼",
+          "options": {
+            "bean": "B03"
+          }
+        }
+      ],
+      "image": {
+        "path": "images/M06.png",
+        "alt_text": "바닐라 라떼, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M06-ICED-S",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Vanilla Latte, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A sweet latte with vanilla syrup and milk. The half-syrup option reduces syrup, not all sugar by half.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk",
+        "vanilla syrup (sugar, water, vanilla flavor; no alcohol added in this recipe)"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "부드럽고 달콤함",
+      "texture_en": "Smooth and sweet",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M07",
+      "name": "고운결 크림 라떼",
+      "name_en": "Goungyeol Cream Latte",
+      "category": "커피",
+      "aliases": [
+        "고운결 라떼",
+        "크림 라떼",
+        "디카페인 고운결 라떼",
+        "Goungyeol Cream Latte"
+      ],
+      "description": "작은 잔에 담은 달콤한 크림과 진한 커피를 함께 즐기는 시그니처 라떼입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유",
+        "생크림(우유)",
+        "설탕"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        15,
+        108
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 5
+      },
+      "tags": [
+        "크림",
+        "시그니처"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M29"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [
+        {
+          "alias": "디카페인 고운결 라떼",
+          "options": {
+            "bean": "B03"
+          }
+        }
+      ],
+      "image": {
+        "path": "images/M07.png",
+        "alt_text": "고운결 크림 라떼, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M07-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Goungyeol Cream Latte, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Our signature small iced latte with sweet cream on top and a bold coffee flavor. Goungyeol is its house name.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk",
+        "cream (milk)",
+        "sugar"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "진하고 크리미함",
+      "texture_en": "Rich and creamy",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M08",
+      "name": "다크 카페 모카",
+      "name_en": "Dark Caffe Mocha",
+      "category": "커피",
+      "aliases": [
+        "카페모카",
+        "모카",
+        "디카페인 카페모카",
+        "Dark Caffe Mocha"
+      ],
+      "description": "카카오의 쌉싸름한 맛과 에스프레소가 어우러지는 진한 모카입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유",
+        "초콜릿 소스(코코아·설탕·대두레시틴)"
+      ],
+      "allergens": [
+        "우유",
+        "대두"
+      ],
+      "source_ids": [
+        93,
+        115
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 4
+      },
+      "tags": [
+        "초콜릿",
+        "달콤함"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "하우스 원두·기본 레시피 기준. 원두 변경 시 선택 원두 설명 참조",
+      "alias_attributes": [
+        {
+          "alias": "디카페인 카페모카",
+          "options": {
+            "bean": "B03"
+          }
+        }
+      ],
+      "image": {
+        "path": "images/M08.png",
+        "alt_text": "다크 카페 모카, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M08-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Dark Caffe Mocha, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Espresso, milk and chocolate sauce with a rich cocoa flavor. Contains both coffee and cocoa caffeine.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk",
+        "chocolate sauce (cocoa, sugar, soy lecithin)"
+      ],
+      "allergens_en": [
+        "milk",
+        "soy"
+      ],
+      "texture": "진한 초콜릿 풍미",
+      "texture_en": "Rich and chocolatey",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M09",
+      "name": "콜드브루",
+      "name_en": "Cold Brew",
+      "category": "커피",
+      "aliases": [
+        "콜드 브루",
+        "더치커피",
+        "Cold Brew"
+      ],
+      "description": "하우스 원두로 미리 추출한 부드러운 풍미의 차가운 블랙커피입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "차가움",
+        "블랙커피"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M21"
+      ],
+      "reference_ids": [
+        "R2",
+        "R3"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M09.png",
+        "alt_text": "콜드브루, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M09-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Cold Brew, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A smooth chilled black coffee brewed in advance with the house blend.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "부드럽고 깔끔함",
+      "texture_en": "Smooth and clean",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M10",
+      "name": "콜드브루 라떼",
+      "name_en": "Cold Brew Latte",
+      "category": "커피",
+      "aliases": [
+        "콜드브루라떼",
+        "콜드 브루 라떼",
+        "Cold Brew Latte"
+      ],
+      "description": "하우스 콜드브루에 우유를 더한 부드러운 아이스 커피입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물",
+        "우유"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        98
+      ],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "차가움",
+        "부드러움"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M29"
+      ],
+      "reference_ids": [
+        "R2"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M10.png",
+        "alt_text": "콜드브루 라떼, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M10-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Cold Brew Latte, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "House cold brew mixed with milk for a smooth iced coffee.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water",
+        "milk"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "부드러운 우유 질감",
+      "texture_en": "Smooth and milky",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M11",
+      "name": "에티오피아 필터커피",
+      "name_en": "Ethiopia Filter Coffee",
+      "category": "커피",
+      "aliases": [
+        "드립커피",
+        "핸드드립",
+        "산미 커피",
+        "에티오피아",
+        "Ethiopia Filter Coffee"
+      ],
+      "description": "감귤과 꽃을 떠올리게 하는 향, 산뜻한 산미가 특징인 필터커피입니다.",
+      "ingredients": [
+        "커피 원두",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 4,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "산뜻함",
+        "필터커피"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M20"
+      ],
+      "reference_ids": [
+        "R3",
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M11.png",
+        "alt_text": "에티오피아 필터커피, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M11-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Ethiopia Filter Coffee, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A filter coffee with citrus-like and floral aromas and bright acidity. These tasting notes are not added ingredients.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "coffee beans",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "맑고 가벼움",
+      "texture_en": "Light and clear",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M12",
+      "name": "디카페인 필터커피",
+      "name_en": "Decaf Filter Coffee",
+      "category": "커피",
+      "aliases": [
+        "디카페인 드립",
+        "디카페인 핸드드립",
+        "Decaf Filter Coffee"
+      ],
+      "description": "캐러멜을 떠올리게 하는 향과 부드러운 여운의 콜롬비아 디카페인 필터커피입니다.",
+      "ingredients": [
+        "디카페인 커피 원두",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 2,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "디카페인",
+        "필터커피"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M29"
+      ],
+      "reference_ids": [
+        "R4",
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M12.png",
+        "alt_text": "디카페인 필터커피, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M12-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Decaf Filter Coffee, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A Colombian decaf filter coffee with caramel-like aroma and a gentle finish. Decaf still contains some caffeine.",
+      "category_en": "Coffee",
+      "ingredients_en": [
+        "decaf coffee beans",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "맑고 부드러움",
+      "texture_en": "Clear and mellow",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M13",
+      "name": "말차 라떼",
+      "name_en": "Matcha Latte",
+      "category": "차/논커피",
+      "aliases": [
+        "말차라떼",
+        "녹차라떼",
+        "Matcha Latte"
+      ],
+      "description": "말차의 쌉싸름한 맛과 우유의 부드러움이 어우러지는 음료입니다.",
+      "ingredients": [
+        "말차 분말",
+        "우유",
+        "설탕"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        132
+      ],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 3
+      },
+      "tags": [
+        "말차",
+        "논커피"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M13.png",
+        "alt_text": "말차 라떼, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M13-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Matcha Latte, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A sweetened milk drink with the pleasantly bitter flavor of powdered green tea. Contains caffeine.",
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "matcha powder",
+        "milk",
+        "sugar"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "부드럽고 쌉싸름함",
+      "texture_en": "Creamy and gently bitter",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M14",
+      "name": "초코 라떼",
+      "name_en": "Chocolate Latte",
+      "category": "차/논커피",
+      "aliases": [
+        "초코라떼",
+        "핫초코",
+        "코코아",
+        "Chocolate Latte",
+        "hot chocolate"
+      ],
+      "description": "진한 코코아 풍미를 담은 달콤한 우유 음료입니다.",
+      "ingredients": [
+        "우유",
+        "초콜릿 소스(코코아·설탕·대두레시틴)"
+      ],
+      "allergens": [
+        "우유",
+        "대두"
+      ],
+      "source_ids": [
+        134
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 4
+      },
+      "tags": [
+        "초콜릿",
+        "논커피"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M29"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [
+        {
+          "alias": "핫초코",
+          "temperature": "HOT"
+        },
+        {
+          "alias": "hot chocolate",
+          "temperature": "HOT"
+        }
+      ],
+      "image": {
+        "path": "images/M14.png",
+        "alt_text": "초코 라떼, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M14-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Chocolate Latte, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A sweet milk drink with rich cocoa flavor and no coffee added. Cocoa contributes some caffeine.",
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "milk",
+        "chocolate sauce (cocoa, sugar, soy lecithin)"
+      ],
+      "allergens_en": [
+        "milk",
+        "soy"
+      ],
+      "texture": "진하고 부드러움",
+      "texture_en": "Rich and smooth",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M15",
+      "name": "보성 홍차 밀크티",
+      "name_en": "Boseong Black Milk Tea",
+      "category": "차/논커피",
+      "aliases": [
+        "밀크티",
+        "홍차라떼",
+        "보성 밀크티",
+        "Boseong Black Milk Tea"
+      ],
+      "description": "보성 홍차의 향과 우유의 부드러움을 함께 즐기는 밀크티입니다.",
+      "ingredients": [
+        "보성산 홍차",
+        "물",
+        "우유",
+        "설탕"
+      ],
+      "allergens": [
+        "우유"
+      ],
+      "source_ids": [
+        136
+      ],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 2,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "홍차",
+        "논커피"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M20"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M15.png",
+        "alt_text": "보성 홍차 밀크티, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M15-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Boseong Black Milk Tea, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "Black tea from Boseong blended with milk and sugar. Contains caffeine.",
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "black tea from Boseong",
+        "water",
+        "milk",
+        "sugar"
+      ],
+      "allergens_en": [
+        "milk"
+      ],
+      "texture": "부드럽고 향긋함",
+      "texture_en": "Milky and aromatic",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M16",
+      "name": "유자티",
+      "name_en": "Yuja Tea — Korean Citrus",
+      "category": "차/논커피",
+      "aliases": [
+        "유자차",
+        "유자 티",
+        "Yuja Tea — Korean Citrus",
+        "Yuja Tea",
+        "yuja tea",
+        "yuzu tea"
+      ],
+      "description": "유자청을 풀어 만든 새콤달콤한 음료입니다. 찻잎과 커피는 넣지 않습니다.",
+      "ingredients": [
+        "유자청(유자·설탕)",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 3,
+        "bitterness": 1,
+        "body": 1
+      },
+      "tags": [
+        "새콤달콤함",
+        "유자"
+      ],
+      "pairing_menu_ids": [
+        "M18",
+        "M28"
+      ],
+      "reference_ids": [
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M16.png",
+        "alt_text": "유자티, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M16-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Yuja Tea — Korean Citrus, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A sweet-tart drink made with yuja citrus preserves and water. No tea leaves or coffee are added.",
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "yuja citrus preserves (yuja, sugar)",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "새콤달콤한 과육감",
+      "texture_en": "Sweet-tart with citrus peel",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M17",
+      "name": "루이보스티",
+      "name_en": "Rooibos Tea",
+      "category": "차/논커피",
+      "aliases": [
+        "루이보스",
+        "루이보스 차",
+        "허브티",
+        "Rooibos Tea"
+      ],
+      "description": "루이보스 잎을 우려 만든 담백한 차입니다. 시럽과 우유는 넣지 않습니다.",
+      "ingredients": [
+        "루이보스 잎",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 1,
+        "body": 1
+      },
+      "tags": [
+        "무가당",
+        "담백함"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M29"
+      ],
+      "reference_ids": [
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M17.png",
+        "alt_text": "루이보스티, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M17-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Rooibos Tea, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A rooibos herbal infusion with no syrup or milk added.",
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "rooibos leaves",
+        "water"
+      ],
+      "allergens_en": [],
+      "texture": "맑고 담백함",
+      "texture_en": "Clear and gentle",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔"
+    },
+    {
+      "id": "M26",
+      "name": "오미자차",
+      "name_en": "Omija Tea — Five-Flavor Berry",
+      "category": "차/논커피",
+      "aliases": [
+        "오미자차",
+        "omija tea",
+        "five flavor berry tea",
+        "Omija Tea — Five-Flavor Berry",
+        "Omija Tea",
+        "iced omija tea"
+      ],
+      "description": "오미자청을 물에 풀어 만든 새콤달콤한 차입니다. 붉은 빛과 산뜻한 과일 향을 즐길 수 있습니다.",
+      "description_en": "A sweet-tart drink made with omija berry syrup and water. Bright red, fruity and refreshing, with no tea leaves or alcohol added.",
+      "ingredients": [
+        "오미자청(오미자·설탕)",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 4,
+        "bitterness": 1,
+        "body": 2
+      },
+      "tags": [
+        "맑고 가벼움"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M29"
+      ],
+      "reference_ids": [
+        "R6"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [
+        {
+          "alias": "iced omija tea",
+          "temperature": "ICED"
+        }
+      ],
+      "texture": "맑고 가벼움",
+      "texture_en": "Light and clear",
+      "cultural_note": "오미자는 다섯 가지 맛을 뜻하는 이름입니다. 이 레시피는 새콤달콤한 맛을 중심으로 구성했습니다.",
+      "cultural_note_en": "Omija means five flavors. This recipe emphasizes its sweet-tart berry taste.",
+      "piece_count": null,
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "omija berry syrup (omija berries, sugar)",
+        "water"
+      ],
+      "allergens_en": [],
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔",
+      "image": {
+        "path": "images/M26.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M26-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "오미자차, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Omija Tea — Five-Flavor Berry, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M27",
+      "name": "대추생강차",
+      "name_en": "Daechu Saenggang Tea — Jujube & Ginger",
+      "category": "차/논커피",
+      "aliases": [
+        "대추차",
+        "생강차",
+        "대추생강차",
+        "jujube ginger tea",
+        "Daechu Saenggang Tea — Jujube & Ginger",
+        "Daechu Saenggang Tea"
+      ],
+      "description": "대추의 은은한 단맛에 생강의 알싸한 향을 더한 차입니다. 얇게 썬 대추 두 조각을 띄워 제공합니다.",
+      "description_en": "A mellow jujube and ginger infusion with a little honey, topped with two thin jujube slices. Ginger adds a warming bite; it contains no chili or tea leaves.",
+      "ingredients": [
+        "대추",
+        "생강",
+        "꿀",
+        "물"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 1,
+        "bitterness": 1,
+        "body": 3
+      },
+      "tags": [
+        "은은하게 진함"
+      ],
+      "pairing_menu_ids": [
+        "M28",
+        "M18"
+      ],
+      "reference_ids": [
+        "R6"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "은은하게 진함",
+      "texture_en": "Mellow with a ginger bite",
+      "cultural_note": "대추는 붉은 열매를 말려 차와 음식에 쓰는 재료입니다. 대추야자와 다른 열매입니다.",
+      "cultural_note_en": "Jujube is a small red fruit often dried for Korean tea and cooking. It is different from a date-palm fruit.",
+      "piece_count": null,
+      "category_en": "Tea & Non-Coffee",
+      "ingredients_en": [
+        "jujube",
+        "ginger",
+        "honey",
+        "water"
+      ],
+      "allergens_en": [],
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔",
+      "image": {
+        "path": "images/M27.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M27-HOT-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "대추생강차, HOT / 음료 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Daechu Saenggang Tea — Jujube & Ginger, HOT / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M18",
+      "name": "버터 소금빵",
+      "name_en": "Butter Salt Bread",
+      "category": "디저트",
+      "aliases": [
+        "소금빵",
+        "버터소금빵",
+        "Butter Salt Bread"
+      ],
+      "description": "고소한 버터 향과 짭짤한 맛이 어우러지는 소금빵 한 개입니다. 따뜻하게 데워 드릴 수 있습니다.",
+      "ingredients": [
+        "밀가루",
+        "버터(우유)",
+        "우유",
+        "설탕",
+        "효모",
+        "소금"
+      ],
+      "allergens": [
+        "밀",
+        "우유"
+      ],
+      "source_ids": [
+        70
+      ],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 1,
+        "body": 3
+      },
+      "tags": [
+        "짭짤함",
+        "베이커리"
+      ],
+      "pairing_menu_ids": [
+        "M02",
+        "M03"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M18.png",
+        "alt_text": "버터 소금빵, 빵 1개, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M18-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Butter Salt Bread, one bread roll, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "One buttery bread roll with a lightly salted crust. Warming is available.",
+      "category_en": "Desserts",
+      "ingredients_en": [
+        "wheat flour",
+        "butter (milk)",
+        "milk",
+        "sugar",
+        "yeast",
+        "salt"
+      ],
+      "allergens_en": [
+        "wheat",
+        "milk"
+      ],
+      "texture": "부드러운 속과 얇은 껍질",
+      "texture_en": "Soft center and light crust",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one bread roll",
+      "order_unit_ko": "빵 1개"
+    },
+    {
+      "id": "M20",
+      "name": "바스크 치즈케이크",
+      "name_en": "Basque Cheesecake",
+      "category": "디저트",
+      "aliases": [
+        "치즈케이크",
+        "바스크 치즈",
+        "Basque Cheesecake"
+      ],
+      "description": "겉면을 진하게 구워 고소한 향과 부드러운 치즈 풍미를 살린 케이크 한 조각입니다.",
+      "ingredients": [
+        "크림치즈(우유)",
+        "생크림(우유)",
+        "계란",
+        "설탕",
+        "밀가루"
+      ],
+      "allergens": [
+        "우유",
+        "계란",
+        "밀"
+      ],
+      "source_ids": [
+        52
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 2,
+        "bitterness": 1,
+        "body": 5
+      },
+      "tags": [
+        "치즈",
+        "진한 디저트"
+      ],
+      "pairing_menu_ids": [
+        "M02",
+        "M11"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M20.png",
+        "alt_text": "바스크 치즈케이크, 케이크 1조각, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M20-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Basque Cheesecake, one slice, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "One slice of creamy cheesecake with a deeply browned top.",
+      "category_en": "Desserts",
+      "ingredients_en": [
+        "cream cheese (milk)",
+        "cream (milk)",
+        "egg",
+        "sugar",
+        "wheat flour"
+      ],
+      "allergens_en": [
+        "milk",
+        "egg",
+        "wheat"
+      ],
+      "texture": "진하고 크리미함",
+      "texture_en": "Rich and creamy",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one slice",
+      "order_unit_ko": "케이크 1조각"
+    },
+    {
+      "id": "M21",
+      "name": "티라미수 컵",
+      "name_en": "Tiramisu Cup",
+      "category": "디저트",
+      "aliases": [
+        "티라미수",
+        "티라미수 컵",
+        "Tiramisu Cup"
+      ],
+      "description": "마스카르포네 크림과 커피에 적신 시트를 층층이 담은 개인용 컵 디저트입니다. 이 레시피에는 술을 넣지 않습니다.",
+      "ingredients": [
+        "마스카르포네(우유)",
+        "생크림(우유)",
+        "계란",
+        "밀가루",
+        "설탕",
+        "커피",
+        "코코아"
+      ],
+      "allergens": [
+        "우유",
+        "계란",
+        "밀"
+      ],
+      "source_ids": [
+        53
+      ],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 4
+      },
+      "tags": [
+        "커피 디저트",
+        "컵 디저트"
+      ],
+      "pairing_menu_ids": [
+        "M09",
+        "M02"
+      ],
+      "reference_ids": [
+        "R1"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M21.png",
+        "alt_text": "티라미수 컵, 디저트 1컵, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M21-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Tiramisu Cup, one dessert cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "An individual cup of mascarpone cream and coffee-soaked cake, dusted with cocoa. This recipe uses no alcohol.",
+      "category_en": "Desserts",
+      "ingredients_en": [
+        "mascarpone (milk)",
+        "cream (milk)",
+        "egg",
+        "wheat flour",
+        "sugar",
+        "coffee",
+        "cocoa"
+      ],
+      "allergens_en": [
+        "milk",
+        "egg",
+        "wheat"
+      ],
+      "texture": "촉촉한 시트와 크림",
+      "texture_en": "Soft cake and cream",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one dessert cup",
+      "order_unit_ko": "디저트 1컵"
+    },
+    {
+      "id": "M28",
+      "name": "약과 2개",
+      "name_en": "Yakgwa — Honey Cookies (2 pcs)",
+      "category": "디저트",
+      "aliases": [
+        "약과",
+        "yakgwa",
+        "Korean honey cookies",
+        "Yakgwa — Honey Cookies (2 pcs)",
+        "Yakgwa"
+      ],
+      "description": "꿀과 조청의 달콤함을 담은 작은 약과 두 개입니다. 꽃 모양의 과자는 겉이 윤기 있고 속은 촉촉하고 쫀득합니다.",
+      "description_en": "Two small flower-shaped Korean honey cookies, glazed with honey and grain syrup. Moist and chewy rather than crisp. This recipe uses no alcohol.",
+      "ingredients": [
+        "밀가루",
+        "조청(쌀·보리 엿기름)",
+        "꿀",
+        "참기름",
+        "식용유",
+        "생강즙"
+      ],
+      "allergens": [
+        "밀",
+        "보리",
+        "참깨"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 4,
+        "acidity": 1,
+        "bitterness": 1,
+        "body": 4
+      },
+      "tags": [
+        "촉촉하고 쫀득함"
+      ],
+      "pairing_menu_ids": [
+        "M01",
+        "M26",
+        "M27"
+      ],
+      "reference_ids": [
+        "R6"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "촉촉하고 쫀득함",
+      "texture_en": "Moist and chewy",
+      "cultural_note": "약과는 꿀·기름·곡물로 만드는 한국 과자입니다. 레시피에 따라 성분은 달라집니다.",
+      "cultural_note_en": "Yakgwa is a Korean sweet made with grain flour, oil and syrup. Ingredients vary by recipe.",
+      "piece_count": 2,
+      "category_en": "Desserts",
+      "ingredients_en": [
+        "wheat flour",
+        "grain syrup (rice, barley malt)",
+        "honey",
+        "sesame oil",
+        "vegetable oil",
+        "ginger juice"
+      ],
+      "allergens_en": [
+        "wheat",
+        "barley",
+        "sesame"
+      ],
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one plate of 2 cookies",
+      "order_unit_ko": "약과 2개 1접시",
+      "image": {
+        "path": "images/M28.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M28-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "약과 2개, 약과 2개 1접시, 대표 AI 연출 이미지",
+        "alt_text_en": "Yakgwa — Honey Cookies (2 pcs), one plate of 2 cookies, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M29",
+      "name": "쑥인절미 4개",
+      "name_en": "Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs)",
+      "category": "디저트",
+      "aliases": [
+        "쑥떡",
+        "인절미",
+        "ssuk injeolmi",
+        "mugwort rice cakes",
+        "Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs)",
+        "Ssuk Injeolmi"
+      ],
+      "description": "쑥을 넣은 찹쌀떡에 볶은 콩가루를 묻힌 인절미 네 개입니다. 쑥의 풀 향과 고소한 콩가루, 쫀득한 식감이 어우러집니다.",
+      "description_en": "Four chewy glutinous-rice cakes flavored with mugwort and coated in roasted soybean powder. Earthy and gently sweet. Contains soy.",
+      "ingredients": [
+        "찹쌀",
+        "쑥",
+        "볶은 콩가루(대두)",
+        "설탕",
+        "소금"
+      ],
+      "allergens": [
+        "대두"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 4
+      },
+      "tags": [
+        "부드럽고 쫀득함"
+      ],
+      "pairing_menu_ids": [
+        "M12",
+        "M26",
+        "M15"
+      ],
+      "reference_ids": [
+        "R6"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "부드럽고 쫀득함",
+      "texture_en": "Soft and chewy",
+      "cultural_note": "쑥은 풀 향을 내는 식물이고, 인절미는 떡의 한 종류입니다. 찹쌀의 영어 glutinous는 끈기를 뜻하며 글루텐 프리 인증을 뜻하지 않습니다.",
+      "cultural_note_en": "Mugwort gives the cakes an earthy herbal aroma. Glutinous describes sticky rice; it is not a gluten-free certification.",
+      "piece_count": 4,
+      "category_en": "Desserts",
+      "ingredients_en": [
+        "glutinous rice",
+        "mugwort",
+        "roasted soybean powder (soy)",
+        "sugar",
+        "salt"
+      ],
+      "allergens_en": [
+        "soy"
+      ],
+      "contains_alcohol": false,
+      "alcohol_status": "no_alcohol_added",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one plate of 4 rice cakes",
+      "order_unit_ko": "떡 4개 1접시",
+      "image": {
+        "path": "images/M29.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M29-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "쑥인절미 4개, 떡 4개 1접시, 대표 AI 연출 이미지",
+        "alt_text_en": "Ssuk Injeolmi — Mugwort Rice Cakes (4 pcs), one plate of 4 rice cakes, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M32",
+      "name": "유자 소주 하이볼",
+      "name_en": "Yuja Soju Highball",
+      "category": "주류",
+      "aliases": [
+        "유자 하이볼",
+        "유자 소주 하이볼",
+        "yuja soju highball",
+        "yuzu soju highball",
+        "Yuja Soju Highball",
+        "하이볼",
+        "highball"
+      ],
+      "description": "유자청과 소주에 탄산수를 더한 산뜻한 칵테일입니다. 가는 유자 껍질과 얼음이 함께 들어갑니다. 주류가 포함됩니다.",
+      "description_en": "A sparkling cocktail of soju, yuja citrus syrup and soda water, served over ice with fine yuja peel. Contains alcohol; approximately 5.3% ABV before ice melts.",
+      "ingredients": [
+        "소주(쌀 증류주·물, 20%)",
+        "유자청(유자·설탕)",
+        "탄산수",
+        "얼음"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 3,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "가벼운 탄산"
+      ],
+      "pairing_menu_ids": [],
+      "reference_ids": [
+        "R8"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "가벼운 탄산",
+      "texture_en": "Light and sparkling",
+      "cultural_note": "한국의 유자와 소주를 활용한 현대적인 창작 칵테일입니다. 전통 칵테일이나 전통주 인증 상품이라는 뜻은 아닙니다.",
+      "cultural_note_en": "A modern cocktail inspired by Korean yuja and soju. It is not presented as a historical cocktail or a certified traditional-liquor product.",
+      "piece_count": null,
+      "category_en": "Alcoholic Drinks",
+      "ingredients_en": [
+        "soju (rice distillate, water; 20% ABV)",
+        "yuja citrus preserves (yuja, sugar)",
+        "soda water",
+        "ice"
+      ],
+      "allergens_en": [],
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M16",
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔",
+      "image": {
+        "path": "images/M32.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M32-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "유자 소주 하이볼, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Yuja Soju Highball, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M33",
+      "name": "오미자 소주 스프리츠",
+      "name_en": "Omija Soju Spritz",
+      "category": "주류",
+      "aliases": [
+        "오미자 칵테일",
+        "오미자 스프리츠",
+        "omija soju spritz",
+        "omija cocktail",
+        "Omija Soju Spritz"
+      ],
+      "description": "오미자청과 소주에 탄산수를 더한 붉은빛 칵테일입니다. 새콤달콤한 맛과 가벼운 탄산을 즐길 수 있습니다. 주류가 포함됩니다.",
+      "description_en": "A ruby-red cocktail of soju, omija berry syrup and soda water over ice. Sweet-tart and sparkling. Contains alcohol; approximately 5.0% ABV before ice melts.",
+      "ingredients": [
+        "소주(쌀 증류주·물, 20%)",
+        "오미자청(오미자·설탕)",
+        "탄산수",
+        "얼음"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 4,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "산뜻한 탄산"
+      ],
+      "pairing_menu_ids": [],
+      "reference_ids": [
+        "R8"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "산뜻한 탄산",
+      "texture_en": "Tart and sparkling",
+      "cultural_note": "전통차에 쓰는 오미자를 활용한 현대적인 창작 칵테일입니다. 술 없는 오미자차와 별도 메뉴입니다.",
+      "cultural_note_en": "A modern cocktail using the berry found in omija tea. The tea is a separate menu item with no alcohol added.",
+      "piece_count": null,
+      "category_en": "Alcoholic Drinks",
+      "ingredients_en": [
+        "soju (rice distillate, water; 20% ABV)",
+        "omija berry syrup (omija berries, sugar)",
+        "soda water",
+        "ice"
+      ],
+      "allergens_en": [],
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M26",
+      "chili_heat_level": 0,
+      "order_unit_en": "one cup",
+      "order_unit_ko": "음료 1잔",
+      "image": {
+        "path": "images/M33.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M33-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "오미자 소주 스프리츠, ICED / 음료 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Omija Soju Spritz, ICED / one cup, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M34",
+      "name": "위스키 하이볼",
+      "name_en": "Whisky Highball",
+      "category": "주류",
+      "category_en": "Alcoholic Drinks",
+      "aliases": [
+        "하이볼",
+        "위스키 하이볼",
+        "whisky highball",
+        "whiskey highball",
+        "highball"
+      ],
+      "description": "위스키의 은은한 오크 향과 탄산을 즐기는 드라이한 하이볼입니다. 레몬 껍질을 곁들이며 얼음과 함께 제공합니다.",
+      "description_en": "A dry, sparkling whisky highball with gentle oak notes and a lemon peel garnish. Served over ice.",
+      "ingredients": [
+        "위스키(40% 설정)",
+        "탄산수",
+        "레몬 껍질",
+        "얼음"
+      ],
+      "ingredients_en": [
+        "Whisky (modeled 40% ABV)",
+        "Sparkling water",
+        "Lemon peel",
+        "Ice"
+      ],
+      "allergens": [],
+      "allergens_en": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "가볍고 청량함"
+      ],
+      "pairing_menu_ids": [
+        "M18"
+      ],
+      "reference_ids": [],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "가볍고 청량함",
+      "texture_en": "Light and sparkling",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "piece_count": null,
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M17",
+      "chili_heat_level": 0,
+      "order_unit_ko": "얼음 포함 300ml 잔",
+      "order_unit_en": "one 300 ml glass including ice",
+      "image": {
+        "path": "images/M34.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M34-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "위스키 하이볼, ICED / 얼음 포함 300ml 잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Whisky Highball, ICED / one 300 ml glass including ice, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M35",
+      "name": "에스프레소 마티니",
+      "name_en": "Espresso Martini",
+      "category": "주류",
+      "category_en": "Alcoholic Drinks",
+      "aliases": [
+        "에스프레소 마티니",
+        "커피 칵테일",
+        "espresso martini",
+        "coffee cocktail"
+      ],
+      "description": "에스프레소에 보드카와 커피 리큐르를 더한 진한 커피 칵테일입니다. 차갑게 흔든 뒤 얼음을 걸러 내고 커피 원두 3알을 올립니다. 알코올과 카페인이 모두 들어 있습니다.",
+      "description_en": "A rich coffee cocktail with espresso, vodka and coffee liqueur. Shaken, strained and served cold without ice, with three coffee beans. Contains both alcohol and caffeine.",
+      "ingredients": [
+        "보드카(40% 설정)",
+        "커피 리큐르(20% 설정; 커피·설탕·주정·물)",
+        "하우스 에스프레소",
+        "설탕 시럽",
+        "물(셰이킹 희석분)",
+        "장식용 커피 원두 3알"
+      ],
+      "ingredients_en": [
+        "Vodka (modeled 40% ABV)",
+        "Coffee liqueur (modeled 20% ABV; coffee, sugar, ethanol and water)",
+        "House espresso",
+        "Sugar syrup",
+        "Water from modeled shaking dilution",
+        "Three coffee beans for garnish"
+      ],
+      "allergens": [],
+      "allergens_en": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 3,
+        "acidity": 1,
+        "bitterness": 3,
+        "body": 4
+      },
+      "tags": [
+        "진한 커피와 부드러운 거품"
+      ],
+      "pairing_menu_ids": [
+        "M21"
+      ],
+      "reference_ids": [
+        "R11"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "진한 커피와 부드러운 거품",
+      "texture_en": "Rich coffee with a smooth foam",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "piece_count": null,
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M01",
+      "chili_heat_level": 0,
+      "order_unit_ko": "차갑게, 얼음 없이 120ml 1잔",
+      "order_unit_en": "one 120 ml cocktail, cold without ice",
+      "image": {
+        "path": "images/M35.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M35-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "에스프레소 마티니, ICED / 차갑게, 얼음 없이 120ml 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Espresso Martini, ICED / one 120 ml cocktail, cold without ice, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M36",
+      "name": "라거 맥주",
+      "name_en": "Lager Beer",
+      "category": "주류",
+      "category_en": "Alcoholic Drinks",
+      "aliases": [
+        "맥주",
+        "라거",
+        "라거 맥주",
+        "beer",
+        "lager",
+        "lager beer"
+      ],
+      "description": "깔끔한 몰트 풍미와 가벼운 쌉쌀함의 라거입니다. 330ml를 차갑게 잔에 담아 얼음 없이 제공합니다.",
+      "description_en": "A crisp lager with a light malt flavor and gentle bitterness. A 330 ml serving poured into a glass, chilled without ice.",
+      "ingredients": [
+        "물",
+        "보리 맥아",
+        "홉",
+        "효모"
+      ],
+      "ingredients_en": [
+        "Water",
+        "Barley malt",
+        "Hops",
+        "Yeast"
+      ],
+      "allergens": [
+        "보리"
+      ],
+      "allergens_en": [
+        "Barley"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 1,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "가볍고 탄산감 있음"
+      ],
+      "pairing_menu_ids": [
+        "M18"
+      ],
+      "reference_ids": [],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "가볍고 탄산감 있음",
+      "texture_en": "Light and carbonated",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "piece_count": null,
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M17",
+      "chili_heat_level": 0,
+      "order_unit_ko": "차갑게, 얼음 없이 330ml 1잔",
+      "order_unit_en": "one 330 ml glass, chilled without ice",
+      "image": {
+        "path": "images/M36.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M36-ICED-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "라거 맥주, ICED / 차갑게, 얼음 없이 330ml 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "Lager Beer, ICED / one 330 ml glass, chilled without ice, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M37",
+      "name": "하우스 레드와인",
+      "name_en": "House Red Wine",
+      "category": "주류",
+      "category_en": "Alcoholic Drinks",
+      "aliases": [
+        "레드와인",
+        "와인",
+        "하우스 와인",
+        "red wine",
+        "house red wine",
+        "wine"
+      ],
+      "description": "붉은 과일 향과 부드러운 떫은맛이 있는 드라이 레드와인입니다. 150ml 잔 단위로 제공하며 얼음이나 온도 변경 옵션은 없습니다.",
+      "description_en": "A dry red wine with red-fruit aromas and gentle tannins. Served by the 150 ml glass without ice; no temperature options.",
+      "ingredients": [
+        "적포도 발효액",
+        "아황산류(보존제)"
+      ],
+      "ingredients_en": [
+        "Fermented red grape juice",
+        "Sulfites (preservative)"
+      ],
+      "allergens": [
+        "아황산류"
+      ],
+      "allergens_en": [
+        "Sulfites"
+      ],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 1,
+        "acidity": 3,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "부드러운 바디와 가벼운 떫은맛"
+      ],
+      "pairing_menu_ids": [
+        "M20"
+      ],
+      "reference_ids": [],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "기본 레시피 기준",
+      "alias_attributes": [],
+      "texture": "부드러운 바디와 가벼운 떫은맛",
+      "texture_en": "Smooth body with gentle tannins",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "piece_count": null,
+      "contains_alcohol": true,
+      "alcohol_status": "contains_alcohol",
+      "requires_staff_age_check": true,
+      "alternative_no_alcohol_menu_id": "M26",
+      "chili_heat_level": 0,
+      "order_unit_ko": "얼음 없이 150ml 1잔",
+      "order_unit_en": "one 150 ml glass, without ice",
+      "image": {
+        "path": "images/M37.png",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M37-NA-ONE",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text": "하우스 레드와인, 얼음 없이 150ml 1잔, 대표 AI 연출 이미지",
+        "alt_text_en": "House Red Wine, one 150 ml glass, without ice, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      }
+    },
+    {
+      "id": "M23",
+      "name": "하우스 원두 200g",
+      "name_en": "House Blend Beans 200g",
+      "category": "원두",
+      "aliases": [
+        "하우스 원두",
+        "고소한 원두",
+        "House Blend Beans 200g"
+      ],
+      "description": "고소한 하우스 블렌드를 집에서도 즐길 수 있는 200g 홀빈 상품입니다. 분쇄하지 않은 원두로 제공합니다.",
+      "ingredients": [
+        "볶은 커피 원두"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 1,
+        "bitterness": 4,
+        "body": 4
+      },
+      "tags": [
+        "원두",
+        "홀빈"
+      ],
+      "pairing_menu_ids": [],
+      "reference_ids": [
+        "R2"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "원두를 추출했을 때의 향미 참고값",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M23.png",
+        "alt_text": "하우스 원두 200g, 200g 1봉, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M23-NA-PACK",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "House Blend Beans 200g, one 200 g bag, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A 200 g bag of the nutty house blend, supplied as whole beans. Grinding is not available.",
+      "category_en": "Whole Beans",
+      "ingredients_en": [
+        "roasted coffee beans"
+      ],
+      "allergens_en": [],
+      "texture": "홀빈 상품",
+      "texture_en": "Whole beans",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "not_applicable",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one 200 g bag",
+      "order_unit_ko": "200g 1봉"
+    },
+    {
+      "id": "M24",
+      "name": "에티오피아 원두 200g",
+      "name_en": "Ethiopia Beans 200g",
+      "category": "원두",
+      "aliases": [
+        "싱글오리진 원두",
+        "산미 있는 원두",
+        "Ethiopia Beans 200g"
+      ],
+      "description": "에티오피아 필터커피에 사용하는 원두의 200g 홀빈 상품입니다. 분쇄하지 않은 원두로 제공합니다.",
+      "ingredients": [
+        "볶은 커피 원두"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 4,
+        "bitterness": 2,
+        "body": 2
+      },
+      "tags": [
+        "원두",
+        "홀빈"
+      ],
+      "pairing_menu_ids": [],
+      "reference_ids": [
+        "R3",
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "원두를 추출했을 때의 향미 참고값",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M24.png",
+        "alt_text": "에티오피아 원두 200g, 200g 1봉, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M24-NA-PACK",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Ethiopia Beans 200g, one 200 g bag, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A 200 g bag of the beans used for our Ethiopian filter coffee, supplied as whole beans.",
+      "category_en": "Whole Beans",
+      "ingredients_en": [
+        "roasted coffee beans"
+      ],
+      "allergens_en": [],
+      "texture": "홀빈 상품",
+      "texture_en": "Whole beans",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "not_applicable",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one 200 g bag",
+      "order_unit_ko": "200g 1봉"
+    },
+    {
+      "id": "M25",
+      "name": "디카페인 원두 200g",
+      "name_en": "Decaf Beans 200g",
+      "category": "원두",
+      "aliases": [
+        "디카페인 원두",
+        "콜롬비아 원두",
+        "Decaf Beans 200g"
+      ],
+      "description": "디카페인 커피에 사용하는 콜롬비아 원두의 200g 홀빈 상품입니다. 분쇄하지 않은 원두로 제공합니다.",
+      "ingredients": [
+        "볶은 디카페인 커피 원두"
+      ],
+      "allergens": [],
+      "source_ids": [],
+      "taste": {
+        "sweetness": 2,
+        "acidity": 2,
+        "bitterness": 2,
+        "body": 3
+      },
+      "tags": [
+        "원두",
+        "홀빈"
+      ],
+      "pairing_menu_ids": [],
+      "reference_ids": [
+        "R4",
+        "R5"
+      ],
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "taste_basis": "원두를 추출했을 때의 향미 참고값",
+      "alias_attributes": [],
+      "image": {
+        "path": "images/M25.png",
+        "alt_text": "디카페인 원두 200g, 200g 1봉, 대표 AI 연출 이미지",
+        "kind": "ai_generated",
+        "is_representative": true,
+        "representative_variant_id": "M25-NA-PACK",
+        "width": 1254,
+        "height": 1254,
+        "display_notice": "AI 연출 이미지 · 선택한 온도·크기·옵션에 따라 모습이 달라질 수 있습니다.",
+        "alt_text_en": "Decaf Beans 200g, one 200 g bag, representative AI-generated image",
+        "display_notice_en": "AI-generated representative image. Temperature, size and options may look different."
+      },
+      "description_en": "A 200 g bag of the Colombian beans used for our decaf coffee, supplied as whole beans.",
+      "category_en": "Whole Beans",
+      "ingredients_en": [
+        "roasted decaf coffee beans"
+      ],
+      "allergens_en": [],
+      "texture": "홀빈 상품",
+      "texture_en": "Whole beans",
+      "cultural_note": "",
+      "cultural_note_en": "",
+      "contains_alcohol": false,
+      "alcohol_status": "not_applicable",
+      "requires_staff_age_check": false,
+      "alternative_no_alcohol_menu_id": null,
+      "chili_heat_level": 0,
+      "order_unit_en": "one 200 g bag",
+      "order_unit_ko": "200g 1봉"
+    }
+  ],
+  "variants": [
+    {
+      "id": "M01-HOT-ONE",
+      "menu_id": "M01",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 60,
+      "serving_unit": "ml",
+      "price_krw": 3500,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M02-HOT-S",
+      "menu_id": "M02",
+      "temperature": "HOT",
+      "size": "S",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 4500,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M02-HOT-L",
+      "menu_id": "M02",
+      "temperature": "HOT",
+      "size": "L",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 1.5,
+      "protein_g": 0.8,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 8,
+      "kcal": 9,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M02-ICED-S",
+      "menu_id": "M02",
+      "temperature": "ICED",
+      "size": "S",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 4500,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M02-ICED-L",
+      "menu_id": "M02",
+      "temperature": "ICED",
+      "size": "L",
+      "serving_amount": 500,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 1.5,
+      "protein_g": 0.8,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 8,
+      "kcal": 9,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M03-HOT-S",
+      "menu_id": "M03",
+      "temperature": "HOT",
+      "size": "S",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 10,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 10,
+      "sodium_mg": 90,
+      "kcal": 131,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M03-HOT-L",
+      "menu_id": "M03",
+      "temperature": "HOT",
+      "size": "L",
+      "serving_amount": 340,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 15,
+      "protein_g": 10,
+      "fat_g": 10,
+      "sugars_g": 15,
+      "sodium_mg": 135,
+      "kcal": 190,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M03-ICED-S",
+      "menu_id": "M03",
+      "temperature": "ICED",
+      "size": "S",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 10,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 10,
+      "sodium_mg": 90,
+      "kcal": 131,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M03-ICED-L",
+      "menu_id": "M03",
+      "temperature": "ICED",
+      "size": "L",
+      "serving_amount": 460,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 15,
+      "protein_g": 10,
+      "fat_g": 10,
+      "sugars_g": 15,
+      "sodium_mg": 135,
+      "kcal": 190,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M04-HOT-ONE",
+      "menu_id": "M04",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 180,
+      "serving_unit": "ml",
+      "price_krw": 5200,
+      "carbs_g": 7,
+      "protein_g": 5,
+      "fat_g": 5,
+      "sugars_g": 7,
+      "sodium_mg": 65,
+      "kcal": 93,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M05-HOT-ONE",
+      "menu_id": "M05",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 180,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 7,
+      "protein_g": 5,
+      "fat_g": 5,
+      "sugars_g": 7,
+      "sodium_mg": 65,
+      "kcal": 93,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M06-HOT-S",
+      "menu_id": "M06",
+      "temperature": "HOT",
+      "size": "S",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 25,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 24,
+      "sodium_mg": 90,
+      "kcal": 191,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M06-HOT-L",
+      "menu_id": "M06",
+      "temperature": "HOT",
+      "size": "L",
+      "serving_amount": 340,
+      "serving_unit": "ml",
+      "price_krw": 7000,
+      "carbs_g": 30,
+      "protein_g": 10,
+      "fat_g": 10,
+      "sugars_g": 29,
+      "sodium_mg": 135,
+      "kcal": 250,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M06-ICED-S",
+      "menu_id": "M06",
+      "temperature": "ICED",
+      "size": "S",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 25,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 24,
+      "sodium_mg": 90,
+      "kcal": 191,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M06-ICED-L",
+      "menu_id": "M06",
+      "temperature": "ICED",
+      "size": "L",
+      "serving_amount": 460,
+      "serving_unit": "ml",
+      "price_krw": 7000,
+      "carbs_g": 30,
+      "protein_g": 10,
+      "fat_g": 10,
+      "sugars_g": 29,
+      "sodium_mg": 135,
+      "kcal": 250,
+      "espresso_shots": 3,
+      "caffeine_mg": 180,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M07-ICED-ONE",
+      "menu_id": "M07",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 26,
+      "protein_g": 5,
+      "fat_g": 17,
+      "sugars_g": 24,
+      "sodium_mg": 75,
+      "kcal": 277,
+      "espresso_shots": 2,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M08-HOT-ONE",
+      "menu_id": "M08",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6200,
+      "carbs_g": 30,
+      "protein_g": 7,
+      "fat_g": 9,
+      "sugars_g": 26,
+      "sodium_mg": 100,
+      "kcal": 229,
+      "espresso_shots": 2,
+      "caffeine_mg": 132,
+      "caffeine_non_coffee_mg": 12,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M08-ICED-ONE",
+      "menu_id": "M08",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 6200,
+      "carbs_g": 30,
+      "protein_g": 7,
+      "fat_g": 9,
+      "sugars_g": 26,
+      "sodium_mg": 100,
+      "kcal": 229,
+      "espresso_shots": 2,
+      "caffeine_mg": 132,
+      "caffeine_non_coffee_mg": 12,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M09-ICED-ONE",
+      "menu_id": "M09",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 5200,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 0,
+      "caffeine_mg": 150,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M10-ICED-ONE",
+      "menu_id": "M10",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 10,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 10,
+      "sodium_mg": 90,
+      "kcal": 131,
+      "espresso_shots": 0,
+      "caffeine_mg": 120,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M11-HOT-ONE",
+      "menu_id": "M11",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 0,
+      "caffeine_mg": 140,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B02",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M11-ICED-ONE",
+      "menu_id": "M11",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 0,
+      "caffeine_mg": 140,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B02",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M12-HOT-ONE",
+      "menu_id": "M12",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6800,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 0,
+      "caffeine_mg": 8,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B03",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M12-ICED-ONE",
+      "menu_id": "M12",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 6800,
+      "carbs_g": 1,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 6,
+      "espresso_shots": 0,
+      "caffeine_mg": 8,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B03",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M13-HOT-ONE",
+      "menu_id": "M13",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 25,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 22,
+      "sodium_mg": 90,
+      "kcal": 191,
+      "espresso_shots": 0,
+      "caffeine_mg": 70,
+      "caffeine_non_coffee_mg": 70,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M13-ICED-ONE",
+      "menu_id": "M13",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 25,
+      "protein_g": 7,
+      "fat_g": 7,
+      "sugars_g": 22,
+      "sodium_mg": 90,
+      "kcal": 191,
+      "espresso_shots": 0,
+      "caffeine_mg": 70,
+      "caffeine_non_coffee_mg": 70,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M14-HOT-ONE",
+      "menu_id": "M14",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 5800,
+      "carbs_g": 30,
+      "protein_g": 7,
+      "fat_g": 9,
+      "sugars_g": 26,
+      "sodium_mg": 100,
+      "kcal": 229,
+      "espresso_shots": 0,
+      "caffeine_mg": 12,
+      "caffeine_non_coffee_mg": 12,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M14-ICED-ONE",
+      "menu_id": "M14",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 5800,
+      "carbs_g": 30,
+      "protein_g": 7,
+      "fat_g": 9,
+      "sugars_g": 26,
+      "sodium_mg": 100,
+      "kcal": 229,
+      "espresso_shots": 0,
+      "caffeine_mg": 12,
+      "caffeine_non_coffee_mg": 12,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M15-HOT-ONE",
+      "menu_id": "M15",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 240,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 24,
+      "protein_g": 6,
+      "fat_g": 6,
+      "sugars_g": 22,
+      "sodium_mg": 80,
+      "kcal": 174,
+      "espresso_shots": 0,
+      "caffeine_mg": 45,
+      "caffeine_non_coffee_mg": 45,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M15-ICED-ONE",
+      "menu_id": "M15",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 360,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 24,
+      "protein_g": 6,
+      "fat_g": 6,
+      "sugars_g": 22,
+      "sodium_mg": 80,
+      "kcal": 174,
+      "espresso_shots": 0,
+      "caffeine_mg": 45,
+      "caffeine_non_coffee_mg": 45,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M16-HOT-ONE",
+      "menu_id": "M16",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 30,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 28,
+      "sodium_mg": 5,
+      "kcal": 120,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M16-ICED-ONE",
+      "menu_id": "M16",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 5500,
+      "carbs_g": 30,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 28,
+      "sodium_mg": 5,
+      "kcal": 120,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M17-HOT-ONE",
+      "menu_id": "M17",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 5000,
+      "carbs_g": 0.5,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 3,
+      "kcal": 2,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M17-ICED-ONE",
+      "menu_id": "M17",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 5000,
+      "carbs_g": 0.5,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 3,
+      "kcal": 2,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M26-HOT-ONE",
+      "menu_id": "M26",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 28,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 26,
+      "sodium_mg": 5,
+      "kcal": 112,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M26-ICED-ONE",
+      "menu_id": "M26",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 6000,
+      "carbs_g": 28,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 26,
+      "sodium_mg": 5,
+      "kcal": 112,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M27-HOT-ONE",
+      "menu_id": "M27",
+      "temperature": "HOT",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 32,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 28,
+      "sodium_mg": 10,
+      "kcal": 130,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M27-ICED-ONE",
+      "menu_id": "M27",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 400,
+      "serving_unit": "ml",
+      "price_krw": 6500,
+      "carbs_g": 32,
+      "protein_g": 0.5,
+      "fat_g": 0,
+      "sugars_g": 28,
+      "sodium_mg": 10,
+      "kcal": 130,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M18-NA-ONE",
+      "menu_id": "M18",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 75,
+      "serving_unit": "g",
+      "price_krw": 3800,
+      "carbs_g": 32,
+      "protein_g": 6,
+      "fat_g": 13,
+      "sugars_g": 4,
+      "sodium_mg": 420,
+      "kcal": 269,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M20-NA-ONE",
+      "menu_id": "M20",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 110,
+      "serving_unit": "g",
+      "price_krw": 6800,
+      "carbs_g": 25,
+      "protein_g": 7,
+      "fat_g": 25,
+      "sugars_g": 22,
+      "sodium_mg": 260,
+      "kcal": 353,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M21-NA-ONE",
+      "menu_id": "M21",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 100,
+      "serving_unit": "g",
+      "price_krw": 6500,
+      "carbs_g": 28,
+      "protein_g": 5,
+      "fat_g": 18,
+      "sugars_g": 22,
+      "sodium_mg": 100,
+      "kcal": 294,
+      "espresso_shots": 0,
+      "caffeine_mg": 20,
+      "caffeine_non_coffee_mg": 20,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M28-NA-ONE",
+      "menu_id": "M28",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 50,
+      "serving_unit": "g",
+      "price_krw": 4500,
+      "carbs_g": 32,
+      "protein_g": 2,
+      "fat_g": 10,
+      "sugars_g": 14,
+      "sodium_mg": 60,
+      "kcal": 226,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M29-NA-ONE",
+      "menu_id": "M29",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 80,
+      "serving_unit": "g",
+      "price_krw": 5500,
+      "carbs_g": 40,
+      "protein_g": 5,
+      "fat_g": 2,
+      "sugars_g": 6,
+      "sodium_mg": 60,
+      "kcal": 198,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 0,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M32-ICED-ONE",
+      "menu_id": "M32",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 9500,
+      "carbs_g": 18,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 17,
+      "sodium_mg": 8,
+      "kcal": 127,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 7.89,
+      "abv_percent": 5.3,
+      "liquid_volume_ml": 190,
+      "spirit_volume_ml": 50,
+      "spirit_abv_percent": 20,
+      "recipe_volume_note": "소주 50ml + 유자청 30ml + 탄산수 110ml; 얼음 별도",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "소주",
+          "ingredient_en": "Soju",
+          "volume_ml": 50,
+          "abv_percent": 20
+        }
+      ]
+    },
+    {
+      "id": "M33-ICED-ONE",
+      "menu_id": "M33",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 10000,
+      "carbs_g": 20,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 19,
+      "sodium_mg": 8,
+      "kcal": 135,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 7.89,
+      "abv_percent": 5,
+      "liquid_volume_ml": 200,
+      "spirit_volume_ml": 50,
+      "spirit_abv_percent": 20,
+      "recipe_volume_note": "소주 50ml + 오미자청 40ml + 탄산수 110ml; 얼음 별도",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "소주",
+          "ingredient_en": "Soju",
+          "volume_ml": 50,
+          "abv_percent": 20
+        }
+      ]
+    },
+    {
+      "id": "M34-ICED-ONE",
+      "menu_id": "M34",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 300,
+      "serving_unit": "ml",
+      "price_krw": 9000,
+      "carbs_g": 0.5,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 0,
+      "sodium_mg": 5,
+      "kcal": 101,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 14.2,
+      "abv_percent": 10,
+      "liquid_volume_ml": 180,
+      "spirit_volume_ml": 45,
+      "spirit_abv_percent": 40,
+      "recipe_volume_note": "위스키 45ml(40%)+탄산수 135ml=180ml. 레몬 껍질·얼음 별도. 추가 얼음 희석 전 계산",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "위스키",
+          "ingredient_en": "Whisky",
+          "volume_ml": 45,
+          "abv_percent": 40
+        }
+      ]
+    },
+    {
+      "id": "M35-ICED-ONE",
+      "menu_id": "M35",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 120,
+      "serving_unit": "ml",
+      "price_krw": 12000,
+      "carbs_g": 18,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 17,
+      "sodium_mg": 8,
+      "kcal": 182,
+      "espresso_shots": 1,
+      "caffeine_mg": 70,
+      "caffeine_non_coffee_mg": 10,
+      "default_bean_id": "B01",
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 15.78,
+      "abv_percent": 16.7,
+      "liquid_volume_ml": 120,
+      "spirit_volume_ml": 40,
+      "spirit_abv_percent": 40,
+      "recipe_volume_note": "보드카 40ml(40%)+커피 리큐르 20ml(20%)+에스프레소 30ml+시럽 10ml+셰이킹 희석수 20ml=120ml. 얼음을 걸러 제공. 희석량은 가상값",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "보드카",
+          "ingredient_en": "Vodka",
+          "volume_ml": 40,
+          "abv_percent": 40
+        },
+        {
+          "ingredient_ko": "커피 리큐르",
+          "ingredient_en": "Coffee liqueur",
+          "volume_ml": 20,
+          "abv_percent": 20
+        }
+      ]
+    },
+    {
+      "id": "M36-ICED-ONE",
+      "menu_id": "M36",
+      "temperature": "ICED",
+      "size": "ONE",
+      "serving_amount": 330,
+      "serving_unit": "ml",
+      "price_krw": 7000,
+      "carbs_g": 11,
+      "protein_g": 1,
+      "fat_g": 0,
+      "sugars_g": 0.5,
+      "sodium_mg": 13,
+      "kcal": 139,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 13.02,
+      "abv_percent": 5,
+      "liquid_volume_ml": 330,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": "5.0%로 설정한 가상 라거 330ml. 얼음·다른 재료·희석수 없음",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "라거 맥주",
+          "ingredient_en": "Lager beer",
+          "volume_ml": 330,
+          "abv_percent": 5
+        }
+      ]
+    },
+    {
+      "id": "M37-NA-ONE",
+      "menu_id": "M37",
+      "temperature": "NA",
+      "size": "ONE",
+      "serving_amount": 150,
+      "serving_unit": "ml",
+      "price_krw": 9000,
+      "carbs_g": 4.5,
+      "protein_g": 0,
+      "fat_g": 0,
+      "sugars_g": 1,
+      "sodium_mg": 8,
+      "kcal": 126,
+      "espresso_shots": 0,
+      "caffeine_mg": 0,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": null,
+      "nutrition_basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "ethanol_g": 15.39,
+      "abv_percent": 13,
+      "liquid_volume_ml": 150,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": "13.0%로 설정한 가상 레드와인 150ml. 얼음·다른 재료·희석수 없음",
+      "alcohol_components": [
+        {
+          "ingredient_ko": "레드와인",
+          "ingredient_en": "Red wine",
+          "volume_ml": 150,
+          "abv_percent": 13
+        }
+      ]
+    },
+    {
+      "id": "M23-NA-PACK",
+      "menu_id": "M23",
+      "temperature": "NA",
+      "size": "PACK",
+      "serving_amount": 200,
+      "serving_unit": "g",
+      "price_krw": 16000,
+      "carbs_g": null,
+      "protein_g": null,
+      "fat_g": null,
+      "sugars_g": null,
+      "sodium_mg": null,
+      "kcal": null,
+      "espresso_shots": 0,
+      "caffeine_mg": null,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B01",
+      "nutrition_basis": "음용 전 원두 상품. 1잔 영양값 해당 없음",
+      "ethanol_g": null,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M24-NA-PACK",
+      "menu_id": "M24",
+      "temperature": "NA",
+      "size": "PACK",
+      "serving_amount": 200,
+      "serving_unit": "g",
+      "price_krw": 19000,
+      "carbs_g": null,
+      "protein_g": null,
+      "fat_g": null,
+      "sugars_g": null,
+      "sodium_mg": null,
+      "kcal": null,
+      "espresso_shots": 0,
+      "caffeine_mg": null,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B02",
+      "nutrition_basis": "음용 전 원두 상품. 1잔 영양값 해당 없음",
+      "ethanol_g": null,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    },
+    {
+      "id": "M25-NA-PACK",
+      "menu_id": "M25",
+      "temperature": "NA",
+      "size": "PACK",
+      "serving_amount": 200,
+      "serving_unit": "g",
+      "price_krw": 18000,
+      "carbs_g": null,
+      "protein_g": null,
+      "fat_g": null,
+      "sugars_g": null,
+      "sodium_mg": null,
+      "kcal": null,
+      "espresso_shots": 0,
+      "caffeine_mg": null,
+      "caffeine_non_coffee_mg": 0,
+      "default_bean_id": "B03",
+      "nutrition_basis": "음용 전 원두 상품. 1잔 영양값 해당 없음",
+      "ethanol_g": null,
+      "abv_percent": null,
+      "liquid_volume_ml": null,
+      "spirit_volume_ml": null,
+      "spirit_abv_percent": null,
+      "recipe_volume_note": null,
+      "alcohol_components": []
+    }
+  ],
+  "beans": [
+    {
+      "id": "B01",
+      "name": "모키 하우스 블렌드",
+      "origin": "브라질 70%, 콜롬비아 30%",
+      "process": "내추럴·워시드 혼합",
+      "roast": "미디엄 다크",
+      "notes": [
+        "다크초콜릿",
+        "구운 견과"
+      ],
+      "acidity": 1,
+      "bitterness": 4,
+      "body": 4,
+      "decaf": false,
+      "caffeine_per_shot_mg": 60,
+      "retail_menu_id": "M23",
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "name_en": "Moki House Blend",
+      "origin_en": "Brazil 70%, Colombia 30%",
+      "process_en": "Natural and washed blend",
+      "roast_en": "Medium-dark",
+      "notes_en": [
+        "dark chocolate",
+        "roasted nuts"
+      ]
+    },
+    {
+      "id": "B02",
+      "name": "모키 에티오피아 싱글오리진",
+      "origin": "에티오피아",
+      "process": "워시드",
+      "roast": "미디엄 라이트",
+      "notes": [
+        "감귤",
+        "꽃",
+        "홍차"
+      ],
+      "acidity": 4,
+      "bitterness": 2,
+      "body": 2,
+      "decaf": false,
+      "caffeine_per_shot_mg": 60,
+      "retail_menu_id": "M24",
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "name_en": "Moki Ethiopian Single Origin",
+      "origin_en": "Ethiopia",
+      "process_en": "Washed",
+      "roast_en": "Medium-light",
+      "notes_en": [
+        "citrus",
+        "flowers",
+        "black tea"
+      ]
+    },
+    {
+      "id": "B03",
+      "name": "모키 콜롬비아 디카페인",
+      "origin": "콜롬비아",
+      "process": "워시드 후 EA 디카페인 공정",
+      "roast": "미디엄",
+      "notes": [
+        "캐러멜",
+        "코코아"
+      ],
+      "acidity": 2,
+      "bitterness": 2,
+      "body": 3,
+      "decaf": true,
+      "caffeine_per_shot_mg": 4,
+      "retail_menu_id": "M25",
+      "basis": "가상 매장 시연용 설정. 실측·실제 브랜드 영양정보 아님",
+      "name_en": "Moki Colombian Decaf",
+      "origin_en": "Colombia",
+      "process_en": "Washed, then EA decaffeination",
+      "roast_en": "Medium",
+      "notes_en": [
+        "caramel",
+        "cocoa"
+      ]
+    }
+  ],
+  "option_rules": [
+    {
+      "id": "bean",
+      "name": "원두 선택",
+      "menus": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08"
+      ],
+      "type": "choice",
+      "choices": [
+        {
+          "value": "B01",
+          "name": "하우스",
+          "price_krw": 0,
+          "name_en": "House blend"
+        },
+        {
+          "value": "B02",
+          "name": "에티오피아 싱글오리진",
+          "price_krw": 1000,
+          "name_en": "Ethiopian single origin"
+        },
+        {
+          "value": "B03",
+          "name": "콜롬비아 디카페인",
+          "price_krw": 700,
+          "name_en": "Colombian decaf"
+        }
+      ],
+      "default": "B01",
+      "restriction": "필터커피와 콜드브루는 원두가 고정되어 있다. 원두 선택은 1종만 가능하며 추가금은 한 잔 기준이다.",
+      "effect": "선택 원두의 샷당 카페인 × (기본 샷 + 추가 샷) + 커피 외 카페인. 모카의 카카오 카페인은 유지",
+      "invalidates_nutrition": true,
+      "name_en": "Coffee bean",
+      "restriction_en": "Choose one bean. Surcharge is per cup. Filter coffee and cold brew use fixed beans.",
+      "effect_en": "Caffeine = selected bean caffeine per shot × total shots + caffeine from other sources."
+    },
+    {
+      "id": "extra_shots",
+      "name": "샷 추가",
+      "menus": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08"
+      ],
+      "type": "integer",
+      "min": 0,
+      "max": 2,
+      "unit_price_krw": 600,
+      "default": 0,
+      "restriction": "콜드브루·필터·논커피·디저트 불가. 추가 샷도 선택한 원두 사용",
+      "effect": "추가금과 카페인을 횟수만큼 반영",
+      "invalidates_nutrition": true,
+      "name_en": "Extra espresso shots",
+      "restriction_en": "0 to 2 extra shots, for supported espresso drinks only.",
+      "effect_en": "600 KRW per extra shot; the selected bean is also used for extra shots."
+    },
+    {
+      "id": "milk",
+      "allergen_replacements": {
+        "dairy": [
+          "우유"
+        ],
+        "lowfat": [
+          "우유"
+        ],
+        "oat": [
+          "귀리"
+        ],
+        "soy": [
+          "대두"
+        ]
+      },
+      "name": "우유 변경",
+      "menus": [
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M10",
+        "M13",
+        "M15"
+      ],
+      "type": "choice",
+      "choices": [
+        {
+          "value": "dairy",
+          "name": "일반 우유",
+          "price_krw": 0,
+          "name_en": "Regular milk"
+        },
+        {
+          "value": "lowfat",
+          "name": "저지방 우유",
+          "price_krw": 0,
+          "name_en": "Low-fat milk"
+        },
+        {
+          "value": "oat",
+          "name": "오트 음료",
+          "price_krw": 500,
+          "name_en": "Oat drink"
+        },
+        {
+          "value": "soy",
+          "name": "두유",
+          "price_krw": 500,
+          "name_en": "Soy drink"
+        }
+      ],
+      "default": "dairy",
+      "restriction": "크림 라떼·모카·초코는 고정 레시피로 우유 변경 미지원. 우유 없음 요청은 별도 비유제품 메뉴 제안",
+      "effect": "원재료 중 우유만 선택한 음료로 바꾸고, 알레르기 목록에서도 우유만 해당 재료로 교체한다. 저지방: 우유 유지, 오트: 귀리, 두유: 대두. 다른 성분과 공용기구 안내는 유지한다.",
+      "ingredient_replacements": {
+        "dairy": "우유",
+        "lowfat": "저지방 우유",
+        "oat": "귀리 음료(귀리·물·식물성유)",
+        "soy": "두유(대두·물)"
+      },
+      "replaces_ingredient": "우유",
+      "replaces_allergen": "우유",
+      "invalidates_nutrition": true,
+      "name_en": "Milk choice",
+      "restriction_en": "Available only for listed menus. Cream latte, mocha and chocolate have fixed recipes.",
+      "effect_en": "Replace only milk and its allergen entry. Retain other ingredients and the shared-equipment notice.",
+      "allergen_replacements_en": {
+        "dairy": [
+          "milk"
+        ],
+        "lowfat": [
+          "milk"
+        ],
+        "oat": [
+          "oat"
+        ],
+        "soy": [
+          "soy"
+        ]
+      }
+    },
+    {
+      "id": "sweetness",
+      "name": "시럽·유자청 양",
+      "menus": [
+        "M06",
+        "M16"
+      ],
+      "type": "choice",
+      "choices": [
+        {
+          "value": "normal",
+          "name": "기본",
+          "price_krw": 0,
+          "name_en": "Regular"
+        },
+        {
+          "value": "less",
+          "name": "절반",
+          "price_krw": 0,
+          "name_en": "Half syrup"
+        }
+      ],
+      "default": "normal",
+      "restriction": "바닐라 시럽 또는 유자청을 절반으로 줄인다. 단맛과 당류가 정확히 절반이 되거나 무당·제로가 되는 것은 아니다. 다른 음료는 고정 레시피다.",
+      "effect": "열량·당류의 변경 후 정확값 미산정. 기본 레시피 영양값을 변경 후 수치로 재사용하지 않음",
+      "invalidates_nutrition": true,
+      "name_en": "Syrup amount",
+      "restriction_en": "Only vanilla latte and yuja tea. Half syrup does not mean half of all sugar.",
+      "effect_en": "Modified nutrition is not calculated."
+    },
+    {
+      "id": "ice",
+      "required_temperature": "ICED",
+      "name": "얼음 양",
+      "menus": [
+        "M02",
+        "M03",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M11",
+        "M12",
+        "M13",
+        "M14",
+        "M15",
+        "M16",
+        "M17",
+        "M26",
+        "M27"
+      ],
+      "type": "choice",
+      "choices": [
+        {
+          "value": "normal",
+          "name": "기본",
+          "price_krw": 0,
+          "name_en": "Regular ice"
+        },
+        {
+          "value": "less",
+          "name": "적게",
+          "price_krw": 0,
+          "name_en": "Less ice"
+        }
+      ],
+      "default": "normal",
+      "restriction": "ICED 주문 단위의 적용 메뉴만 허용. 모든 주류·얼음 없음·얼음 종류 변경은 미지원",
+      "effect": "얼음을 줄여도 우유·물·커피를 더 채우지 않는다. 컵에 담기는 전체 부피만 줄어들며, 기본 레시피의 주요 영양과 카페인은 유지한다.",
+      "invalidates_nutrition": false,
+      "name_en": "Ice amount",
+      "restriction_en": "ICED variants of listed non-alcohol menus only. Alcoholic drinks have fixed serving conditions.",
+      "effect_en": "Less ice does not add more drink. Base nutrition stays the same."
+    },
+    {
+      "id": "warming",
+      "name": "데우기",
+      "menus": [
+        "M18"
+      ],
+      "type": "choice",
+      "choices": [
+        {
+          "value": "room",
+          "name": "기본",
+          "price_krw": 0,
+          "name_en": "As served"
+        },
+        {
+          "value": "warm",
+          "name": "따뜻하게",
+          "price_krw": 0,
+          "name_en": "Warmed"
+        }
+      ],
+      "default": "room",
+      "restriction": "버터 소금빵만 선택 가능. 다른 디저트는 고정 제공 방식",
+      "effect": "추가 요금 없음. 기본 레시피의 주요 영양값은 유지한다.",
+      "invalidates_nutrition": false,
+      "name_en": "Warm the bread",
+      "restriction_en": "Only the butter salt bread. Other food has fixed serving conditions.",
+      "effect_en": "No surcharge; base nutrition stays the same."
+    }
+  ],
+  "store_policies": [
+    {
+      "id": "P01",
+      "topic": "컨셉",
+      "status": "시연 설정",
+      "text": "취향과 언어에 맞춰 커피·차·디저트·주류를 선택하는 테이블 주문 커피바. 한국 재료 메뉴도 일반 분류에 통합한다. 언어와 취향은 따로 확인한다. 실제 브랜드와 제휴하지 않은 가상 매장이다.",
+      "text_en": "Moki is a fictional table-order coffee bar offering coffee, tea, desserts and alcoholic drinks. Korean ingredients appear within the regular categories. Ask language and taste preferences separately. No brand affiliation."
+    },
+    {
+      "id": "P02",
+      "topic": "좌석",
+      "status": "개발 연동 규칙",
+      "text": "시연용 좌석 번호는 1~12다. 설정된 좌석을 화면에서 확인하고 주문에 table_id로 저장한다. 번호는 정수로 검증하며, 이 데이터만으로 기기별 자동 연결이 구현되는 것은 아니다.",
+      "text_en": "Demo tables are integers 1 through 12. Confirm the displayed table before saving table_id. This dataset does not bind devices to tables."
+    },
+    {
+      "id": "P03",
+      "topic": "온도·크기",
+      "status": "검증 규칙",
+      "text": "목록에 있는 온도·크기만 지원한다. ONE은 단일 크기, PACK은 200g 홀빈이다. ICED는 차갑게 제공한다는 코드이며 M35 마티니·M36 맥주는 얼음이 없다. M37 와인의 NA는 온도 선택이 없다는 뜻이다. 미지원 선택은 자동 대체하지 않는다. 하이볼만 요청하면 유자 소주 하이볼과 위스키 하이볼 중 선택을 확인한다.",
+      "text_en": "Use only listed variants. ONE is one size; PACK is a 200 g whole-bean bag. ICED means served cold, not necessarily over ice: M35 and M36 are served without ice. NA for M37 means no temperature choice. Ask before substituting unsupported choices. For a request for just a highball, ask the guest to choose yuja soju or whisky."
+    },
+    {
+      "id": "P04",
+      "topic": "이용·수령",
+      "status": "시연 설정",
+      "text": "매장 이용·좌석 수령이 기본이다. 비주류는 요청 시 포장한다. 모든 주류는 매장 이용만 가능하다. 포장비·개인컵 할인은 시연에서 제공하지 않는다.",
+      "text_en": "Dine-in table service is the default. Non-alcohol items may be packed on request. All alcoholic drinks are dine-in only. No packaging surcharge or reusable-cup discount in the demo."
+    },
+    {
+      "id": "P05",
+      "topic": "주문 확정",
+      "status": "개발 연동 규칙",
+      "text": "좌석·품목·온도·크기·옵션·수량·합계를 확인한 뒤 시연 주문을 확정한다. 주류가 있으면 해당 손님에 대한 직원 확인 전에는 pending_staff_check 상태로 둔다. 실제 결제·접수 성공을 주장하지 않는다.",
+      "text_en": "Confirm table, items, temperature, size, options, quantities and total. An alcohol order stays pending_staff_check until staff verify the intended drinker. Never claim a real payment or venue receipt succeeded."
+    },
+    {
+      "id": "P06",
+      "topic": "추가 주문",
+      "status": "개발 연동 규칙",
+      "text": "확정 뒤 추가 주문은 같은 좌석에 연결된 새 주문으로 만든다. 확정된 과거 주문을 덮어쓰지 않는다. 이전 주문 다시 담기도 새 장바구니에서 확인 후 확정한다.",
+      "text_en": "Additional orders are new orders for the same table. Never overwrite a confirmed order. Reordering uses a new cart and requires confirmation."
+    },
+    {
+      "id": "P07",
+      "topic": "미지원",
+      "status": "미지원 안내",
+      "text": "실제 결제, 분할 결제, 영수증 발급, 포인트 적립, 쿠폰·기프티콘, 예약, 실시간 재고·제조 진행·대기시간 연동은 미지원이다. 지원된다고 답하지 않는다.",
+      "text_en": "Real payments, split payments, receipts, points, coupons, reservations, live stock and preparation-time integration are not implemented."
+    },
+    {
+      "id": "P08",
+      "topic": "도움",
+      "status": "안내만 제공",
+      "text": "상담은 바리스타에게 직접 문의하도록 안내한다. 직원 호출 API가 구현되지 않았다면 호출을 보냈다고 답하지 않는다. 언어·화면 접근성 기능도 구현 상태를 따라 설명한다.",
+      "text_en": "Ask the barista directly for help. Do not claim a staff-call API or accessibility function has run unless implemented."
+    },
+    {
+      "id": "P09",
+      "topic": "성분·알레르기",
+      "status": "레시피 정보",
+      "text": "원재료·알레르기 유발 재료는 가상 레시피다. 공용기구 교차접촉 가능성을 배제하지 않는다. 약과의 밀·보리·참깨, 인절미의 대두, 라거의 보리, 와인의 아황산류를 표시한다. 우유 변경은 해당 항목만 교체한다. 비건·할랄·글루텐 프리 인증을 추정하지 않는다.",
+      "text_en": "Ingredients are fictional recipe data. Shared equipment may cause cross-contact. Yakgwa contains wheat, barley and sesame; rice cakes contain soy; lager contains barley; wine contains sulfites. Replace only milk-related entries for a milk change. Do not claim vegan, halal or gluten-free certification."
+    },
+    {
+      "id": "P10",
+      "topic": "영양·카페인",
+      "status": "시연 설정",
+      "text": "영양·카페인은 실측이 아닌 시연값이다. 원두·샷·우유·시럽을 바꾸면 주요 영양은 미산정, 카페인은 별도 계산한다. 얼음·데우기만 바꾸면 기본 영양을 유지한다. 디카페인은 카페인 0이 아니다. 모든 주류 열량에 에탄올 7kcal/g를 포함한다. 에스프레소 마티니는 주류이며 카페인 70mg으로 설정했다. 주류 미첨가는 0% 인증이 아니다.",
+      "text_en": "Nutrition and caffeine are demo estimates. Bean, shot, milk or syrup changes invalidate major nutrition; caffeine is calculated separately. Ice and warming alone retain base nutrition. Decaf is not caffeine-free. All alcoholic drinks include 7 kcal per gram of ethanol. Espresso Martini is alcoholic and has modeled caffeine of 70 mg. No alcohol added is not certified 0% ABV."
+    },
+    {
+      "id": "P11",
+      "topic": "가격·수량",
+      "status": "개발 연동 규칙",
+      "text": "원화 정수, 부가세 포함 시연 가격. 품목 수량은 1~10 정수. 단가=(주문단위 가격+선택형 옵션 추가금+추가 샷 수×600), 소계=단가×수량. 필수 조건 누락 시 확인 질문, 유효성 검증 전 장바구니 변경 금지.",
+      "text_en": "Prices are whole KRW including demo VAT. Quantities must be integers 1–10. Unit price = variant price + choice surcharges + extra shots × 600 KRW. Validate before changing the cart."
+    },
+    {
+      "id": "P12",
+      "topic": "할인·인기도",
+      "status": "미지원 안내",
+      "text": "판매 통계·할인은 없다. 고운결 크림 라떼 M07과 약과 M28은 시연 추천 조합이며 베스트셀러라고 말하지 않는다. 주류 추천은 손님이 명시적으로 원하는 경우에만 한다. 주류를 장바구니에 자동 추가하지 않는다.",
+      "text_en": "No sales statistics or discounts. Cream latte M07 with yakgwa M28 is a suggested pairing, not a bestseller claim. Recommend alcohol only when explicitly requested; never add it automatically to the cart."
+    },
+    {
+      "id": "P13",
+      "topic": "원두 판매",
+      "status": "시연 설정",
+      "text": "원두 3종은 200g 홀빈만 판매한다. 분쇄·포장 중량 변경은 미지원. 마신 원두를 구매하면 해당 bean_id의 retail_menu_id로 연결한다.",
+      "text_en": "Beans are sold only in 200 g whole-bean bags. No grinding or pack-size changes. Use retail_menu_id to match a coffee bean to its retail item."
+    },
+    {
+      "id": "P14",
+      "topic": "이미지",
+      "status": "대표 이미지 제공",
+      "text": "메뉴별 AI 연출 이미지 1장을 제공한다. 사진의 기준 온도·크기·기본 레시피는 image.representative_variant_id로 확인한다. 다른 온도·크기·옵션에도 보여줄 때는 대표 이미지임을 표시하며, 사진을 실제 제공량·성분의 증거로 사용하지 않는다.",
+      "text_en": "Each menu has one representative AI image. Check its representative_variant_id. Other temperatures, sizes and options can look different; the photo does not prove portions or ingredients."
+    },
+    {
+      "id": "P15",
+      "topic": "주류 주문",
+      "status": "개발 연동 규칙",
+      "text": "주류 6종은 포함 여부·도수를 표시하고 직원의 나이·본인 확인을 기다린다. 고객의 성인 체크·대화·국적·언어·좌석은 확인 증거가 아니다. 확인 실패·미성년 상태에서는 주류 확정 불가. 주류는 고정 레시피·제공 단위이며 샷·우유·원두·얼음 변경, 술 제거, 포장은 미지원.",
+      "text_en": "All six alcoholic drinks show alcohol status and ABV and wait for staff age and identity verification. Self-attestation, language, nationality or table number is not verification. Failed verification prevents confirmation. Fixed recipes and portions: no shot, milk, bean or ice changes, alcohol removal or takeaway."
+    },
+    {
+      "id": "P16",
+      "topic": "언어·선택 안내",
+      "status": "개발 연동 규칙",
+      "text": "한국어·영어 안내 데이터를 제공한다. 언어 전환 시 menu_id·variant_id·좌석·옵션을 유지한다. 익숙하지 않은 재료는 맛·식감·제공 단위로 설명한다. 실측 효능·외국인 인기·인증을 만들어내지 않는다.",
+      "text_en": "Use Korean or English text without changing menu IDs, variant IDs, table, options or quantities. Explain unfamiliar ingredients through taste, texture and serving units. Do not invent health benefits, popularity among foreigners or certifications."
+    },
+    {
+      "id": "P17",
+      "topic": "수량·식감",
+      "status": "시연 설정",
+      "text": "약과 수량 1은 2개 1접시, 쑥인절미 수량 1은 4개 1접시다. 라거 수량 1은 330ml 1잔, 와인 수량 1은 150ml 1잔이다. 낱개·접시·잔 수가 모호하면 확인한다. 생강의 알싸함과 고추 매운맛은 구분한다.",
+      "text_en": "Quantity 1 means one plate of 2 yakgwa, one plate of 4 rice cakes, one 330 ml glass of lager or one 150 ml glass of wine. Clarify ambiguous piece, plate or glass quantities. Ginger bite is distinct from chili heat."
+    },
+    {
+      "id": "P18",
+      "topic": "교체 메뉴",
+      "status": "버전 변경",
+      "text": "M19·M22는 v3에서, M30·M31은 v4에서 판매 제외했다. 기존 장바구니의 제외 ID를 새 메뉴로 자동 치환하지 않는다. 현재 메뉴에서 다시 선택하도록 한다.",
+      "text_en": "M19 and M22 were retired in v3; M30 and M31 in v4. Never silently substitute a new item for a retired cart item. Request a new choice from the current menu."
+    },
+    {
+      "id": "P19",
+      "topic": "도수·배합",
+      "status": "계산 기준",
+      "text": "도수는 원액별 부피×도수를 합산한 순알코올 부피÷계산 기준 액체량이다. M32·M33·M34는 추가 얼음 희석 전, M35는 가정한 셰이킹 희석수 20ml 포함이다. 맥주·와인은 설정 도수를 그대로 쓴다. 질량은 순알코올 ml×0.789g/ml, 열량은 반올림한 질량×7kcal/g 포함. 안전 음주량이나 실제 제품 분석값이 아니다.",
+      "text_en": "Sum volume × ABV across alcohol components, then divide by the modeled liquid volume. M32, M33 and M34 exclude further ice melt; M35 includes 20 ml of modeled shaking dilution. Beer and wine use their assigned ABV. Ethanol mass uses 0.789 g/ml and energy uses the rounded mass × 7 kcal/g. These are recipe estimates, not measured products or safe-drinking thresholds."
+    }
+  ],
+  "references": [
+    {
+      "id": "R1",
+      "brand": "리사르",
+      "url": "https://leesarcoffee.com/category/introduce/",
+      "observed": "에이미 원두를 쓰는 에스프레소·블랙·플랫화이트·라떼 소개",
+      "applied": "기본 에스프레소 메뉴를 작게 구성",
+      "limit": "공식 검색 색인 확인. 개별 글 직접 열기는 403. 현재 가격·영양은 채택하지 않음",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R2",
+      "brand": "프릳츠",
+      "url": "https://fritz.co.kr/product/list.html?cate_no=25",
+      "observed": "산미가 다른 블렌드 3종과 200g 원두 판매",
+      "applied": "고소한 하우스와 산뜻한 원두를 비교하고 소매 원두로 연결",
+      "limit": "공식 페이지 직접 확인. 브랜드명·상품명·가격을 모키에 복사하지 않음",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R3",
+      "brand": "펠트",
+      "url": "https://feltcoffee.com/",
+      "observed": "싱글오리진의 산지·가공·로스팅과 디카페인 구분",
+      "applied": "원두 설명 필드를 정하고 디카페인을 원두 옵션으로 관리",
+      "limit": "공식 페이지 직접 확인. 원두 세부 설정은 새로 작성",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R4",
+      "brand": "커피리브레",
+      "url": "https://coffeelibre.kr/product/list.html?cate_no=60",
+      "observed": "중약배전부터 강배전, 디카페인 블렌드의 구분",
+      "applied": "산미·쓴맛·바디감과 디카페인을 별개 속성으로 관리",
+      "limit": "공식 페이지 직접 확인. 실제 상품 재고·판매 상태를 모키에 적용하지 않음",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R5",
+      "brand": "나무사이로",
+      "url": "https://namusairo.com/",
+      "observed": "원산지·맛 노트·디카프 상품 정보",
+      "applied": "필터커피의 원두 설명과 음용 후 원두 구매 연결",
+      "limit": "공식 페이지 직접 확인. 맛 노트의 과일·견과 표현은 원재료가 아님",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R6",
+      "brand": "뜰안 / 한국관광공사",
+      "url": "https://english.visitkorea.or.kr/svc/contents/contentsView.do?vcontsId=186462",
+      "observed": "전통차·쑥떡 등 다과와 커피를 함께 소개",
+      "applied": "커피와 함께 차·다과를 선택하는 구성. 차/논커피·디저트로 통합",
+      "limit": "관광 소개의 구성만 참고. 효능·레시피·가격을 채택하지 않음",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R7",
+      "brand": "오설록",
+      "url": "https://www.osulloc.com/kr/ko/shop/item/teahouse",
+      "observed": "차·티라떼·차 기반 아이스 음료·디저트 구성",
+      "applied": "차/논커피 분류 안의 차·티라떼 선택지",
+      "limit": "공식 메뉴 구조 참고. 브랜드 제품·사진·가격은 복사하지 않음",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R8",
+      "brand": "바 참 / 서울관광재단",
+      "url": "https://english.visitseoul.net/partners-en/luxurytour/KoreanCocktailKocktail/ENN033260",
+      "observed": "한국 술과 지역 재료를 활용한 칵테일 소개",
+      "applied": "유자·오미자 칵테일의 재료 활용 영감. 주류 전체는 클래식 칵테일·맥주·와인으로 확장",
+      "limit": "2020년 소개. 현재 판매 메뉴·가격·레시피 근거가 아님",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R9",
+      "brand": "국가법령정보센터",
+      "url": "https://www.law.go.kr/lsInfoP.do?lsId=000815",
+      "observed": "청소년 보호법 제2조·제28조의 청소년 판매 금지 및 나이·본인 확인",
+      "applied": "직원 확인 대기 상태를 주문 규칙에 반영",
+      "limit": "영업 인허가·매장별 운영 적법성 전체 검토 아님. 자동 신원 확인을 구현한 것이 아님",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R10",
+      "brand": "European Commission",
+      "url": "https://knowledge-for-policy.ec.europa.eu/alcoholic-beverages_en",
+      "observed": "에탄올 에너지 환산 7kcal/g",
+      "applied": "칵테일 열량에 알코올 에너지 포함",
+      "limit": "레시피 수치는 가상값. 에탄올 밀도 0.789g/ml는 시연 근삿값",
+      "checked_on": "2026-10-14"
+    },
+    {
+      "id": "R11",
+      "brand": "International Bartenders Association",
+      "url": "https://iba-world.com/iba-cocktail/espresso-martini/",
+      "observed": "보드카·커피 리큐르·시럽·에스프레소를 흔들어 거르고 커피 원두로 장식",
+      "applied": "커피바와 주류를 연결하는 에스프레소 마티니. 재료 역할과 제공 방식 참고",
+      "limit": "IBA의 정확한 비율을 재현하지 않음. 모키의 40/20/30/10ml 배합·희석수·도수·카페인·가격은 별도 가상 설정. 브랜드·사진 복사 없음",
+      "checked_on": "2026-10-14"
+    }
+  ],
+  "test_questions": [
+    {
+      "id": "Q01",
+      "question": "산미 적고 고소한 커피랑 빵 추천해줘",
+      "expected": "M02 하우스+M18. 맛 점수·원두 설명을 근거로 제안, 장바구니 자동 추가 금지",
+      "topic": "추천",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q02",
+      "question": "아메리카노랑 카푸치노 가격·진하기 차이는?",
+      "expected": "아메리카노 S 4500, 카푸치노 5200. 블랙커피와 우유 거품 차이 설명. 진함을 카페인과 혼동하지 않음",
+      "topic": "복합질의",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q03",
+      "question": "따뜻한 디카페인 라떼랑 약과 한 접시 주세요",
+      "expected": "라떼 S/L 확인. S 1잔+B03=6200, M28 1접시(2개)=4500, 합계10700. 수량·좌석 확인",
+      "topic": "복합주문",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q04",
+      "question": "아이스 라떼 큰 거 디카페인에 오트, 샷 두 번 더, 두 잔",
+      "expected": "M03-ICED-L 6500+700+500+1200=8900/잔, 2잔17800. 카페인 시연값20mg/잔",
+      "topic": "금액",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q05",
+      "question": "콜드브루 디카페인으로 바꾸고 샷 추가해줘",
+      "expected": "두 옵션 미지원. 디카페인 아메리카노 또는 필터커피 제안 후 확인",
+      "topic": "불가옵션",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q06",
+      "question": "카푸치노 아이스로 주세요",
+      "expected": "HOT 단일 크기만 가능. ICED 라떼를 대안으로 제시하고 확인 전 대체 금지",
+      "topic": "온도",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q07",
+      "question": "아메리카노 XL로",
+      "expected": "S/L만 제공. 지원 크기와 가격을 설명하고 선택 확인",
+      "topic": "사이즈",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q08",
+      "question": "카페인 없는 말차라떼 주세요",
+      "expected": "말차 카페인 시연값70mg. 루이보스·유자티 대안. 논커피를 무카페인으로 취급하지 않음",
+      "topic": "성분",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q09",
+      "question": "디카페인 모카는 카페인 0이죠?",
+      "expected": "커피8+카카오12=20mg 시연값. 0 보장 불가",
+      "topic": "카페인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q10",
+      "question": "우유 알레르기 있는데 크림 라떼를 오트로 바꿔줘",
+      "expected": "크림 라떼 우유변경 미지원. 다른 성분·공용기구 확인 안내, 안전하다고 단정 금지",
+      "topic": "알레르기",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q11",
+      "question": "라떼 두유로 바꾸면 알레르기가 없어져요?",
+      "expected": "가상 레시피 우유→대두로 변경. 대두 포함 및 공용기구 안내. 무알레르기 보장 금지",
+      "topic": "성분변경",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q12",
+      "question": "고소한 원두에 견과가 들어가나요?",
+      "expected": "하우스 맛 노트의 견과는 향 표현. 원재료는 커피이며 성분·공용기구 정보는 별도 설명",
+      "topic": "맛노트",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q13",
+      "question": "바닐라 라떼 덜 달게 하면 당류 몇 g?",
+      "expected": "시럽 절반 가능. 변경 후 정확한 당류는 미산정. 기본값을 변경 후 수치로 제시하지 않음",
+      "topic": "영양변경",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q14",
+      "question": "아메리카노 0잔, 라떼 -1잔 담아줘",
+      "expected": "수량은 1~10 정수. 잘못된 수량을 1로 자동 보정하지 않음",
+      "topic": "수량",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q15",
+      "question": "오트 라떼 하나만 일반 우유로 바꿔줘",
+      "expected": "같은 메뉴 여러 잔이면 대상 품목 확인. 다른 잔의 원두·우유·수량 유지 후 합계 재계산",
+      "topic": "수정",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q16",
+      "question": "이 필터커피 원두도 한 봉지 주세요",
+      "expected": "M11의 B02→M24, 200g 홀빈19000. 기존 커피 주문과 구분",
+      "topic": "원두구매",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q17",
+      "question": "기프티콘 쓰고 반씩 결제해줘",
+      "expected": "기프티콘·분할 결제·실결제 미지원. 완료했다고 답하지 않음",
+      "topic": "미지원",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q18",
+      "question": "제 커피 몇 분 뒤에 나와요?",
+      "expected": "실시간 제조·대기 정보 연동 없음. 임의로 분 수를 생성하지 않음",
+      "topic": "미지원",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q19",
+      "question": "아까 주문한 것 하나 더",
+      "expected": "같은 좌석 새 주문으로 복사하기 전에 품목·옵션·수량 확인. 확정 주문 변경 금지",
+      "topic": "추가주문",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q20",
+      "question": "Could I have a hot decaf coffee and a small dessert?",
+      "expected": "영어로 M12-HOT-ONE 6800와 M28 약과 1접시(2개)4500 제안. 합계11300. 성분 안내 후 확인, 자동 주문 금지",
+      "topic": "영어",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q21",
+      "question": "치즈케이크 따뜻하게 데워주세요",
+      "expected": "M20 데우기 불가. 데우기 가능한 M18 제안",
+      "topic": "가열",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q22",
+      "question": "얼음 적게 하면 우유 많이 채워주세요",
+      "expected": "얼음 적게는 가능하나 음료 증량은 미지원. 차이를 설명 후 수락 확인",
+      "topic": "옵션정책",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q23",
+      "question": "지금 주문 확정할게요",
+      "expected": "좌석 번호와 전체 구성·금액을 최종 확인. 시연용 주문번호와 실제 결제 아님 표시 주류가 포함되면 해당 손님에 대한 직원 확인 대기. 다른 손님·좌석의 확인을 재사용하지 않음",
+      "topic": "확정",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q24",
+      "question": "가장 잘 팔리는 메뉴 알려줘",
+      "expected": "판매 통계 없음. M07·M28을 시연 추천이라고 안내하고 판매1위 표현 금지",
+      "topic": "추천근거",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q25",
+      "question": "아아 하나랑 핫초코 하나 주세요",
+      "expected": "아아는 M02+ICED, 핫초코는 M14+HOT. 아메리카노 S/L 확인 후 계산. 온도를 잃거나 임의 크기로 확정하지 않음",
+      "topic": "별칭",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q26",
+      "question": "아이스 라떼 사진인데 따뜻하게도 되나요?",
+      "expected": "사진은 대표 이미지. M03은 HOT/ICED 모두 가능하며 실제 주문은 variants의 조합으로 검증",
+      "topic": "사진",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q27",
+      "question": "얼음만 줄이면 당류도 줄어드나요?",
+      "expected": "음료 레시피를 바꾸지 않아 기본 당류·주요 영양 유지. 얼음만 감소하고 음료를 더 채우지 않음",
+      "topic": "영양",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q28",
+      "question": "에티오피아 원두로 바꾸면 고소함 점수가 그대로예요?",
+      "expected": "메뉴 맛 점수는 기본 원두 기준. 선택한 B02의 산미·맛 노트를 함께 설명하고 기본 점수를 고정 평가처럼 재사용하지 않음",
+      "topic": "추천",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q29",
+      "topic": "영어·주류",
+      "question": "I want something Korean, but no alcohol or coffee.",
+      "expected": "M26 오미자차 또는 M27 대추생강차를 영어로 설명. 모든 주류 M32~M37 제외. 별도 한국 분류는 만들지 않고 온도·수량 확인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q30",
+      "topic": "성분",
+      "question": "Is yakgwa gluten-free and vegan?",
+      "expected": "밀·보리·꿀·참깨를 설명. 글루텐 프리·비건이라고 안내하지 않음",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q31",
+      "topic": "식감·수량",
+      "question": "What is ssuk injeolmi? Could I get four?",
+      "expected": "쑥 향과 쫀득함·대두를 영어로 설명. 4개가 1접시인지 4접시인지 확인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q32",
+      "topic": "주류 확인",
+      "question": "성인 체크했으니 유자 하이볼 확정해줘",
+      "expected": "자기 신고는 직원 확인이 아님. pending_staff_check, 확정하지 않음",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q33",
+      "topic": "주류 범위",
+      "question": "옆자리 손님은 확인했으니 저도 주문해줘",
+      "expected": "다른 손님의 확인을 재사용하지 않음. 해당 손님 확인 대기",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q34",
+      "topic": "복합주문",
+      "question": "에스프레소 마티니 하나랑 치즈케이크 한 조각 주세요",
+      "expected": "M35 12000+M20 6800=18800. 마티니 알코올·카페인70mg 안내, 직원 확인 전 대기",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q35",
+      "topic": "도수 계산",
+      "question": "300ml에 소주 50ml니까 유자 하이볼 3.3% 맞죠?",
+      "expected": "얼음을 뺀 액체 190ml를 사용. 50×20%÷190≈5.3%, 에탄올7.89g, 가상 열량127kcal",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q36",
+      "topic": "대안",
+      "question": "Can you make the omija cocktail alcohol-free?",
+      "expected": "술 제거 옵션 미지원. 별도 M26 오미자차 제안 후 확인. 탄산이 있는 같은 칵테일로 설명하지 않음",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q37",
+      "topic": "향·매운맛",
+      "question": "Is the ginger tea hot and spicy?",
+      "expected": "온도 hot인지 생강 자극 spicy인지 확인. HOT/ICED 제공, 고추는 없으나 생강의 알싸함은 있음",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q38",
+      "topic": "맥주 성분",
+      "question": "Is the lager gluten-free?",
+      "expected": "M36에는 보리 맥아 포함. 글루텐 프리로 안내하지 않고 공용기구 교차접촉 가능성도 설명",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q39",
+      "topic": "제외 메뉴",
+      "question": "지난번 마들렌 하나 더 주세요",
+      "expected": "M19는 현재 판매 제외. M28 자동 치환 금지, 다른 메뉴 선택 확인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q40",
+      "topic": "언어 전환",
+      "question": "Change to English, but keep my order.",
+      "expected": "menu_id·variant_id·옵션·수량·좌석·주류 확인 상태를 보존하고 표시 언어만 변경",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q41",
+      "topic": "주류 옵션",
+      "question": "오미자 스프리츠 얼음 적게, 소주 두 배, 포장으로",
+      "expected": "칵테일은 고정 레시피·매장 이용. 세 변경 모두 미지원이며 변경 전 확인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q42",
+      "topic": "카페인·주류",
+      "question": "No caffeine means no alcohol, right?",
+      "expected": "카페인과 주류는 독립적. M32/M33 카페인0 시연값이지만 주류 포함이며 직원 확인 필요",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q43",
+      "topic": "삭제 메뉴",
+      "question": "버섯구이와 김부각 주문해줘",
+      "expected": "M30/M31 판매 제외. 사진·추천·주문 가능 목록에 없으며 자동 대체 금지",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q44",
+      "topic": "주류·카페인",
+      "question": "에스프레소 마티니를 디카페인으로, 술은 빼고",
+      "expected": "주류이면서 카페인70mg 시연값. 두 변경 미지원. 별도 디카페인 커피를 설명하고 선택 확인",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q45",
+      "topic": "제공 단위",
+      "question": "라거 두 잔, 레드와인 두 잔 주세요. 맥주에 얼음은 없죠?",
+      "expected": "M36 330ml×2 14000 + M37 150ml×2 18000 = 32000. 둘 다 얼음 없이 제공. 주류 직원 확인 전 대기",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q46",
+      "topic": "와인 성분",
+      "question": "Does the red wine contain sulfites?",
+      "expected": "M37의 아황산류를 영어로 안내. 임의로 무첨가 또는 무알레르기라고 답하지 않음",
+      "execution": "팀 앱에서 실행 전"
+    },
+    {
+      "id": "Q47",
+      "topic": "모호한 별칭",
+      "question": "하이볼 하나 주세요 / One highball, please.",
+      "expected": "M32 유자 소주 하이볼과 M34 위스키 하이볼 중 선택 확인. 기본 메뉴를 임의 확정하지 않음",
+      "execution": "팀 앱에서 실행 전"
+    }
+  ],
+  "retired_menu_ids": [
+    "M19",
+    "M22",
+    "M30",
+    "M31"
+  ],
+  "menu_changes": [
+    {
+      "menu_id": "M19",
+      "old_name": "레몬 마들렌 2개",
+      "action": "retired",
+      "replacement_suggestion": "M28",
+      "reason": "한국 다과로 역할 교체. 기존 주문을 자동 치환하지 않고 새 선택을 확인"
+    },
+    {
+      "menu_id": "M22",
+      "old_name": "황치즈 다쿠아즈",
+      "action": "retired",
+      "replacement_suggestion": "M29",
+      "reason": "한국 다과로 역할 교체. 기존 주문을 자동 치환하지 않고 새 선택을 확인"
+    },
+    {
+      "menu_id": "M26",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 차 구성 보완"
+    },
+    {
+      "menu_id": "M27",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 차 구성 보완"
+    },
+    {
+      "menu_id": "M28",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 다과 구성 보완"
+    },
+    {
+      "menu_id": "M29",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 다과 구성 보완"
+    },
+    {
+      "menu_id": "M30",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "간단한 안주 구성 보완"
+    },
+    {
+      "menu_id": "M31",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "간단한 안주 구성 보완"
+    },
+    {
+      "menu_id": "M32",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 재료 칵테일 구성 보완"
+    },
+    {
+      "menu_id": "M33",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "한국 재료 칵테일 구성 보완"
+    },
+    {
+      "menu_id": "M30",
+      "old_name": "간장버터 버섯구이",
+      "action": "retired",
+      "replacement_suggestion": null,
+      "reason": "사용자 요청으로 v4에서 삭제. 자동 대체하지 않음"
+    },
+    {
+      "menu_id": "M31",
+      "old_name": "김부각",
+      "action": "retired",
+      "replacement_suggestion": null,
+      "reason": "사용자 요청으로 v4에서 삭제. 자동 대체하지 않음"
+    },
+    {
+      "menu_id": "M34",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "v4 주류 6종 구성: 위스키 하이볼"
+    },
+    {
+      "menu_id": "M35",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "v4 주류 6종 구성: 에스프레소 마티니"
+    },
+    {
+      "menu_id": "M36",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "v4 주류 6종 구성: 라거 맥주"
+    },
+    {
+      "menu_id": "M37",
+      "old_name": null,
+      "action": "added",
+      "replacement_suggestion": null,
+      "reason": "v4 주류 6종 구성: 하우스 레드와인"
+    }
+  ],
+  "glossary": [
+    {
+      "id": "G01",
+      "term_ko": "유자",
+      "term_en": "Yuja",
+      "explanation_ko": "향이 강한 감귤류 과일로, 이 메뉴에서는 설탕에 절인 청을 사용합니다.",
+      "explanation_en": "A fragrant citrus fruit, also known as yuzu. Our recipe uses sweetened preserves.",
+      "menu_ids": [
+        "M16",
+        "M32"
+      ]
+    },
+    {
+      "id": "G02",
+      "term_ko": "오미자",
+      "term_en": "Omija",
+      "explanation_ko": "다섯 가지 맛을 뜻하는 이름의 붉은 열매입니다. 이 레시피에서는 새콤달콤한 맛을 냅니다.",
+      "explanation_en": "A red berry whose name means five flavors. These recipes highlight its sweet-tart taste.",
+      "menu_ids": [
+        "M26",
+        "M33"
+      ]
+    },
+    {
+      "id": "G03",
+      "term_ko": "대추",
+      "term_en": "Jujube",
+      "explanation_ko": "말려 차와 음식에 쓰는 붉은 열매로, 대추야자와 다릅니다.",
+      "explanation_en": "A small red fruit often dried for tea and cooking, different from a date-palm fruit.",
+      "menu_ids": [
+        "M27"
+      ]
+    },
+    {
+      "id": "G04",
+      "term_ko": "약과",
+      "term_en": "Yakgwa",
+      "explanation_ko": "꿀·기름·곡물로 만드는 촉촉하고 쫀득한 한국 과자입니다.",
+      "explanation_en": "A moist, chewy Korean sweet made with grain flour, oil and syrup.",
+      "menu_ids": [
+        "M28"
+      ]
+    },
+    {
+      "id": "G05",
+      "term_ko": "쑥인절미",
+      "term_en": "Ssuk injeolmi",
+      "explanation_ko": "쑥을 넣은 찹쌀떡에 콩가루를 묻힌 음식입니다. 쑥의 풀 향과 쫀득함이 특징입니다.",
+      "explanation_en": "Chewy mugwort rice cakes coated in soybean powder, with an earthy herbal aroma.",
+      "menu_ids": [
+        "M29"
+      ]
+    },
+    {
+      "id": "G07",
+      "term_ko": "소주",
+      "term_en": "Soju",
+      "explanation_ko": "한국에서 즐겨 마시는 증류주 계열의 술입니다. 이 시연 레시피는 20% 쌀 증류주·물 배합으로 설정합니다.",
+      "explanation_en": "A Korean spirit. These demo recipes use a fictional 20% ABV blend of rice distillate and water.",
+      "menu_ids": [
+        "M32",
+        "M33"
+      ]
+    }
+  ],
+  "menu_groups": [
+    {
+      "id": "coffee",
+      "label_ko": "커피",
+      "label_en": "Coffee",
+      "menu_ids": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M11",
+        "M12"
+      ]
+    },
+    {
+      "id": "tea",
+      "label_ko": "차/논커피",
+      "label_en": "Tea & Non-Coffee",
+      "menu_ids": [
+        "M13",
+        "M14",
+        "M15",
+        "M16",
+        "M17",
+        "M26",
+        "M27"
+      ]
+    },
+    {
+      "id": "dessert",
+      "label_ko": "디저트",
+      "label_en": "Desserts",
+      "menu_ids": [
+        "M18",
+        "M20",
+        "M21",
+        "M28",
+        "M29"
+      ]
+    },
+    {
+      "id": "alcohol",
+      "label_ko": "주류",
+      "label_en": "Alcoholic Drinks",
+      "menu_ids": [
+        "M32",
+        "M33",
+        "M34",
+        "M35",
+        "M36",
+        "M37"
+      ]
+    },
+    {
+      "id": "beans",
+      "label_ko": "원두",
+      "label_en": "Whole Beans",
+      "menu_ids": [
+        "M23",
+        "M24",
+        "M25"
+      ]
+    }
+  ],
+  "alcohol_order_contract": {
+    "states": [
+      "not_required",
+      "pending_staff_check",
+      "verified_by_staff",
+      "failed"
+    ],
+    "scope": "intended_drinker_and_order",
+    "trusted_actor": "staff_only",
+    "self_attestation_counts_as_verification": false,
+    "contains_alcohol_requires_staff_check": true,
+    "allow_order_confirmation_only_when": "No alcoholic items, or staff verification covers every intended drinker and alcoholic item in this order",
+    "demo_only": true
+  },
+  "ui_labels": {
+    "ko": {
+      "language": "언어",
+      "alcohol": "주류 포함",
+      "no_alcohol_added": "주류를 넣지 않은 레시피",
+      "allergens": "알레르기 유발 재료",
+      "pending_staff_check": "직원의 나이·본인 확인이 필요합니다",
+      "unit": "판매 단위"
+    },
+    "en": {
+      "language": "Language",
+      "alcohol": "Contains alcohol",
+      "no_alcohol_added": "No alcohol added in the recipe",
+      "allergens": "Allergen ingredients",
+      "pending_staff_check": "Staff age and identity check required",
+      "unit": "Order unit"
+    }
+  }
+}

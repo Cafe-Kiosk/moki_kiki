@@ -1,0 +1,151 @@
+{
+  "date_kst": "2026-10-15",
+  "scope": "Documentation and existing artifact upload; application source unchanged; no new live API calls or course submission.",
+  "github_snapshot": {
+    "main_application_commit_before_documentation": "34d398bfc1ff70f1ac4d14c066a9e71196d2d179",
+    "candidate_commit": "bb5b0a2a8392fc59447ff5b7ced5e010ef5a299f",
+    "pull_request": "https://github.com/Cafe-Kiosk/moki_kiki/pull/1",
+    "state_at_check": "OPEN",
+    "draft": true,
+    "merged": false
+  },
+  "official_notice": {
+    "url": "https://snufin99.slack.com/archives/C0C02DFVD7W/p1791772485054269",
+    "read_live_during_preparation": true,
+    "deliverables": [
+      "presentation PDF",
+      "runnable program"
+    ],
+    "deadline_rule": "presentation day 09:00 KST",
+    "presentation_date_basis": "existing team schedule: 2026-10-16",
+    "q_and_a_inclusion": "not explicit in notice"
+  },
+  "checks_this_run": {
+    "all_10_workbook_sheet_values_match_main_candidate_v4": true,
+    "embedded_menu_images": 33,
+    "runtime_documents": 61,
+    "runtime_document_type_counts": {
+      "메뉴": 33,
+      "원두": 3,
+      "옵션": 6,
+      "정책": 19
+    },
+    "handoff_jsonl_records": 122,
+    "pdf_pages": 16,
+    "ppt_slides": 16,
+    "artifact_hashes_match_saved_final_manifest": true,
+    "candidate_logic_tests": {
+      "passed": 26,
+      "failed": 0,
+      "api_calls": 0
+    },
+    "candidate_mock_regression_tests": {
+      "run": 42,
+      "passed": 41,
+      "failed": 1,
+      "failed_test": "test_source_mutation_rejects_stale_index",
+      "reason": "MOCK bypasses persisted index validation; test expects a saved-index model mismatch exception",
+      "api_calls": 0
+    },
+    "targeted_saved_index_retest": {
+      "run": 1,
+      "passed": 1,
+      "mode": "MOKI_MOCK=0, non-use test key; rejects model mismatch before API call",
+      "api_calls": 0
+    },
+    "markdown_links_checked": 76,
+    "private_credential_and_contact_pattern_findings": 0,
+    "candidate_checkout_clean_after_tests": true
+  },
+  "prior_records_reviewed": {
+    "saved_20261014_regressions": 42,
+    "saved_20261014_logic_checks": 26,
+    "source_questions_executed": 67,
+    "case_judgments": {
+      "core_criterion_confirmed": 57,
+      "clarification_or_reselection": 8,
+      "different_recommendation": 2
+    },
+    "continuous_conversations": 3,
+    "continuous_turns": 14,
+    "saved_20261015_browser_live_turns": 8,
+    "full_suite_rerun_on_final_code": false
+  },
+  "not_checked_this_run": [
+    "fresh environment installation",
+    "new live API conversation",
+    "PowerPoint slideshow",
+    "cloud app equivalence",
+    "team adoption",
+    "course submission or acceptance",
+    "user study or TTS listening"
+  ],
+  "presentation_artifacts": {
+    "팀과제_4조_모키커피바.pdf": {
+      "size": 9095057,
+      "sha256": "3e1b9d13ef1619332ed32da3fcc42deaf26063a138993e33a747f87c049c1b7b"
+    },
+    "모키_커피바_최종발표.pptx": {
+      "size": 12563411,
+      "sha256": "e360c61b8c538b19c5a7f97c819f5fa26257445c6918bc2a19496e8928c936f3"
+    }
+  },
+  "uploaded_team_files": {
+    "docs/team/03_검증과_남은일.md": {
+      "size": 7590,
+      "sha256": "22d308be29f9f7ba0a3163a2a5c3925a2234a58999bb34ab0cb0dacbe1a3a47f"
+    },
+    "docs/team/README.md": {
+      "size": 4546,
+      "sha256": "53d93fddb354cee9c431743ef9af441d8c3a2f8f0b620edb3299a7e713a8f851"
+    },
+    "docs/team/01_컨셉부터_발표까지.md": {
+      "size": 28237,
+      "sha256": "eb14c5d236e1766f6f2419f608de1ed991da248570aeff1a0277acc0b7be75d1"
+    },
+    "docs/team/HTI_원문기준과_시연대응.md": {
+      "size": 5301,
+      "sha256": "af87a7bf1716ee39b7c25d253666eb2d873714131372f3118379097907af1494"
+    },
+    "docs/team/04_발표와_시연.md": {
+      "size": 14957,
+      "sha256": "b9983ce09fa15b866d9ed223c826c44aaf2bc0b0a14cfd614158f7f7f1ef82ca"
+    },
+    "docs/team/02_실행과_역할별_인수인계.md": {
+      "size": 7869,
+      "sha256": "36b787423494a740e8949dd45f832db693cd197d91bf42f08d84222cad2616fc"
+    },
+    "docs/team/evidence/live_demo_20261015.json": {
+      "size": 1256,
+      "sha256": "0cb465828655a0a840552295bb516a21e74076db6456818de35f69ca6d8e49a5"
+    },
+    "docs/team/data/02_검토와_변경내역.md": {
+      "size": 4323,
+      "sha256": "b8b0f6a7bd90699d9f308044baf4915ae49a68425aaa3cf8e6326074a5b7bd59"
+    },
+    "docs/team/data/rag_documents.jsonl": {
+      "size": 164090,
+      "sha256": "55e34b3aa307cd56436b9021ad61f8b3a3a013bb5d4ed716020bb031855d615e"
+    },
+    "docs/team/data/mokey_data.json": {
+      "size": 179785,
+      "sha256": "c236b269709cc932fe469517094b875e6c213b12dd20321f74e0fb0f7a5ab49e"
+    },
+    "docs/team/data/00_컨셉과_단계별_구상.md": {
+      "size": 4941,
+      "sha256": "d27edb2cffef548578ee38d92add61b1634b076cc4a36db8f06034d9527e6c83"
+    },
+    "docs/team/data/01_팀_사용안내.md": {
+      "size": 7827,
+      "sha256": "9fef3d7ad086260060b5a79638fc4f2f755151c1a56ce0c9876886b16be5c713"
+    },
+    "docs/team/presentation/팀과제_4조_모키커피바.pdf": {
+      "size": 9095057,
+      "sha256": "3e1b9d13ef1619332ed32da3fcc42deaf26063a138993e33a747f87c049c1b7b"
+    },
+    "docs/team/presentation/모키_커피바_최종발표.pptx": {
+      "size": 12563411,
+      "sha256": "e360c61b8c538b19c5a7f97c819f5fa26257445c6918bc2a19496e8928c936f3"
+    }
+  }
+}
