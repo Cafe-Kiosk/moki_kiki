@@ -12,7 +12,7 @@ AI응용 실습문제(RAG) · 4조. 손님이 테이블에서 글로 메뉴를 �
 
 | 항목 | 현재 상태 | 확인할 곳 |
 |---|---|---|
-| 이 기능 브랜치 앱 | 한·영 RAG 122개와 v1.1 에이전트 프롬프트 적용 | `app.py`, `src/`, `prompts/` |
+| 이 기능 브랜치 앱 | 한·영 RAG 122개와 v1.3 에이전트 프롬프트 적용 | `app.py`, `src/`, `prompts/` |
 | 별도 수정 후보 `bb5b0a2` | [PR #1](https://github.com/Cafe-Kiosk/moki_kiki/pull/1)의 과거 작업 기록 | `codex/complete-moki-order-flow` |
 | 최신 발표 | 16장 발표 자료 | [PDF](docs/team/presentation/팀과제_4조_모키커피바.pdf) · [PPT](docs/team/presentation/모키_커피바_최종발표.pptx) |
 

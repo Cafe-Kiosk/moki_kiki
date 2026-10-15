@@ -29,7 +29,11 @@ class ArtifactIntegrationTests(unittest.TestCase):
         )
 
     def test_prompts_and_schemas_load(self):
-        self.assertIn("자연어 테이블 주문 도우미", load("system"))
+        system = load("system")
+        self.assertIn("자연어 테이블 주문 도우미", system)
+        self.assertIn("비정형·매장 재량 요청 처리 — v1.2", system)
+        self.assertIn("직원 응대 필요 요청과 화면 버튼 연결 — v1.3", system)
+        self.assertIn("화면 액션 출력 계약 — 개발 연동 지침", system)
         self.assertIn("질의 재작성기", load("rewrite"))
         self.assertIn("의도 분류", load("intent"))
         self.assertEqual(load_schema("rewrite")["type"], "object")
