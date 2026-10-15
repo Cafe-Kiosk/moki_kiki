@@ -9,7 +9,9 @@ from dataclasses import dataclass, field
 from .router import route
 from .retrieve import hybrid_search, as_context, _alias_map
 from .chain import answer
-from .cart import Cart, CartItem, resolve_variant, menu_by_id, find_variants
+from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
+                   validate_options, option_label, option_alternatives, is_alcohol,
+                   OPTION_KEYS)
 
 
 def _menu_candidates(text: str) -> list[str]:
@@ -29,6 +31,58 @@ def _menu_candidates(text: str) -> list[str]:
     exact = [mid for mid in found
              if str(menu_by_id(mid)["메뉴명"]).lower() in t]
     return exact if len(exact) == 1 else found
+
+
+def _add_one(it: dict, cart: Cart) -> str:
+    """주문 항목 하나를 검증해 담고, 모델에게 넘길 계산 줄을 돌려준다."""
+    name = it.get("menu_name", "")
+    cands = _menu_candidates(name)
+    if not cands:
+        return f"'{name}' 은 메뉴에서 찾지 못했습니다."
+    if len(cands) > 1:
+        names = " 또는 ".join(str(menu_by_id(c)["메뉴명"]) for c in cands)
+        return f"'{name}' 은 {names} 중 어느 것인지 확인이 필요합니다. 담지 않았습니다."
+    mid = cands[0]
+    m = menu_by_id(mid)
+    v, all_v = resolve_variant(mid, it.get("temp"), it.get("size"))
+    if v is None:
+        opts = " / ".join(
+            f"{x.get('온도')}·{x.get('크기')} {int(x['가격(원)']):,}원" for x in all_v)
+        return f"{m['메뉴명']}: 구성을 하나 골라야 합니다 → {opts}"
+
+    # 옵션 검증 — 하나라도 안 되면 그 품목은 담지 않는다. 대체도 하지 않는다 (P03).
+    options = {k: it.get(k) for k in OPTION_KEYS}
+    allowed, rejected = validate_options(mid, v, options)
+    if rejected:
+        bits = []
+        for k, why in rejected:
+            alt = option_alternatives(mid, k, options[k])
+            bits.append(f"{option_label(k, options[k])} 불가 — {why}"
+                        + (f" 대안: {' · '.join(alt)} (손님 확인 후 담기)" if alt else ""))
+        return f"{m['메뉴명']}: 담지 않았습니다. " + " / ".join(bits)
+
+    qty = int(it.get("qty") or 1)
+    item = CartItem(
+        menu_id=mid, variant_id=str(v["주문 단위 ID"]), name=str(m["메뉴명"]),
+        temp=str(v.get("온도")), size=str(v.get("크기")), qty=qty,
+        is_alcohol=is_alcohol(mid), **allowed)
+    ok, err = cart.add(item)
+    if not ok:
+        return f"{m['메뉴명']}: {err}"
+    return (f"{item.name} {item.temp}/{item.size}"
+            + (f" ({item.option_text()})" if item.option_text() else "")
+            + f" ×{qty} = {item.subtotal:,}원 "
+              f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
+
+
+def apply_order_items(order_items: list[dict], cart: Cart) -> list[str]:
+    """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
+    lines = [_add_one(it, cart) for it in order_items]
+    if cart.items:
+        lines.append(f"현재 합계 {cart.total:,}원")
+    if cart.status() == "pending_staff_check":
+        lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
+    return lines
 
 
 @dataclass
@@ -76,46 +130,7 @@ def handle(user_input: str, store, cart: Cart,
     # ── 장바구니 담기 ──────────────────────────────────────
     calc_lines = []
     if intent == "장바구니" and r.get("order_items"):
-        for it in r["order_items"]:
-            cands = _menu_candidates(it.get("menu_name", ""))
-            if not cands:
-                calc_lines.append(f"'{it.get('menu_name')}' 은 메뉴에서 찾지 못했습니다.")
-                continue
-            if len(cands) > 1:
-                names = " 또는 ".join(str(menu_by_id(c)["메뉴명"]) for c in cands)
-                calc_lines.append(
-                    f"'{it.get('menu_name')}' 은 {names} 중 어느 것인지 확인이 필요합니다. "
-                    "담지 않았습니다.")
-                continue
-            mid = cands[0]
-            m = menu_by_id(mid)
-            v, all_v = resolve_variant(mid, it.get("temp"), it.get("size"))
-            if v is None:
-                opts = " / ".join(
-                    f"{x.get('온도')}·{x.get('크기')} {int(x['가격(원)']):,}원" for x in all_v)
-                calc_lines.append(f"{m['메뉴명']}: 구성을 하나 골라야 합니다 → {opts}")
-                continue
-            qty = int(it.get("qty") or 1)
-            item = CartItem(
-                menu_id=mid, variant_id=str(v["주문 단위 ID"]), name=str(m["메뉴명"]),
-                temp=str(v.get("온도")), size=str(v.get("크기")), qty=qty,
-                bean=it.get("bean"), extra_shots=int(it.get("extra_shots") or 0),
-                milk=it.get("milk"), sweetness=it.get("sweetness"),
-                ice=it.get("ice"), warming=it.get("warming"),
-                is_alcohol=str(m.get("주류 구분", "")).startswith("주류 포함"))
-            ok, err = cart.add(item)
-            if not ok:
-                calc_lines.append(f"{m['메뉴명']}: {err}")
-            else:
-                calc_lines.append(
-                    f"{item.name} {item.temp}/{item.size}"
-                    + (f" ({item.option_text()})" if item.option_text() else "")
-                    + f" ×{qty} = {item.subtotal:,}원 "
-                      f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
-        if cart.items:
-            calc_lines.append(f"현재 합계 {cart.total:,}원")
-        if cart.status() == "pending_staff_check":
-            calc_lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
+        calc_lines = apply_order_items(r["order_items"], cart)
 
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)
