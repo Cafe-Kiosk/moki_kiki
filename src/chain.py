@@ -12,6 +12,11 @@ OFFTOPIC = load_prompt("offtopic")
 INFO_RULES = load_prompt("info_rules")    # 정보·정책 질문에서만 덧붙인다
 
 
+def offtopic_prompt(lang: str = "ko") -> str:
+    """범위밖 경로 프롬프트. 영어 손님이면 영어로만 답하라는 줄을 덧붙인다 (Q40·Q42: 한국어가 섞이던 문제)."""
+    return OFFTOPIC + ("\n\nThe customer wrote in English. Reply only in English." if lang == "en" else "")
+
+
 def system_prompt(context: str, calc: str = "", info: bool = False) -> str:
     """주문 흐름용 system.md. info=True(메뉴질문·추천·옵션)면 <자료> 앞에 정보·정책 규칙을 넣는다."""
     s = SYSTEM.format(context=context, calc=calc or "(없음)")
@@ -37,9 +42,9 @@ def _cache_key(system: str, user: str) -> str:
 
 def answer(user_input: str, context: str, calc: str = "",
            history: list[dict] | None = None, offtopic: bool = False,
-           info: bool = False) -> tuple[str, bool]:
+           info: bool = False, lang: str = "ko") -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
-    system = OFFTOPIC if offtopic else system_prompt(context, calc, info)
+    system = offtopic_prompt(lang) if offtopic else system_prompt(context, calc, info)
 
     convo = ""
     if history:

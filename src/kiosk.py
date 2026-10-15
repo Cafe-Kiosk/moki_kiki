@@ -281,7 +281,9 @@ def handle(user_input: str, store, cart: Cart,
 
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
-        reply, cached = answer(user_input, "", history=history, offtopic=True)
+        # 라우터 language 가 틀려도 영문만 쓴 손님이면 영어로 답한다
+        reply_lang = "en" if str(user_input).isascii() and re.search(r"[A-Za-z]", user_input) else lang
+        reply, cached = answer(user_input, "", history=history, offtopic=True, lang=reply_lang)
         reply = sanitize_reply(reply)
         return TurnResult(reply, intent, rq, lang, trace=router_trace, cached=cached,
                           llm_calls=calls + (0 if cached else 1))

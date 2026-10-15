@@ -855,6 +855,22 @@ try:
 finally:
     K.route, K.answer, K.hybrid_search = saved
 check("info 규칙: 메뉴질문·추천·옵션만 True, 장바구니·예산추천 False", seen, [True, True, True, False, False])
-check("범위밖 프롬프트에 30번 안내 문구", "모키 메뉴 안내와 주문을 도와드려요" in _ch.OFFTOPIC, True)
+check("범위밖 프롬프트에 30번 범위 안내·주문 유지", ("범위를 안내" in _ch.OFFTOPIC, "주문은 그대로" in _ch.OFFTOPIC), (True, True))
+
+print("\n【 범위밖 경로 언어 (Q40 · Q42) 】")
+check("offtopic.md 에 한국어 고정 예시 문장 없음", "저는 모키 메뉴 안내와 주문을 도와드려요" in _ch.OFFTOPIC, False)
+check("영어 손님이면 '영어로만' 줄 추가", "Reply only in English" in _ch.offtopic_prompt("en"), True)
+check("한국어 손님은 offtopic.md 그대로", _ch.offtopic_prompt("ko"), _ch.OFFTOPIC)
+langs = []
+saved = K.route, K.answer, K.hybrid_search
+K.answer = lambda *a, **k: (langs.append((k.get("offtopic"), k.get("lang"))) or ("ok", True))
+try:
+    for text, rlang in [("No caffeine means no alcohol, right?", "ko"), ("오늘 날씨 어때요", "ko")]:
+        K.route = (lambda rl: (lambda *a, **k: {"intent": "범위밖", "rewritten_query": "x", "language": rl,
+                                                "errors": [], "order_items": []}))(rlang)
+        K.handle(text, None, Cart(table_id=1))
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("라우터가 ko 라 해도 영문 입력이면 범위밖 답변은 en", langs, [(True, "en"), (True, "ko")])
 
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
