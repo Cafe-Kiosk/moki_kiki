@@ -340,7 +340,9 @@ class VercelAppTests(unittest.TestCase):
         self.assertTrue(coffee_added.json()["cart"]["staff_checked"])
         self.assertTrue(more_alcohol.json()["requires_staff_verification"])
         self.assertEqual(len(more_alcohol.json()["cart"]["items"]), 2)
-        self.assertEqual(len(calls), 5)
+        # Unverified alcohol requests are rejected before reaching the AI
+        # handler; only the verified retry and coffee request need routing.
+        self.assertEqual(len(calls), 2)
 
     def test_client_cannot_forge_order_or_staff_state(self):
         alcohol = {

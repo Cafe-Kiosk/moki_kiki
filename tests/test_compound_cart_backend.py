@@ -557,6 +557,29 @@ class CompoundApiTests(unittest.TestCase):
                 for response in no_gates
             ))
 
+    def test_production_specific_alcohol_purchase_gates_before_api_key(self):
+        requests = ("맥주 주문할게요", "위스키 하이볼 한 잔 주세요")
+        with patch.dict(os.environ, {
+            "MOKI_STATE_SECRET": STATE_SECRET,
+        }, clear=False), patch("api.index.is_mock", return_value=False), \
+                patch("api.index.ensure_api_key") as api_key_mock, \
+                patch("api.index.handle") as handle_mock:
+            responses = [self.client.post("/api/chat", json={
+                "message": message, "table_id": 5,
+                "history": [], "cart": [], "language": "ko",
+            }) for message in requests]
+
+        api_key_mock.assert_not_called()
+        handle_mock.assert_not_called()
+        for response in responses:
+            with self.subTest(response=response):
+                self.assertEqual(response.status_code, 200)
+                payload = response.json()
+                self.assertTrue(payload["requires_staff_verification"])
+                self.assertEqual(
+                    payload["staff_verification_reason"], "alcohol_purchase")
+                self.assertTrue(payload["staff_challenge"])
+
     def test_alcohol_information_and_explicit_exclusion_do_not_gate(self):
         result = SimpleNamespace(
             reply="정보를 알려드릴게요.", intent="메뉴질문",

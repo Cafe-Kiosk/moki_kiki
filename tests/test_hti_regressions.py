@@ -248,15 +248,23 @@ class HtiRegressionTests(unittest.TestCase):
                 "language": "ko", "defer_cart_add": True,
             })
 
-        for response, expected_id in ((coffee, "M02"), (alcohol, "M34")):
-            self.assertEqual(response.status_code, 200, response.text)
-            payload = response.json()
-            self.assertEqual(payload["cart"]["items"], [])
-            self.assertEqual(payload["open_option_menu_id"], expected_id)
-            self.assertEqual(payload["menu_actions"][0]["menu_id"], expected_id)
-            self.assertEqual(payload["deferred_cart_items"][0]["menu_id"], expected_id)
-            self.assertFalse(payload["requires_staff_verification"])
-            self.assertIn("담기 전에", payload["reply"])
+        self.assertEqual(coffee.status_code, 200, coffee.text)
+        coffee_payload = coffee.json()
+        self.assertEqual(coffee_payload["cart"]["items"], [])
+        self.assertEqual(coffee_payload["open_option_menu_id"], "M02")
+        self.assertEqual(coffee_payload["menu_actions"][0]["menu_id"], "M02")
+        self.assertEqual(
+            coffee_payload["deferred_cart_items"][0]["menu_id"], "M02")
+        self.assertFalse(coffee_payload["requires_staff_verification"])
+        self.assertIn("담기 전에", coffee_payload["reply"])
+
+        self.assertEqual(alcohol.status_code, 200, alcohol.text)
+        alcohol_payload = alcohol.json()
+        self.assertEqual(alcohol_payload["cart"]["items"], [])
+        self.assertTrue(alcohol_payload["requires_staff_verification"])
+        self.assertEqual(
+            alcohol_payload["staff_verification_reason"], "alcohol_purchase")
+        self.assertTrue(alcohol_payload["staff_challenge"])
 
     def test_browser_chat_keeps_non_add_cart_mutations_realtime(self):
         """defer_cart_add는 신규 담기만 보류하고 수량 변경은 즉시 반영한다."""

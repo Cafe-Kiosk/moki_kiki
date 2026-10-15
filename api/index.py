@@ -1244,22 +1244,12 @@ def chat(
         explicit_alcohol_purchase = _explicit_alcohol_purchase_intent(
             request.message)
         specific_alcohol_menu_ids = _specific_alcohol_menu_ids(request.message)
-        generic_alcohol_purchase = (
-            explicit_alcohol_purchase
-            and not specific_alcohol_menu_ids
-        )
-        # The deterministic mock router cannot construct cart_add targets from
-        # every purchase phrase (for example, "맥주 주문할게요").  Gate those
-        # explicit purchases before routing as well, then bind the one-use
-        # authorization to the catalog IDs actually mentioned in the request.
-        mock_specific_alcohol_purchase = bool(
-            is_mock() and explicit_alcohol_purchase and specific_alcohol_menu_ids
-        )
-        if ((generic_alcohol_purchase or mock_specific_alcohol_purchase)
-                and not staff_authorized):
-            # This also covers a generic request such as "주류를 구매하고
-            # 싶어요" before a concrete menu exists.  Information-only price,
-            # ABV and recommendation questions continue to the normal answer path.
+        # Explicit alcohol purchases must be verified before the AI router or
+        # API-key check.  This keeps the staff modal deterministic in production
+        # for both generic requests and named menu requests such as
+        # "맥주 주문할게요".  Information-only price, ABV and recommendation
+        # questions continue to the normal answer path.
+        if explicit_alcohol_purchase and not staff_authorized:
             return _staff_required_payload(
                 cart,
                 scope,
