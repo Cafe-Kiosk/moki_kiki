@@ -242,7 +242,10 @@ def budget_lines(user_input: str, router: dict | None = None) -> list[str]:
                       f"예산보다 {lo - budget:,}원 부족"]
     lines = [head]
     for i, pl in enumerate(ps, 1):
-        lines.append(f"[예산안] {i}안: {pl.text()} = {pl.total:,}원 (잔액 {budget - pl.total:,}원)")
+        lines.append(f"[예산안] {i}안: {pl.text()} = 합계 {pl.total:,}원 · 잔액 {budget - pl.total:,}원")
+    # 모델이 괄호 속 잔액을 빠뜨리던 문제 (S02 T1) — 안별 잔액을 한 줄로 따로 넘긴다
+    lines.append("[예산안] 잔액(코드 계산, 안마다 말하기): "
+                 + " · ".join(f"{i}안 {budget - pl.total:,}원" for i, pl in enumerate(ps, 1)))
     if any(p.label for pl in ps for p in pl.drinks + pl.desserts):
         lines.append("[예산안] '가장 싼 구성'은 크기가 여럿인 메뉴를 가장 싼 크기로 계산한 것 — 다른 크기면 금액이 바뀜")
     return lines

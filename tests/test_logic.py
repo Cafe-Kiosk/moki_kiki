@@ -433,8 +433,12 @@ check("모든 안 디저트 1개 이상", all(len(p.desserts) >= 1 for p in ps),
 check("안끼리 음료가 겹치지 않음",
       len({x.menu_id for p in ps for x in p.drinks}) == sum(len({x.menu_id for x in p.drinks}) for p in ps), True)
 s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
-check("calc 형식 '[예산안] 1안: ... = N원 (잔액 M원)'",
-      bool(__import__("re").search(r"\[예산안\] 1안: .+ = [\d,]+원 \(잔액 [\d,]+원\)", s)), True)
+check("calc 형식 '[예산안] 1안: ... = 합계 N원 · 잔액 M원'",
+      bool(__import__("re").search(r"\[예산안\] 1안: .+ = 합계 [\d,]+원 · 잔액 [\d,]+원", s)), True)
+_ps = plans(20000, 2, True)
+check("안별 잔액 줄 = 예산 − 합계 (S02 T1)",
+      "[예산안] 잔액(코드 계산, 안마다 말하기): " + " · ".join(f"{i}안 {20000 - p.total:,}원"
+                                                       for i, p in enumerate(_ps, 1)) in s, True)
 check("calc 에 '인기' 없음 (P12)", "인기" in s, False)
 s = "\n".join(budget_lines("5000원으로 두 명 음료랑 디저트"))
 check("5,000원·2명 → 조합 없음 + 최소 금액 10,800원 안내",
