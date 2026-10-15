@@ -9,6 +9,13 @@ from .prompts import load as load_prompt
 
 SYSTEM = load_prompt("system")
 OFFTOPIC = load_prompt("offtopic")
+INFO_RULES = load_prompt("info_rules")    # 정보·정책 질문에서만 덧붙인다
+
+
+def system_prompt(context: str, calc: str = "", info: bool = False) -> str:
+    """주문 흐름용 system.md. info=True(메뉴질문·추천·옵션)면 <자료> 앞에 정보·정책 규칙을 넣는다."""
+    s = SYSTEM.format(context=context, calc=calc or "(없음)")
+    return s.replace("\n<자료>\n", "\n" + INFO_RULES + "\n\n<자료>\n", 1) if info else s   # 자료 블록 앞
 
 # 앱은 캐시를 쓴다 (시연 리허설 답변 고정). 검증 스크립트는 기본으로 끈다 (run_checks --use-cache).
 USE_CACHE = True
@@ -29,9 +36,10 @@ def _cache_key(system: str, user: str) -> str:
 
 
 def answer(user_input: str, context: str, calc: str = "",
-           history: list[dict] | None = None, offtopic: bool = False) -> tuple[str, bool]:
+           history: list[dict] | None = None, offtopic: bool = False,
+           info: bool = False) -> tuple[str, bool]:
     """(답변, 캐시사용여부)를 돌려준다."""
-    system = OFFTOPIC if offtopic else SYSTEM.format(context=context, calc=calc or "(없음)")
+    system = OFFTOPIC if offtopic else system_prompt(context, calc, info)
 
     convo = ""
     if history:

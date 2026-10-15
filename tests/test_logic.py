@@ -832,4 +832,29 @@ finally:
     K.route, K.answer, K.hybrid_search = saved
 check("[담기완료] 없는 턴은 교정하지 않음", r.reply, "어떤 크기로 할까요? 담아 드릴까요?")
 
+print("\n【 정보·정책 규칙은 정보 질문 경로에만 (info_rules.md) 】")
+import src.chain as _ch
+s_info, s_order = _ch.system_prompt("ctx", "calc", info=True), _ch.system_prompt("ctx", "calc", info=False)
+check("info=True 면 정보·정책 규칙이 자료 블록 바로 앞에",
+      ("카페인과 알코올은 별개다" in s_info.split("\n<자료>\n")[0], s_info.count("정보·정책 질문에 답할 때")), (True, 1))
+check("주문 흐름 프롬프트(info=False)는 system.md 그대로",
+      s_order == _ch.SYSTEM.format(context="ctx", calc="calc"), True)
+check("info_rules.md 설명 블록(> 줄)은 프롬프트에 안 들어감", "옮겼다" in _ch.INFO_RULES, False)
+seen = []
+saved = K.route, K.answer, K.hybrid_search
+K.answer = lambda *a, **k: (seen.append(k.get("info")) or ("답", True))
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    for intent, items in [("메뉴질문", []), ("추천", []), ("옵션", []), ("장바구니",
+                          [{"action": "add", "menu_name": "아메리카노", "temp": "ICED", "size": "S", "qty": 1}]),
+                          ("예산추천", [])]:
+        K.route = (lambda it, oi: (lambda *a, **k: {"intent": it, "rewritten_query": "x", "language": "ko",
+                                                     "errors": [], "order_items": oi, "budget": 10000,
+                                                     "people": 1, "wants": []}))(intent, items)
+        K.handle("x", None, Cart(table_id=1))
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("info 규칙: 메뉴질문·추천·옵션만 True, 장바구니·예산추천 False", seen, [True, True, True, False, False])
+check("범위밖 프롬프트에 30번 안내 문구", "모키 메뉴 안내와 주문을 도와드려요" in _ch.OFFTOPIC, True)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

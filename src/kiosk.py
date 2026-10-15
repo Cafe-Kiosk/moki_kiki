@@ -159,6 +159,7 @@ def receipt_line(cart: Cart) -> str:
     return line
 
 
+INFO_INTENTS = ("메뉴질문", "추천", "옵션")
 FOOTER_MARKS = ("⚠️", "⚠", "🧾", "📋")
 PLAN_LINE_RE = re.compile(r"^\s*(?:[-*•]|\d+[.)])?\s*\**\s*[1-9]\s*안\b")
 
@@ -308,8 +309,9 @@ def handle(user_input: str, store, cart: Cart,
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)
     trace = router_trace + trace
-    reply, cached = answer(user_input, as_context(docs),
-                           calc="\n".join(calc_lines), history=history)
+    # 정보·정책 규칙(info_rules.md)은 메뉴질문·추천·옵션에서만. 주문 흐름 프롬프트는 그대로 둔다
+    reply, cached = answer(user_input, as_context(docs), calc="\n".join(calc_lines), history=history,
+                           info=intent in INFO_INTENTS)
     reply = sanitize_reply(strip_footer_lines(reply, plans=intent == "예산추천"))  # 태그·내부 ID 제거
     if any(ln.startswith("[담기완료]") for ln in calc_lines):
         reply = fix_add_question(reply)
