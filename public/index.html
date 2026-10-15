@@ -70,13 +70,6 @@
         <section class="panel settings-panel">
           <div class="panel-heading compact"><h2 data-i18n="settings">이용 설정</h2></div>
           <label><span data-i18n="tableNumber">좌석 번호</span><select id="tableSelect"></select></label>
-          <div class="staff-verification" id="staffVerification" hidden>
-            <label for="staffCodeInput" data-i18n="staffCodeLabel">주류 구매 직원 확인 코드</label>
-            <input id="staffCodeInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" data-i18n-placeholder="staffCodePlaceholder" placeholder="4자리 코드를 입력해 주세요">
-            <button class="secondary-button" id="staffVerifyButton" type="button" data-i18n="staffVerify">직원 확인</button>
-            <button class="quiet-button" id="staffCancelButton" type="button" data-i18n="cancelAlcohol">주류 구매 취소</button>
-            <p class="setting-note" id="staffStatus" aria-live="polite"></p>
-          </div>
           <button class="secondary-button" id="resetButton" type="button" data-i18n="reset">대화와 장바구니 초기화</button>
         </section>
 
@@ -122,6 +115,21 @@
       </div>
       <div class="modal-actions"><button class="secondary-button" id="easyViewAll" type="button" data-i18n="enableEasyView">모두 켜기</button><button class="quiet-button" id="easyViewReset" type="button" data-i18n="resetView">기본 보기</button><button class="primary-button" type="button" data-close-dialog="accessibilityModal" data-i18n="done">완료</button></div>
     </div>
+  </dialog>
+
+  <dialog class="modal staff-code-modal" id="staffCodeModal" aria-labelledby="staffCodeTitle" aria-describedby="staffCodeDescription">
+    <section class="modal-card staff-code-card">
+      <span class="eyebrow">STAFF CHECK</span>
+      <h2 id="staffCodeTitle" data-i18n="staffCodeLabel">주류 구매 직원 확인 코드</h2>
+      <p id="staffCodeDescription" data-i18n="staffNeeded">직원 확인이 필요한 내용입니다. 직원을 부르겠습니다.</p>
+      <div class="staff-verification" id="staffVerification" hidden>
+        <label for="staffCodeInput" data-i18n="codeFourDigits">4자리 직원 확인 코드를 입력해 주세요.</label>
+        <input id="staffCodeInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" data-i18n-placeholder="staffCodePlaceholder" placeholder="4자리 코드를 입력해 주세요">
+        <button class="primary-button" id="staffVerifyButton" type="button" data-i18n="staffVerify">직원 확인</button>
+        <button class="quiet-button" id="staffCancelButton" type="button" data-i18n="cancelAlcohol">주류 구매 취소</button>
+        <p class="setting-note" id="staffStatus" aria-live="polite"></p>
+      </div>
+    </section>
   </dialog>
 
   <dialog class="modal option-modal" id="optionModal" aria-labelledby="optionTitle">

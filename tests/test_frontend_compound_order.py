@@ -78,6 +78,19 @@ class FrontendCompoundOrderContractTests(unittest.TestCase):
         self.assertIn("revealStaffVerification()", send)
         self.assertIn("staffCodeChatPrompt", send)
 
+    def test_staff_code_appears_as_a_blocking_modal_when_alcohol_needs_approval(self):
+        self.assertIn(
+            '<dialog class="modal staff-code-modal" id="staffCodeModal"',
+            self.markup,
+        )
+        self.assertIn('id="staffCodeInput"', self.markup)
+        self.assertIn('id="staffVerifyButton"', self.markup)
+        self.assertIn("openDialog($('#staffCodeModal'))", self.script)
+        self.assertIn("closeDialog($('#staffCodeModal'))", self.script)
+        self.assertIn("if (state.staffVerificationRequired) { revealStaffVerification(); return; }", self.script)
+        self.assertIn("$('#staffCodeModal').addEventListener('cancel'", self.script)
+        self.assertIn(".staff-code-card input", self.styles)
+
     def test_checkout_opens_from_chat_and_keeps_a_localized_detailed_receipt(self):
         send_start = self.script.index("async function sendMessage")
         send_end = self.script.index("async function retryPendingStaffRequest", send_start)

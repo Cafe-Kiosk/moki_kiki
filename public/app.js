@@ -626,6 +626,7 @@ function renderStaffStatus(message = '', focus = false) {
 
 function revealStaffVerification(message = '') {
   renderStaffStatus(message, true);
+  openDialog($('#staffCodeModal'));
   const verification = $('#staffVerification');
   verification.classList.remove('attention');
   // Restart the visual cue even when two purchase actions are attempted in a row.
@@ -1121,7 +1122,7 @@ async function submitOption(event) {
 async function sendMessage(rawMessage, options = {}) {
   const message = String(rawMessage || '').trim();
   if (!message || state.busy) return;
-  if (state.staffVerificationRequired) { renderStaffStatus('', true); return; }
+  if (state.staffVerificationRequired) { revealStaffVerification(); return; }
   if (state.deferredItems.length) {
     renderQuickReplies();
     announce(tr('batchPending'));
@@ -1214,6 +1215,7 @@ async function cancelStaffVerification() {
   state.staffChallenge = null; state.staffAuthorization = null; state.pendingStaffRequest = null; state.pendingCartRollback = null;
   $('#staffCodeInput').value = '';
   appendMessage('assistant', tr('alcoholCancelled'));
+  closeDialog($('#staffCodeModal'));
   renderStaffStatus(); renderQuickReplies(); renderCart(); saveState(); $('#messageInput').focus();
 }
 
@@ -1253,6 +1255,7 @@ async function verifyStaff() {
   } finally {
     $('#staffCodeInput').value = ''; state.busy = false; button.disabled = false;
   }
+  if (!state.staffVerificationRequired && !refreshRequest) closeDialog($('#staffCodeModal'));
   if (refreshRequest) await sendMessage(refreshRequest.message, { appendUser: false, historyOverride: refreshRequest.history });
   else if (retryRequest) await retryPendingStaffRequest();
   else if (!state.staffVerificationRequired && state.deferredItems.length) {
@@ -1567,6 +1570,10 @@ $('#tableSelect').addEventListener('change', (event) => changeTable(event.target
 $('#staffVerifyButton').addEventListener('click', verifyStaff);
 $('#staffCancelButton').addEventListener('click', cancelStaffVerification);
 $('#staffCodeInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); verifyStaff(); } });
+$('#staffCodeModal').addEventListener('cancel', (event) => {
+  event.preventDefault();
+  revealStaffVerification();
+});
 
 $('#apiKeyButton').addEventListener('click', openAPIKeyModal);
 $('#apiKeyForm').addEventListener('submit', submitAPIKey);
