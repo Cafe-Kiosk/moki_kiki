@@ -5,6 +5,7 @@
     python tests/run_checks.py --ids Q01 Q04 Q47
     python tests/run_checks.py --ids Q09 --out tests/results_a.md   # 다른 파일에 저장
     python tests/run_checks.py --use-cache   # 답변 캐시 사용 (기본은 읽지도 쓰지도 않음)
+    python tests/run_checks.py --text "2만 원으로 두 명 음료랑 간식"   # 시트에 없는 문장
 
 프롬프트 팀이 실패 사례를 기록해 발표 4번(약점) 자료로 쓰기로 한 그 표다.
 결과는 tests/results.md 로 저장된다.
@@ -34,13 +35,17 @@ def main():
     ap.add_argument("--ids", nargs="*")
     ap.add_argument("--limit", type=int, default=5)
     ap.add_argument("--out", default="tests/results.md")
+    ap.add_argument("--text", nargs="*", help="검증질문 시트에 없는 문장을 바로 돌린다")
     ap.add_argument("--use-cache", action="store_true",
                     help="답변 캐시를 읽고 쓴다. 기본은 끔 — 프롬프트를 고쳐도 옛 답변이 나오지 않게")
     a = ap.parse_args()
     chain.USE_CACHE = a.use_cache
 
     qs = load_questions()
-    if a.ids:
+    if a.text:
+        qs = [{"질문 ID": f"T{i}", "유형": "직접 입력", "테스트 질문": s, "기대 처리": "-"}
+              for i, s in enumerate(a.text, 1)]
+    elif a.ids:
         qs = [q for q in qs if q["질문 ID"] in a.ids]
     elif not a.all:
         qs = qs[: a.limit]

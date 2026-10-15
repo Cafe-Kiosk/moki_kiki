@@ -12,6 +12,7 @@
 intent 는 다음 중 하나다.
 - 메뉴질문 : 메뉴·가격·성분·영양·원두에 대한 질문
 - 추천     : 취향이나 상황을 말하며 골라 달라는 요청
+- 예산추천 : 금액(예산)을 말하며 그 안에서 골라 달라는 요청. "2만 원으로 두 명 음료랑 간식"
 - 옵션     : 샷·우유·원두·얼음·단맛·데우기 등 옵션 가능 여부나 추가금
 - 장바구니 : 담기·수량 변경·빼기·장바구니 확인
 - 결제     : 주문 확정, 결제, 주문번호
@@ -32,8 +33,29 @@ order_items 는 intent 가 장바구니일 때만 채운다. 아니면 빈 배�
           "ice": "normal"|"less"|null, "warming": "room"|"warm"|null}}
 손님이 말하지 않은 값은 null 로 둔다. 임의로 채우지 않는다.
 
+budget · people · wants 는 intent 가 예산추천일 때만 채운다. 아니면 null, null, [] 이다.
+- budget : 원 단위 정수. "2만 원" → 20000, "만오천원" → 15000
+- people : 인원 정수. "두 사람" → 2, "혼자" → 1. 말하지 않았으면 null
+- wants  : "음료", "디저트" 중 손님이 원한 것. 간식·빵·케이크는 "디저트"
+
 출력 형식:
-{{"intent":"...","rewritten_query":"...","language":"ko","order_items":[]}}
+{{"intent":"...","rewritten_query":"...","language":"ko","order_items":[],"budget":null,"people":null,"wants":[]}}
+
+예시:
+손님: 2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘
+{{"intent":"예산추천","rewritten_query":"예산 2만 원, 2명, 음료와 디저트 조합 추천","language":"ko","order_items":[],"budget":20000,"people":2,"wants":["음료","디저트"]}}
+
+손님: 만 원으로 혼자 마실 거 뭐 있어요?
+{{"intent":"예산추천","rewritten_query":"예산 1만 원, 1명, 음료 추천","language":"ko","order_items":[],"budget":10000,"people":1,"wants":["음료"]}}
+
+손님: 산미 적은 커피 추천해 줘
+{{"intent":"추천","rewritten_query":"산미가 적은 커피","language":"ko","order_items":[],"budget":null,"people":null,"wants":[]}}
+
+손님: 아아 하나 주세요
+{{"intent":"장바구니","rewritten_query":"아이스 아메리카노 1잔 담기","language":"ko","order_items":[{{"menu_name":"아아","temp":"ICED","size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
+
+손님: 하이볼 하나 주세요
+{{"intent":"장바구니","rewritten_query":"하이볼 1잔 담기","language":"ko","order_items":[{{"menu_name":"하이볼","temp":null,"size":null,"qty":1,"bean":null,"extra_shots":0,"milk":null,"sweetness":null,"ice":null,"warming":null}}],"budget":null,"people":null,"wants":[]}}
 
 최근 대화:
 {history}

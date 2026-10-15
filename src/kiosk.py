@@ -12,6 +12,7 @@ from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
+from .budget import budget_lines, parse_budget
 from .conditions import screen, alternatives_line, item_caution_line, decaf_notes
 
 
@@ -156,8 +157,10 @@ def footer_lines(cart: Cart) -> list[str]:
 
 
 def build_calc(user_input: str, intent: str, order_items: list[dict] | None,
-               cart: Cart) -> list[str]:
+               cart: Cart, router: dict | None = None) -> list[str]:
     """모델에게 넘길 계산 결과. 판단은 여기서 끝내고 태그로 적는다. LLM 호출 없음."""
+    if intent == "예산추천":
+        return budget_lines(user_input, router)          # 장바구니는 건드리지 않는다
     lines, blocked = screen(user_input, order_items)
     lines += decaf_notes(user_input)
     if intent == "장바구니" and order_items:
@@ -193,6 +196,9 @@ def handle(user_input: str, store, cart: Cart,
     # 메뉴 이름이 걸렸는데 범위밖·잡담으로 분류되면 코드가 뒤집는다 (Q47: '하이볼'을 범위밖으로 봄)
     if intent in ("범위밖", "잡담") and any(menu_by_id(m) for m in match_menus(user_input)[0]):
         intent = "메뉴질문"
+    # 금액이 들어간 추천은 예산추천으로 본다 ("만 원으로 뭐 마실까")
+    if intent == "추천" and parse_budget(user_input):
+        intent = "예산추천"
 
     # ── 범위 밖·잡담 : 검색을 건너뛴다 (비용 절약) ──────────
     if intent in ("범위밖", "잡담"):
@@ -218,7 +224,7 @@ def handle(user_input: str, store, cart: Cart,
 
     # ── 장바구니 담기 ──────────────────────────────────────
     before = cart_signature(cart)
-    calc_lines = build_calc(user_input, intent, r.get("order_items"), cart)
+    calc_lines = build_calc(user_input, intent, r.get("order_items"), cart, r)
 
     # ── 검색 + 답변 ────────────────────────────────────────
     docs, trace = hybrid_search(store, rq)

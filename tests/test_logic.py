@@ -419,4 +419,44 @@ finally:
     chain.ChatOpenAI, chain.ANSWER_CACHE = saved_llm, saved_path
 check("앱 기본값은 캐시 사용", chain.USE_CACHE, True)
 
+print("\n【 묶음 B 예산 추천 (교수님 시나리오 · P12) 】")
+from src.budget import plans, budget_lines, parse_budget, parse_people
+from src.cart import is_alcohol
+ps = safe(lambda: plans(20000, 2, True))
+check("20,000원·2명·음료+디저트 → 2~3안", 2 <= len(ps) <= 3 if isinstance(ps, list) else ps, True)
+check("모든 안 합계 ≤ 20,000원", all(p.total <= 20000 for p in ps), True)
+check("모든 안 주류 0개", sum(is_alcohol(x.menu_id) for p in ps for x in p.drinks + p.desserts), 0)
+check("모든 안 음료 정확히 2개 (1인당 1개)",
+      all(len(p.drinks) == 2 and all(menu_by_id(x.menu_id)["분류"] in ("커피", "차/논커피")
+                                     for x in p.drinks) for p in ps), True)
+check("모든 안 디저트 1개 이상", all(len(p.desserts) >= 1 for p in ps), True)
+check("안끼리 음료가 겹치지 않음",
+      len({x.menu_id for p in ps for x in p.drinks}) == sum(len({x.menu_id for x in p.drinks}) for p in ps), True)
+s = "\n".join(budget_lines("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘"))
+check("calc 형식 '[예산안] 1안: ... = N원 (잔액 M원)'",
+      bool(__import__("re").search(r"\[예산안\] 1안: .+ = [\d,]+원 \(잔액 [\d,]+원\)", s)), True)
+check("calc 에 '인기' 없음 (P12)", "인기" in s, False)
+s = "\n".join(budget_lines("5000원으로 두 명 음료랑 디저트"))
+check("5,000원·2명 → 조합 없음 + 최소 금액 10,800원 안내",
+      ("조합 없음" in s, "최소 10,800원" in s, "1안" in s), (True, True, False))
+s = "\n".join(budget_lines("3만원으로 혼자 커피랑 케이크"))
+check("가격이 갈리는 메뉴는 '가장 싼 구성'으로 표시",
+      all(("(가장 싼 구성)" in ln) == any(n in ln for n in ["아메리카노", "카페 라떼", "바닐라 라떼"])
+          for ln in s.splitlines() if "안:" in ln), True)
+check("같은 메뉴 2잔 조합 허용", any(len({x.menu_id for x in p.drinks}) == 1
+                                for p in plans(9000, 2, False, limit=50)), True)
+for text, want in [("2만 원", 20000), ("1만 2천원", 12000), ("만오천원", 15000),
+                   ("15,000원", 15000), ("오천원", 5000), ("이만원", 20000)]:
+    check(f"예산 읽기 '{text}' → {want:,}", parse_budget(text), want)
+for text, want in [("두 사람", 2), ("3명", 3), ("혼자", 1), ("둘이", 2)]:
+    check(f"인원 읽기 '{text}' → {want}", parse_people(text), want)
+c = Cart(table_id=1)
+r = safe(lambda: handle_stub("2만 원밖에 없는데 두 사람 음료랑 간식 추천해 줘",
+                             {"intent": "예산추천", "budget": 20000, "people": 2,
+                              "wants": ["음료", "디저트"]}, c))
+check("예산추천 → 장바구니에 담지 않음, 🧾 줄 없음",
+      (len(c.items), "🧾" in getattr(r, "reply", "")), (0, False))
+r = safe(lambda: handle_stub("만 원으로 혼자 마실 거 추천", {"intent": "추천"}))
+check("라우터가 '추천'이라 해도 금액이 있으면 예산추천", getattr(r, "intent", r), "예산추천")
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

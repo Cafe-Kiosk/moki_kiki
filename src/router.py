@@ -9,7 +9,7 @@ import json
 from langchain_openai import ChatOpenAI
 from .config import ROUTER_MODEL, ROUTER_MAX_TOKENS, MOCK, HISTORY_TURNS
 
-INTENTS = ["메뉴질문", "추천", "옵션", "장바구니", "결제", "잡담", "범위밖"]
+INTENTS = ["메뉴질문", "추천", "예산추천", "옵션", "장바구니", "결제", "잡담", "범위밖"]
 
 from .prompts import load as load_prompt
 
@@ -23,7 +23,8 @@ def _llm():
 
 def _mock(user_input: str) -> dict:
     return {"intent": "메뉴질문", "rewritten_query": user_input,
-            "language": "en" if user_input.isascii() else "ko", "order_items": []}
+            "language": "en" if user_input.isascii() else "ko", "order_items": [],
+            "budget": None, "people": None, "wants": []}
 
 
 def route(user_input: str, history: list[dict] | None = None) -> dict:
@@ -48,6 +49,9 @@ def route(user_input: str, history: list[dict] | None = None) -> dict:
     out.setdefault("rewritten_query", user_input)
     out.setdefault("language", "ko")
     out.setdefault("order_items", [])
+    out.setdefault("budget", None)
+    out.setdefault("people", None)
+    out.setdefault("wants", [])
     if out["intent"] not in INTENTS:
         out["intent"] = "메뉴질문"
     return out
