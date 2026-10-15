@@ -263,9 +263,18 @@ c2 = Cart(table_id=1); add(c2, "M28")
 check("주류 없으면 직원 확인 문구 없음", safe(lambda: receipt_line(c2)), "🧾 합계 4,500원")
 sig = cart_signature(c2); c2.set_qty(0, 2)
 check("수량을 바꾸면 장바구니 변경으로 인식", cart_signature(c2) != sig, True)
-check("Q34 [주의] 주류·도수·카페인 70mg·직원 확인 대기",
-      "[주의] 에스프레소 마티니 주류 포함·도수 16.7%, 카페인 70mg, 직원 확인 대기" in s, True)
-check("치즈케이크엔 [주의] 없음", "[주의] 바스크 치즈케이크" in s, False)
+check("Q34 calc 엔 품목 도수·카페인 없음 (코드가 답변 끝에 붙임)", "16.7%" in s, False)
+from src.kiosk import footer_lines
+check("Q34 끝줄: ⚠️ 마티니 주류·카페인 → 🧾 합계 (치즈케이크 ⚠️ 없음)",
+      safe(lambda: footer_lines(c)),
+      ["⚠️ 에스프레소 마티니 — 주류 16.7% · 카페인 70mg", "🧾 합계 18,800원 · 직원 확인 대기"])
+c3 = Cart(table_id=1); add(c3, "M02", "ICED", "S"); add(c3, "M17", "HOT"); add(c3, "M32")
+check("커피는 카페인만, 0mg 차는 생략, 0mg 주류는 도수만",
+      safe(lambda: footer_lines(c3)),
+      ["⚠️ 아메리카노 — 카페인 120mg", "⚠️ 유자 소주 하이볼 — 주류 5.3%",
+       "🧾 합계 19,000원 · 직원 확인 대기"])
+c4 = Cart(table_id=1); add(c4, "M21")
+check("디저트는 ⚠️ 없음 (카페인은 커피·차·주류만)", safe(lambda: footer_lines(c4)), ["🧾 합계 " + f"{c4.total:,}원"])
 _, s = safe(lambda: calc("술 없이 유자 하이볼 주세요", "장바구니",
                          {"menu_name": "유자 소주 하이볼", "qty": 1}))
 check("술 없이 → [조건충돌] + 대안 첫째 유자티",
@@ -298,8 +307,8 @@ check("디카페인 추천 calc 에 '120mg' 없음, 디카페인 필터커피 8m
       ("120mg" in s, "디카페인 필터커피: 카페인 8mg (0은 아님, P10)" in s), (False, True))
 c, s = safe(lambda: calc("디카페인 카페라떼 HOT S 하나", "장바구니",
                          {"menu_name": "디카페인 카페라떼", "temp": "HOT", "size": "S", "qty": 1}))
-check("디카페인 라떼 담으면 [주의] 카페인 약 8mg (변경 전 120mg 아님)",
-      "[주의] 카페 라떼 카페인 약 8mg (디카페인 원두, 0은 아님, P10)" in s, True)
+check("디카페인 라떼 ⚠️ 카페인 약 8mg (변경 전 120mg 아님)",
+      safe(lambda: footer_lines(c)[0]), "⚠️ 카페 라떼 — 카페인 약 8mg (디카페인 원두, 0은 아님)")
 check("카페인 적은 음료 추천은 기존대로 (무카페인 차 포함)",
       "M17" in taste_candidates("카페인 적은 음료 추천"), True)
 
@@ -351,5 +360,63 @@ check("Q34 장바구니가 바뀐 턴엔 답변 마지막 줄이 🧾 합계",
       "🧾 합계 18,800원 · 직원 확인 대기")
 r = safe(lambda: handle_stub("말차 라떼 카페인 얼마나 돼요?", {"intent": "메뉴질문"}, c))
 check("장바구니가 안 바뀐 턴엔 🧾 줄 없음", "🧾" in getattr(r, "reply", ""), False)
+
+print("\n【 별칭 속성으로 온도 보충 (Q25) 】")
+c, s = safe(lambda: calc("아아 하나랑 핫초코 하나", "장바구니",
+                         {"menu_name": "아메리카노", "temp": None, "size": None, "qty": 1},
+                         {"menu_name": "초코 라떼", "temp": None, "size": None, "qty": 1}))
+check("Q25 아아 → 아메리카노 ICED 의 S/L 만 묻기",
+      ("아메리카노 ICED: 크기만 골라야" in s, "S 4,500원 / L 5,500원" in s,
+       "HOT" in s.splitlines()[0]),
+      (True, True, False))
+check("[담기완료] 줄에 NA·ONE 내부 값 없음", ("NA" in s, "ONE" in s), (False, False))
+check("Q25 핫초코 → 초코 라떼 HOT 확정", [i.variant_id for i in c.items], ["M14-HOT-ONE"])
+c, s = safe(lambda: calc("뜨아 S 하나", "장바구니",
+                         {"menu_name": "아메리카노", "temp": None, "size": "S", "qty": 1}))
+check("뜨아 → HOT 으로 채워 담김", [i.variant_id for i in c.items], ["M02-HOT-S"])
+c, s = safe(lambda: calc("iced latte large please", "장바구니",
+                         {"menu_name": "latte", "temp": None, "size": "L", "qty": 1}))
+check("iced latte → ICED 로 채워 담김", [i.variant_id for i in c.items], ["M03-ICED-L"])
+c, s = safe(lambda: calc("뜨거운 아아 하나", "장바구니",
+                         {"menu_name": "아메리카노", "temp": "HOT", "size": "S", "qty": 1}))
+check("뜨거운 아아 (라우터 HOT ↔ 별칭 ICED) → 담지 않고 되묻기",
+      (len(c.items), "온도 확인 필요" in s), (0, True))
+c, s = safe(lambda: calc("아아랑 뜨아 하나씩, 둘 다 S", "장바구니",
+                         {"menu_name": "아메리카노", "temp": "ICED", "size": "S", "qty": 1},
+                         {"menu_name": "아메리카노", "temp": "HOT", "size": "S", "qty": 1}))
+check("아아랑 뜨아 (원문 온도가 섞임) → 라우터 값대로 둘 다 담김",
+      sorted(i.variant_id for i in c.items), ["M02-HOT-S", "M02-ICED-S"])
+
+print("\n【 답변 캐시 스위치 】")
+import src.chain as chain
+import json
+saved = chain.USE_CACHE, chain.MOCK, chain._cache_load
+chain.MOCK = False
+calls = []
+class FakeLLM:
+    def __init__(self, *a, **k): pass
+    def invoke(self, msgs):
+        calls.append(1)
+        return type("R", (), {"content": "새 답변"})()
+saved_llm = chain.ChatOpenAI
+chain.ChatOpenAI = FakeLLM
+key = chain._cache_key(chain.SYSTEM.format(context="ctx", calc="(없음)"), "질문")
+chain._cache_load = lambda: {key: "옛 답변"}
+written = []
+saved_path = chain.ANSWER_CACHE
+class FakePath:
+    def write_text(self, s): written.append(s)
+    def exists(self): return True
+chain.ANSWER_CACHE = FakePath()
+try:
+    chain.USE_CACHE = False
+    check("캐시 끔 → 저장된 옛 답변 대신 새로 생성", chain.answer("질문", "ctx"), ("새 답변", False))
+    check("캐시 끔 → 캐시 파일에 쓰지 않음", len(written), 0)
+    chain.USE_CACHE = True
+    check("캐시 켬 → 저장된 답변 사용 (앱 기본)", chain.answer("질문", "ctx"), ("옛 답변", True))
+finally:
+    chain.USE_CACHE, chain.MOCK, chain._cache_load = saved
+    chain.ChatOpenAI, chain.ANSWER_CACHE = saved_llm, saved_path
+check("앱 기본값은 캐시 사용", chain.USE_CACHE, True)
 
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

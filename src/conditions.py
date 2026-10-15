@@ -4,7 +4,7 @@
   [조건충돌] 요청 메뉴가 조건을 어긴다 — 담지 않고 온도·크기도 묻지 않는다 (Q08)
   [대안]     조건을 만족하는 메뉴 2~3개, 데이터에 적힌 값과 함께 (Q08·Q10)
   [주의]     알레르기 질문이면 항상 공용 기구 교차접촉 안내 (P09·Q10)
-                담긴 품목이 주류이거나 카페인이 있으면 도수·카페인·직원 확인 (Q34)
+담긴 품목의 주류·카페인과 합계는 calc 가 아니라 코드가 답변 끝에 붙인다 (kiosk.footer_lines).
 """
 from __future__ import annotations
 import re
@@ -189,28 +189,29 @@ def decaf_notes(text: str) -> list[str]:
     return out
 
 
-def added_item_caution(item: CartItem) -> str | None:
-    """담긴 품목이 주류이거나 카페인이 있으면 [주의] 한 줄 (Q34)."""
+def item_caution_line(item: CartItem) -> str | None:
+    """담긴 품목의 주류·카페인을 코드가 답변 끝에 붙일 한 줄로 만든다 (Q34).
+
+    카페인은 커피·차·주류일 때만, 0mg 이면 생략한다. 원두·샷을 바꿨으면 바꾼 기준으로 계산한다 (P10).
+    """
     from .cart import variant_by_id
     v = variant_by_id(item.variant_id) or {}
-    mg = v.get("카페인(mg)")
-    mg = int(mg) if isinstance(mg, (int, float)) else 0
     bits = []
     if item.is_alcohol:
         abv = v.get("도수(계산 기준)")
-        bits.append("주류 포함" + (f"·도수 {round(abv * 100, 1)}%"
-                                  if isinstance(abv, (int, float)) else ""))
-    bean = item.bean or v.get("원두 ID")
-    if mg > 0 and (item.bean not in (None, "B01") or item.extra_shots):
-        est = caffeine_with_bean(v, bean, item.extra_shots) if bean else None
-        if est is not None:                    # P10: 원두·샷을 바꾸면 카페인은 별도 계산
-            bits.append(f"카페인 약 {est}mg" + (" (디카페인 원두, 0은 아님, P10)" if bean == "B03" else ""))
+        bits.append("주류" + (f" {round(abv * 100, 1)}%" if isinstance(abv, (int, float)) else ""))
+    cat = (menu_by_id(item.menu_id) or {}).get("분류")
+    mg = v.get("카페인(mg)")
+    mg = int(mg) if isinstance(mg, (int, float)) else 0
+    if cat in (*DRINK_CATEGORIES, "주류") and mg > 0:
+        if item.bean not in (None, "B01") or item.extra_shots:
+            est = caffeine_with_bean(v, item.bean or v.get("원두 ID"), item.extra_shots)
+            if est is not None:
+                bits.append(f"카페인 약 {est}mg" + (" (디카페인 원두, 0은 아님)" if item.bean == "B03" else ""))
+            else:
+                bits.append(f"카페인 {mg}mg (원두·샷 변경 전 기준)")
         else:
-            bits.append(f"카페인 {mg}mg (원두·샷 변경 전 기준)")
-    elif mg > 0:
-        bits.append(f"카페인 {mg}mg")
-    if item.is_alcohol:
-        bits.append("직원 확인 대기")
+            bits.append(f"카페인 {mg}mg")
     if not bits:
         return None
-    return f"[주의] {item.name} " + ", ".join(bits)
+    return f"⚠️ {item.name} — " + " · ".join(bits)

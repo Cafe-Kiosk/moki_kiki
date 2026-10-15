@@ -7,12 +7,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .router import route
-from .retrieve import hybrid_search, as_context, match_menus, alias_hits
+from .retrieve import hybrid_search, as_context, match_menus, alias_hits, _alias_attrs
 from .chain import answer
 from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    validate_options, option_label, option_alternatives, is_alcohol,
                    OPTION_KEYS, valid_qty, QTY_MSG)
-from .conditions import screen, alternatives_line, added_item_caution, decaf_notes
+from .conditions import screen, alternatives_line, item_caution_line, decaf_notes
 
 
 def _menu_candidates(text: str) -> tuple[list[str], dict]:
@@ -25,10 +25,30 @@ def _menu_candidates(text: str) -> tuple[list[str], dict]:
     return [i for i in ids if menu_by_id(i)], attrs
 
 
-def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset()) -> str:
+_MIXED = object()      # 같은 메뉴에 서로 다른 온도 별칭이 함께 나온 경우 ('아아랑 뜨아')
+
+
+def text_alias_attrs(text: str) -> dict[str, dict]:
+    """손님 원문의 별칭이 정해 주는 속성을 메뉴별로 모은다. 예: '아아 하나' → {M02: {temp: ICED}}.
+
+    라우터가 온도를 null 로 넘겨도 원문에서 채우기 위해 쓴다 (Q25).
+    """
+    out: dict[str, dict] = {}
+    for alias, mids in alias_hits(text):
+        if len(mids) != 1:
+            continue
+        cur = out.setdefault(mids[0], {})
+        for k, v in _alias_attrs().get(alias, {}).items():
+            cur[k] = v if cur.get(k) in (None, v) else _MIXED
+    return out
+
+
+def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset(),
+             text_attrs: dict | None = None) -> str:
     """주문 항목 하나를 검증해 담고, 모델에게 넘길 계산 줄을 돌려준다.
 
     blocked 는 손님 조건과 충돌한 메뉴다. 담지 않고 온도·크기도 묻지 않는다 (Q08).
+    text_attrs 는 손님 원문 별칭의 속성이다 (text_alias_attrs).
     """
     name = it.get("menu_name", "")
     cands, alias_attrs = _menu_candidates(name)
@@ -48,10 +68,24 @@ def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset()) -> str:
         qty = 1
     if not valid_qty(qty):
         return f"{m['메뉴명']}: 담지 않았습니다. 요청 수량 {qty!r} — {QTY_MSG}"
-    # 라우터가 null 로 준 값은 별칭이 정해 주는 값으로 채운다 ('아아' → ICED)
-    temp = it.get("temp") or alias_attrs.get("temp")
+    # 라우터가 null 로 준 온도는 별칭이 정해 주는 값으로 채운다 ('아아' → ICED).
+    # 라우터 메뉴명의 별칭이 먼저, 없으면 손님 원문의 별칭 (Q25)
+    alias_temp = alias_attrs.get("temp") or (text_attrs or {}).get(mid, {}).get("temp")
+    if alias_temp is _MIXED:
+        alias_temp = None
+    router_temp = (it.get("temp") or "").upper() or None
+    if router_temp and alias_temp and router_temp != alias_temp:
+        # '뜨거운 아아' — 어느 쪽인지 코드가 정하지 않는다
+        return (f"{m['메뉴명']}: 담지 않았습니다. 온도 확인 필요 — "
+                f"별칭은 {alias_temp}, 요청 온도는 {router_temp}")
+    temp = router_temp or alias_temp
     v, all_v = resolve_variant(mid, temp, it.get("size"))
     if v is None:
+        # 온도는 정해졌고 크기만 남았으면 그 온도의 구성만 보여 준다 ('아아' → ICED S/L)
+        same_temp = [x for x in all_v if temp and str(x.get("온도")).upper() == temp]
+        if same_temp:
+            opts = " / ".join(f"{x.get('크기')} {int(x['가격(원)']):,}원" for x in same_temp)
+            return f"{m['메뉴명']} {temp}: 크기만 골라야 합니다 (온도는 {temp}로 정해짐) → {opts}"
         opts = " / ".join(
             f"{x.get('온도')}·{x.get('크기')} {int(x['가격(원)']):,}원" for x in all_v)
         return f"{m['메뉴명']}: 구성을 하나 골라야 합니다 → {opts}"
@@ -79,18 +113,20 @@ def _add_one(it: dict, cart: Cart, blocked: set[str] = frozenset()) -> str:
     ok, err = cart.add(item)
     if not ok:
         return f"{m['메뉴명']}: {err}"
-    line = (f"[담기완료] {item.name} {item.temp}/{item.size}"
+    # 디저트·주류의 NA·ONE 같은 내부 값은 모델에게 넘기지 않는다
+    unit = "/".join(x for x in (item.temp, item.size) if x not in ("NA", "ONE", "None"))
+    line = (f"[담기완료] {item.name}" + (f" {unit}" if unit else "")
             + (f" ({item.option_text()})" if item.option_text() else "")
             + f" ×{qty} · {item.subtotal:,}원 "
               f"[기본 {item.base_price:,} + 옵션 {item.option_fee:,}]")
-    caution = added_item_caution(item)
-    return line + (f"\n{caution}" if caution else "")
+    return line
 
 
 def apply_order_items(order_items: list[dict], cart: Cart,
-                      blocked: set[str] = frozenset()) -> list[str]:
+                      blocked: set[str] = frozenset(), user_input: str = "") -> list[str]:
     """라우터의 order_items 를 장바구니에 반영한다. LLM 호출 없음."""
-    lines = [_add_one(it, cart, blocked) for it in order_items]
+    text_attrs = text_alias_attrs(user_input)
+    lines = [_add_one(it, cart, blocked, text_attrs) for it in order_items]
     if cart.status() == "pending_staff_check":
         lines.append("주류 포함 — 직원 나이 확인 전까지 확정 불가")
     return lines
@@ -109,13 +145,23 @@ def receipt_line(cart: Cart) -> str:
     return line
 
 
+def footer_lines(cart: Cart) -> list[str]:
+    """장바구니가 바뀐 턴에 답변 끝에 붙는 줄들: 품목별 ⚠️ 주류·카페인, 마지막에 🧾 합계."""
+    lines = []
+    for it in cart.items:
+        ln = item_caution_line(it)
+        if ln and ln not in lines:
+            lines.append(ln)
+    return lines + [receipt_line(cart)]
+
+
 def build_calc(user_input: str, intent: str, order_items: list[dict] | None,
                cart: Cart) -> list[str]:
     """모델에게 넘길 계산 결과. 판단은 여기서 끝내고 태그로 적는다. LLM 호출 없음."""
     lines, blocked = screen(user_input, order_items)
     lines += decaf_notes(user_input)
     if intent == "장바구니" and order_items:
-        lines = apply_order_items(order_items, cart, blocked) + lines
+        lines = apply_order_items(order_items, cart, blocked, user_input) + lines
     else:
         # 담기가 아니어도 '하이볼'처럼 두 메뉴에 걸리는 말은 되묻게 한다 (Q47)
         for alias, mids in alias_hits(user_input):
@@ -179,6 +225,6 @@ def handle(user_input: str, store, cart: Cart,
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
     if cart_signature(cart) != before:
-        reply = reply.rstrip() + "\n\n" + receipt_line(cart)
+        reply = reply.rstrip() + "\n\n" + "\n".join(footer_lines(cart))
     return TurnResult(reply, intent, rq, lang, docs, trace,
                       "\n".join(calc_lines), cached, calls + (0 if cached else 1))

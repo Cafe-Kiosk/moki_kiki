@@ -10,6 +10,9 @@ from .prompts import load as load_prompt
 SYSTEM = load_prompt("system")
 OFFTOPIC = load_prompt("offtopic")
 
+# 앱은 캐시를 쓴다 (시연 리허설 답변 고정). 검증 스크립트는 기본으로 끈다 (run_checks --use-cache).
+USE_CACHE = True
+
 
 def _cache_load() -> dict:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -40,7 +43,7 @@ def answer(user_input: str, context: str, calc: str = "",
     if MOCK:
         return f"[MOCK] {user_input} 에 대한 가짜 응답입니다. 검색 문서 {context.count('---') + 1}건.", True
 
-    cache = _cache_load()
+    cache = _cache_load() if USE_CACHE else {}
     key = _cache_key(system, user)
     if key in cache:
         return cache[key], True
@@ -48,6 +51,7 @@ def answer(user_input: str, context: str, calc: str = "",
     llm = ChatOpenAI(model=ANSWER_MODEL, temperature=0.3, max_tokens=ANSWER_MAX_TOKENS)
     text = llm.invoke([{"role": "system", "content": system},
                        {"role": "user", "content": user}]).content.strip()
-    cache[key] = text
-    ANSWER_CACHE.write_text(json.dumps(cache, ensure_ascii=False))
+    if USE_CACHE:
+        cache[key] = text
+        ANSWER_CACHE.write_text(json.dumps(cache, ensure_ascii=False))
     return text, False

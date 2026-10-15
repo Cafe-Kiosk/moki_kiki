@@ -4,6 +4,7 @@
     python tests/run_checks.py --all      # 47개 전부 (LLM 약 90회)
     python tests/run_checks.py --ids Q01 Q04 Q47
     python tests/run_checks.py --ids Q09 --out tests/results_a.md   # 다른 파일에 저장
+    python tests/run_checks.py --use-cache   # 답변 캐시 사용 (기본은 읽지도 쓰지도 않음)
 
 프롬프트 팀이 실패 사례를 기록해 발표 4번(약점) 자료로 쓰기로 한 그 표다.
 결과는 tests/results.md 로 저장된다.
@@ -19,6 +20,7 @@ from src.documents import _sheet_rows
 from src.index import load_index
 from src.cart import Cart
 from src.kiosk import handle
+import src.chain as chain
 
 
 def load_questions():
@@ -32,7 +34,10 @@ def main():
     ap.add_argument("--ids", nargs="*")
     ap.add_argument("--limit", type=int, default=5)
     ap.add_argument("--out", default="tests/results.md")
+    ap.add_argument("--use-cache", action="store_true",
+                    help="답변 캐시를 읽고 쓴다. 기본은 끔 — 프롬프트를 고쳐도 옛 답변이 나오지 않게")
     a = ap.parse_args()
+    chain.USE_CACHE = a.use_cache
 
     qs = load_questions()
     if a.ids:
@@ -42,7 +47,8 @@ def main():
 
     print(f"검증질문 {len(qs)}개 실행 — LLM 약 {len(qs)*2}회\n")
     store = load_index()
-    out = [f"# 검증질문 실행 결과\n", f"실행 {datetime.date.today()} · {len(qs)}개\n"]
+    out = [f"# 검증질문 실행 결과\n",
+           f"실행 {datetime.date.today()} · {len(qs)}개 · 답변 캐시 {'사용' if a.use_cache else '끔'}\n"]
 
     for q in qs:
         cart = Cart(table_id=5)          # 질문마다 새 장바구니
