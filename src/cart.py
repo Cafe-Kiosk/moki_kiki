@@ -311,8 +311,11 @@ class CartItem:
 class Cart:
     table_id: int | None = None
     items: list[CartItem] = field(default_factory=list)
-    order_no: str | None = None
+    order_no: str | None = None      # 마지막으로 확정한 주문번호
     staff_checked: bool = False      # P15 직원 나이 확인
+    # 확인 대기: None | "confirm"(이대로 확정할까요?) | "copy"(직전 주문을 새 장바구니로?) (P05·P06·Q19·Q23)
+    pending: str | None = None
+    confirmed_orders: list = field(default_factory=list)   # 확정한 주문 — 바꾸지 않는다
 
     def add(self, item: CartItem) -> tuple[bool, str]:
         """검증을 통과한 품목만 담는다 (P11: 유효성 검증 전 장바구니 변경 금지)."""
@@ -324,17 +327,25 @@ class Cart:
             return False, " / ".join(f"{option_label(k, getattr(item, k, ''))}: {why}"
                                      for k, why in rejected)
         self.items.append(item)
+        self._changed()
         return True, ""
 
     def remove(self, idx: int):
         if 0 <= idx < len(self.items):
             self.items.pop(idx)
+            self._changed()
 
     def set_qty(self, idx: int, qty: int) -> tuple[bool, str]:
         if not valid_qty(qty):
             return False, QTY_MSG
         self.items[idx].qty = qty
+        self._changed()
         return True, ""
+
+    def _changed(self):
+        """확인받은 요약과 장바구니가 달라졌으니 확정 대기는 풀린다."""
+        if self.pending == "confirm":
+            self.pending = None
 
     @property
     def total(self) -> int:
@@ -349,15 +360,37 @@ class Cart:
             return "pending_staff_check"
         return "ready"
 
-    def confirm(self) -> tuple[bool, str]:
+    def can_confirm(self) -> tuple[bool, str]:
         if not self.items:
             return False, "장바구니가 비어 있습니다."
         if self.table_id is None:
             return False, "좌석 번호를 먼저 확인해 주세요."
         if self.status() == "pending_staff_check":
             return False, "주류가 포함되어 있어 직원의 나이 확인 전에는 확정할 수 없습니다."
-        self.order_no = "M" + "".join(random.choices(string.digits, k=4))
-        return True, self.order_no
+        return True, ""
+
+    def confirm(self) -> tuple[bool, str]:
+        """확정하면 주문을 confirmed_orders 에 보존하고 장바구니를 비운다.
+
+        추가 주문은 같은 좌석의 새 주문이 된다. 직원 나이 확인은 이 주문에만 쓰고
+        다음 주문에 재사용하지 않는다 (Q23).
+        """
+        ok, msg = self.can_confirm()
+        if not ok:
+            return False, msg
+        taken = {o["order_no"] for o in self.confirmed_orders}
+        while True:
+            no = "M" + "".join(random.choices(string.digits, k=4))
+            if no not in taken:
+                break
+        self.confirmed_orders.append({
+            "order_no": no, "table_id": self.table_id, "items": list(self.items),
+            "total": self.total, "text": self.as_text(), "staff_checked": self.staff_checked})
+        self.order_no = no
+        self.items = []
+        self.staff_checked = False
+        self.pending = None
+        return True, no
 
     def as_text(self) -> str:
         if not self.items:

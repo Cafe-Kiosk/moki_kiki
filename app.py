@@ -154,8 +154,18 @@ with right:
                     unsafe_allow_html=True)
         if cart.status() == "pending_staff_check":
             st.warning("주류 포함 — 직원 나이 확인 대기", icon="🪪")
-        if cart.order_no:
-            st.success(f"주문번호 {cart.order_no} (시연용)", icon="✅")
+    if cart.pending == "confirm":
+        st.info("확정 확인 대기 — '네'라고 하면 확정됩니다", icon="⏳")
+    elif cart.pending == "copy":
+        st.info("직전 주문 다시 담기 확인 대기 — '네'라고 하면 담습니다", icon="⏳")
+
+    # 확정한 주문은 장바구니와 따로 보존한다. 추가 주문은 같은 좌석의 새 주문 (P06·Q19)
+    if cart.confirmed_orders:
+        st.markdown("#### ✅ 확정된 주문 (시연용)")
+        for o in reversed(cart.confirmed_orders):
+            st.markdown(
+                f'<div class="cart-line"><b>{o["order_no"]}</b> · 좌석 {o["table_id"]}번 · '
+                f'{len(o["items"])}개 품목 · {o["total"]:,}원</div>', unsafe_allow_html=True)
 
     st.divider()
     st.markdown("#### 🔍 방금 검색한 근거")

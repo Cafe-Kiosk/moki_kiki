@@ -136,8 +136,10 @@ def update_item(it: dict, cart: Cart) -> str:
     if apply_to is not None and apply_to < old.qty:
         cart.items[idx] = replace(old, qty=old.qty - apply_to)     # 나머지 잔은 그대로
         cart.items.insert(idx + 1, replace(new, qty=apply_to))
+        cart._changed()
         return (f"[수정완료] {before} 중 {apply_to}개만 변경 → "
                 f"{cart.items[idx].label()} + {cart.items[idx + 1].label()}")
     cart.items[idx] = replace(new, qty=new_qty if new_qty is not None else old.qty)
+    cart._changed()
     return f"[수정완료] {before} → {cart.items[idx].label()}"
 

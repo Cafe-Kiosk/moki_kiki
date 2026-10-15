@@ -583,4 +583,89 @@ finally:
 check("파싱 실패 턴 → trace 맨 앞에 라우터·실패", res.trace[0][0], "라우터·실패")
 check("파싱 실패 턴 → 담지 않고 calc 에 다시 말해 달라고", (len(c.items), "해석하지 못했습니다" in res.calc), (0, True))
 
+print("\n【 C-2 주문 확정 2단계 · 확정 주문 보존 (P05 · P06 · Q19 · Q23) 】")
+from src import orders
+def turn(text, cart, router_out=None):
+    """라우터를 부르면 실패로 표시한다 — 확인 턴은 LLM 0회여야 한다."""
+    called = []
+    saved = K.route, K.answer, K.hybrid_search
+    def fake_route(*a, **k):
+        called.append(1)
+        return dict({"rewritten_query": text, "language": "ko", "order_items": [],
+                     "budget": None, "people": None, "wants": [], "errors": []},
+                    **(router_out or {"intent": "메뉴질문"}))
+    K.route, K.answer = fake_route, (lambda *a, **k: ("(모델 답변)", True))
+    K.hybrid_search = lambda *a, **k: ([], [])
+    try:
+        return K.handle(text, None, cart), bool(called)
+    finally:
+        K.route, K.answer, K.hybrid_search = saved
+
+for w in ["네", "네!", "예", "확정해 주세요", "yes", "OK"]:
+    check(f"긍정 '{w}'", orders.is_yes(w), True)
+for w in ["네 그리고 라떼 하나 더", "라떼 추가", "아니요"]:
+    check(f"긍정 아님 '{w}'", orders.is_yes(w), False)
+check("'아까 주문한 것 하나 더' 인식", orders.is_repeat_request("아까 주문한 것 하나 더"), True)
+check("'아메리카노 하나 더' 는 복사 요청 아님", orders.is_repeat_request("아메리카노 하나 더"), False)
+
+c = Cart(table_id=5); add(c, "M02", "ICED", "S", qty=2); add(c, "M28")
+r, _ = turn("지금 주문 확정할게요", c, {"intent": "결제"})
+check("Q23 첫 확정 요청 → 확정하지 않고 확인 대기",
+      (c.pending, len(c.confirmed_orders), len(c.items)), ("confirm", 0, 2))
+check("Q23 확인 요약에 좌석·품목·옵션·수량·합계",
+      all(w in r.reply for w in ["좌석 5번", "아메리카노 ICED/S ×2", "약과(2개입) 1접시", "합계 13,500원",
+                                 "이대로 확정할까요?"]), True)
+r, routed = turn("네", c)
+check("Q23 '네' → 확정, LLM 0회", (len(c.confirmed_orders), routed, r.llm_calls), (1, False, 0))
+o = c.confirmed_orders[0]
+check("확정 주문 보존 (좌석·품목 2개·13,500원)", (o["table_id"], len(o["items"]), o["total"]), (5, 2, 13500))
+check("확정 후 장바구니 비움 · 대기 해제", (len(c.items), c.pending), (0, None))
+check("확정 답변에 주문번호·시연용 안내", (o["order_no"] in r.reply, "실제 결제가 이루어지지는 않았습니다" in r.reply),
+      (True, True))
+
+c = Cart(table_id=5); add(c, "M02", "ICED", "S")
+turn("결제할게요", c, {"intent": "결제"})
+r, routed = turn("아니요", c)
+check("'아니요' → 확정 취소, 장바구니 유지, LLM 0회",
+      (c.pending, len(c.items), len(c.confirmed_orders), routed), (None, 1, 0, False))
+turn("결제할게요", c, {"intent": "결제"})
+r, routed = turn("라떼 하나 추가해 주세요", c, {"intent": "장바구니", "order_items": [
+    {"action": "add", "menu_name": "카페 라떼", "temp": "HOT", "size": "S", "qty": 1}]})
+check("다른 말 → 대기 취소 후 평소대로 처리 (라떼 담김, 확정 안 됨)",
+      (c.pending, len(c.items), len(c.confirmed_orders), routed), (None, 2, 0, True))
+check("다른 말 턴의 calc 에 대기 취소 안내", "대기를 취소했습니다" in r.calc, True)
+turn("결제할게요", c, {"intent": "결제"})
+c.remove(0)
+check("확인 대기 중 장바구니를 고치면 대기 해제 (옛 요약으로 확정 방지)", c.pending, None)
+
+c = Cart(table_id=5); add(c, "M35")
+r, _ = turn("확정할게요", c, {"intent": "결제"})
+check("주류 + 직원 확인 전 → 확인 대기도 하지 않음",
+      (c.pending, "직원의 나이 확인 전에는 확정할 수 없습니다" in r.reply), (None, True))
+c.staff_checked = True
+turn("확정할게요", c, {"intent": "결제"}); turn("네", c)
+check("직원 확인 후엔 확정, 다음 주문에 확인 재사용 안 함 (Q23)",
+      (len(c.confirmed_orders), c.staff_checked), (1, False))
+
+c = Cart(table_id=5)
+r, routed = turn("아까 주문한 것 하나 더", c)
+check("Q19 확정 주문 없으면 안내만", ("확정된 주문이 없습니다" in r.reply, c.pending, routed), (True, None, False))
+add(c, "M03", "HOT", "S", milk="oat"); add(c, "M28", qty=2)
+turn("확정", c, {"intent": "결제"}); turn("네", c)
+first = c.confirmed_orders[0]
+r, routed = turn("아까 주문한 것 하나 더", c)
+check("Q19 복사 전에 품목·옵션·수량 보여 주고 확인",
+      (c.pending, len(c.items), "카페 라떼 HOT/S (오트) ×1" in r.reply, "약과(2개입) 2접시" in r.reply, routed),
+      ("copy", 0, True, True, False))
+r, _ = turn("네", c)
+check("Q19 '네' → 새 장바구니에 같은 구성", [(i.menu_id, i.milk, i.qty) for i in c.items],
+      [("M03", "oat", 1), ("M28", None, 2)])
+check("Q19 복사 턴도 🧾 줄", r.reply.splitlines()[-1], f"🧾 합계 {c.total:,}원")
+c.items[0].qty = 3
+check("Q19 새 장바구니를 바꿔도 확정 주문은 그대로", first["items"][0].qty, 1)
+turn("확정", c, {"intent": "결제"}); turn("네", c)
+check("추가 주문은 같은 좌석의 새 주문 (주문번호 다름)",
+      (len(c.confirmed_orders), c.confirmed_orders[1]["table_id"],
+       c.confirmed_orders[0]["order_no"] != c.confirmed_orders[1]["order_no"]), (2, 5, True))
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")

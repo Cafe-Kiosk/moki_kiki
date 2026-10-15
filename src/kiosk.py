@@ -14,6 +14,7 @@ from .cart import (Cart, CartItem, resolve_variant, menu_by_id, find_variants,
                    OPTION_KEYS, valid_qty, QTY_MSG)
 from .budget import budget_lines, parse_budget
 from .cart_edit import remove_item, update_item
+from . import orders
 from .conditions import screen, alternatives_line, item_caution_line, decaf_notes
 
 
@@ -196,9 +197,35 @@ class TurnResult:
     llm_calls: int = 0
 
 
+def _code_turn(reply: str, intent: str, user_input: str, cart: Cart, before: tuple) -> TurnResult:
+    """코드만으로 끝나는 턴 (확정 확인·직전 주문 복사). LLM 호출 0회."""
+    if cart_signature(cart) != before and cart.items:
+        reply = reply.rstrip() + "\n\n" + "\n".join(footer_lines(cart))
+    lang = "en" if str(user_input).isascii() else "ko"
+    return TurnResult(reply, intent, user_input, lang, calc=cart.as_text(), llm_calls=0)
+
+
 def handle(user_input: str, store, cart: Cart,
            history: list[dict] | None = None) -> TurnResult:
     history = history or []
+    before = cart_signature(cart)
+
+    # ── 확인 대기 중이면 네/아니요는 코드가 처리한다 (P05·P06·Q19·Q23) ──
+    pending_note = None
+    if cart.pending:
+        kind = cart.pending
+        if orders.is_yes(user_input):
+            reply = orders.do_confirm(cart) if kind == "confirm" else orders.do_copy(cart)
+            return _code_turn(reply, "결제" if kind == "confirm" else "장바구니", user_input, cart, before)
+        cart.pending = None
+        what = "주문 확정" if kind == "confirm" else "직전 주문 다시 담기"
+        if orders.is_no(user_input):
+            return _code_turn(f"{what}를 취소했습니다. 장바구니는 그대로입니다.", "결제", user_input, cart, before)
+        pending_note = f"{what} 대기를 취소했습니다 — 확정·복사는 하지 않았습니다."   # 다른 말 → 대기만 풀고 평소대로
+    # ── "아까 주문한 것 하나 더" — 복사 전에 확인 (Q19) ──
+    if orders.is_repeat_request(user_input):
+        return _code_turn(orders.ask_copy(cart), "장바구니", user_input, cart, before)
+
     r = route(user_input, history)
     intent, rq, lang = r["intent"], r["rewritten_query"], r["language"]
     calls = 1
@@ -221,12 +248,7 @@ def handle(user_input: str, store, cart: Cart,
         from .retrieve import rule_hits
         _, pids = rule_hits(user_input)
         unsupported = ("P07" in pids)
-        ok, msg = cart.confirm()
-        if ok:
-            reply = (f"주문을 확정했습니다. 주문번호는 {msg} 입니다.\n{cart.as_text()}\n"
-                     "시연용 주문번호이며 실제 결제가 이루어지지는 않았습니다.")
-        else:
-            reply = msg
+        reply = orders.ask_confirm(cart)            # 바로 확정하지 않고 확인을 받는다 (P05)
         if unsupported:
             reply = ("기프티콘·쿠폰·적립·분할 결제는 이 키오스크에서 지원하지 않습니다.\n"
                      + reply)
@@ -234,8 +256,9 @@ def handle(user_input: str, store, cart: Cart,
                           calc=cart.as_text(), llm_calls=calls)
 
     # ── 장바구니 담기 ──────────────────────────────────────
-    before = cart_signature(cart)
     calc_lines = build_calc(user_input, intent, r.get("order_items"), cart, r)
+    if pending_note:
+        calc_lines.insert(0, pending_note)
     if any(e.startswith("JSON 파싱 실패") for e in r.get("errors", [])):
         calc_lines.append("요청을 해석하지 못했습니다 — 담기·빼기·변경은 하지 않았습니다. 손님에게 다시 말해 달라고 요청")
 
