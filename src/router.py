@@ -8,7 +8,9 @@
 """
 from __future__ import annotations
 
+from copy import deepcopy
 import json
+import re
 from typing import Any
 
 from jsonschema import ValidationError, validate
@@ -111,11 +113,40 @@ def _empty_options() -> dict:
     )}
 
 
+_CHECKOUT_INFO_RE = re.compile(
+    r"(?:결제\s*(?:수단|방법|가능|되나|되는지)|"
+    r"어떻게\s*결제|주문\s*(?:가능|방법|할\s*수)|"
+    r"계산\s*(?:방법|가능)|"
+    r"payment\s*(?:method|option)|can\s+i\s+(?:pay|order))",
+    re.IGNORECASE,
+)
+_CHECKOUT_COMMAND_RE = re.compile(
+    r"(?:"
+    r"주문\s*확정(?:해\s*줘|해\s*주세요|할게|할래)?|"
+    r"이대로\s*(?:주문|결제|계산)(?:할게|할래|해\s*줘|해\s*주세요)?|"
+    r"결제(?:할게|할래|해\s*줘|해\s*주세요|진행해\s*줘)|"
+    r"계산(?:할게|할래|해\s*줘|해\s*주세요|부탁해)|"
+    r"\b(?:checkout|confirm\s+(?:my\s+)?order|pay\s+now)\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _is_checkout_command(user_input: str) -> bool:
+    """Recognize an instruction to proceed, not a payment-policy question."""
+    text = str(user_input or "").strip().casefold()
+    if _CHECKOUT_INFO_RE.search(text):
+        return False
+    if text in {"결제", "계산", "주문 확정", "checkout", "confirm"}:
+        return True
+    return bool(_CHECKOUT_COMMAND_RE.search(text))
+
+
 def _mock_plan(user_input: str, rewrite_result: dict) -> dict:
     lower = user_input.lower()
     if any(word in lower for word in ("검토", "review")):
         intent = "order_review"
-    elif any(word in lower for word in ("확정", "결제", "checkout", "confirm")):
+    elif _is_checkout_command(user_input):
         intent = "order_confirm"
     elif any(word in lower for word in ("담아", "추가", "빼", "장바구니", "cart")):
         intent = "cart_view"
@@ -145,6 +176,206 @@ def _mock_plan(user_input: str, rewrite_result: dict) -> dict:
     }
 
 
+_ORDER_WORD_RE = re.compile(
+    r"(?:담아|넣어|"
+    r"추가(?:해\s*줘|해\s*주세요|해줘|해주세요)|"
+    r"주문(?:할게|할래|해|해줘|해주세요)|"
+    r"구매(?:할게|할래|해줘|해주세요|하고\s*싶|하려고\s*해)|"
+    r"살게|살래|마실래|마시고\s*싶|"
+    r"\b(?:add|order|get|give me|i(?:'d| would) like)\b|"
+    r"(?:请给|加入|下单)|(?:ください|注文|追加))",
+    re.IGNORECASE,
+)
+_CLAUSE_BREAK_RE = re.compile(r"[.!?\n。！？]")
+_RETAIL_BEAN_IDS = {"M23", "M24", "M25"}
+
+
+def _is_explicit_order_clause(clause: str) -> bool:
+    """Separate purchase wording from information/option questions.
+
+    A bare ``추가`` often means "is an extra shot available?", and ``주세요``
+    can occur in "please explain".  Those phrases must never turn an
+    ``option_check`` into a cart write.
+    """
+    if _ORDER_WORD_RE.search(clause):
+        return True
+    if not re.search(r"(?:주세요|줘|\b주래\b)", clause):
+        return False
+    if re.search(
+        r"(?:알려|설명(?:해)?|확인(?:해)?|추천(?:해)?|"
+        r"보여|말해|안내(?:해)?)\s*(?:주세요|줘)",
+        clause,
+    ):
+        return False
+    return True
+
+
+def _catalog_mentions(
+    user_input: str,
+    catalog_aliases: list[tuple[str, str]] | None,
+) -> list[tuple[int, int, str, str]]:
+    """Return longest, non-overlapping catalog mentions in source order."""
+    lowered = str(user_input).casefold()
+    candidates: list[tuple[int, int, str, str]] = []
+    for raw_alias, raw_menu_id in catalog_aliases or []:
+        alias = str(raw_alias).strip().casefold()
+        menu_id = str(raw_menu_id).strip().upper()
+        if not alias or not re.fullmatch(r"M\d{2}", menu_id):
+            continue
+        for match in re.finditer(re.escape(alias), lowered):
+            candidates.append((match.start(), match.end(), menu_id, alias))
+
+    # Longest match prevents "바닐라 라떼" from also becoming generic M03.
+    selected: list[tuple[int, int, str, str]] = []
+    for candidate in sorted(
+        candidates,
+        key=lambda row: (-(row[1] - row[0]), row[0], row[2]),
+    ):
+        start, end, _, _ = candidate
+        if any(start < chosen_end and end > chosen_start
+               for chosen_start, chosen_end, _, _ in selected):
+            continue
+        selected.append(candidate)
+    return sorted(selected, key=lambda row: (row[0], row[1]))
+
+
+def _source_clause_bounds(text: str, start: int, end: int) -> tuple[int, int]:
+    left = 0
+    right = len(text)
+    for match in _CLAUSE_BREAK_RE.finditer(text):
+        if match.end() <= start:
+            left = match.end()
+        elif match.start() >= end:
+            right = match.start()
+            break
+    return left, right
+
+
+def _source_clause(text: str, start: int, end: int) -> str:
+    left, right = _source_clause_bounds(text, start, end)
+    return text[left:right]
+
+
+def _explicit_order_menu_ids(
+    user_input: str,
+    catalog_aliases: list[tuple[str, str]] | None,
+) -> list[str]:
+    """Find catalog menus explicitly requested for purchase in each sentence.
+
+    Retail bean aliases also occur as drink options (for example,
+    "디카페인 원두와 오트").  Such text is not a bag-of-beans order without a
+    retail cue, so M23--M25 are excluded from coverage in that case.
+    """
+    ordered: list[str] = []
+    source = str(user_input)
+    mentions = _catalog_mentions(source, catalog_aliases)
+    for position, (start, end, menu_id, _) in enumerate(mentions):
+        clause_start, clause_end = _source_clause_bounds(source, start, end)
+        clause = source[clause_start:clause_end]
+        next_start = (
+            mentions[position + 1][0]
+            if position + 1 < len(mentions)
+            and mentions[position + 1][0] < clause_end
+            else None
+        )
+        # Bind a predicate to the closest mentioned menu.  A final predicate may
+        # cover a coordinated list ("아메리카노랑 약과 주세요"), but it must
+        # not jump across an information request ("라떼 옵션 알려주고 약과 담아줘").
+        local_end = next_start if next_start is not None else clause_end
+        local = source[start:local_end]
+        explicit = _is_explicit_order_clause(local)
+        if not explicit and next_start is not None:
+            bridge = source[end:next_start]
+            bridge = re.sub(
+                r"(?:\d+|한|두|세|네|다섯|여섯|칠|팔|구)\s*(?:개|잔|접시)?",
+                "",
+                bridge,
+            )
+            coordinated = bool(re.fullmatch(
+                r"(?:[\s,/·]*(?:과|와|랑|이랑|하고|및|또)?)*[\s,/·]*",
+                bridge,
+            ))
+            explicit = coordinated and _is_explicit_order_clause(
+                source[next_start:clause_end]
+            )
+        if not explicit:
+            continue
+        if menu_id in _RETAIL_BEAN_IDS and not re.search(
+            r"(?:200\s*g|봉지|팩|홀빈|원두\s*(?:구매|주문|사|담아|줘|주세요))",
+            clause,
+            re.IGNORECASE,
+        ):
+            continue
+        if menu_id not in ordered:
+            ordered.append(menu_id)
+    return ordered
+
+
+def normalize_explicit_order_actions(
+    user_input: str,
+    rewrite_result: dict,
+    plan: dict,
+    catalog_aliases: list[tuple[str, str]] | None = None,
+) -> dict:
+    """Promote explicit ordered targets mislabelled as option checks.
+
+    The model can see wording such as "시럽은 절반으로 선택" and label
+    the first ordered drink as ``option_check``, while retaining only the final menu
+    as ``cart_add``.  We promote only an already identified catalog target when the
+    source sentence explicitly orders that menu; no target, variant, or option is
+    invented.  Missing coverage fails closed instead of allowing a partial order.
+    """
+    del rewrite_result  # reserved for future clause metadata; source text is authoritative
+    normalized = deepcopy(plan)
+    ordered_ids = _explicit_order_menu_ids(user_input, catalog_aliases)
+    if not ordered_ids:
+        return normalized
+
+    actions: list[dict] = []
+    for action in normalized.get("actions") or []:
+        if action.get("intent") != "option_check" or action.get("blocked_reason"):
+            actions.append(action)
+            continue
+        targets = list(action.get("targets") or [])
+        promoted = [
+            target for target in targets
+            if str(target.get("menu_id") or "").upper() in ordered_ids
+        ]
+        remaining = [target for target in targets if target not in promoted]
+        if promoted:
+            promoted_action = deepcopy(action)
+            promoted_action.update({
+                "intent": "cart_add",
+                "targets": promoted,
+                "quantity_mode": "set",
+                "requires_tool": True,
+                "mutates_state": True,
+                "blocked_reason": None,
+            })
+            actions.append(promoted_action)
+        if remaining:
+            remaining_action = deepcopy(action)
+            remaining_action["targets"] = remaining
+            actions.append(remaining_action)
+    normalized["actions"] = actions
+
+    cart_add_ids = {
+        str(target.get("menu_id") or "").upper()
+        for action in actions
+        if action.get("intent") == "cart_add" and not action.get("blocked_reason")
+        for target in action.get("targets") or []
+    }
+    missing = [menu_id for menu_id in ordered_ids if menu_id not in cart_add_ids]
+    if missing:
+        normalized["needs_clarification"] = True
+        normalized["clarification_question"] = (
+            "함께 주문하신 메뉴의 구성을 모두 확인해야 해요. "
+            "각 메뉴의 온도·크기·수량을 한 번만 다시 알려주세요."
+        )
+        normalized["_coverage_missing_menu_ids"] = missing
+    return normalized
+
+
 def rewrite(user_input: str, history: list[dict] | None = None,
             session_state: dict | None = None) -> dict:
     if is_mock():
@@ -167,7 +398,12 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
              session_state: dict | None = None,
              catalog_aliases: list[tuple[str, str]] | None = None) -> dict:
     if is_mock():
-        return _mock_plan(user_input, rewrite_result)
+        return normalize_explicit_order_actions(
+            user_input,
+            rewrite_result,
+            _mock_plan(user_input, rewrite_result),
+            catalog_aliases,
+        )
     payload = {
         "user_message": user_input,
         "preferred_language": current_language(),
@@ -179,13 +415,21 @@ def classify(user_input: str, rewrite_result: dict, retrieved_documents: str,
         "retrieved_documents": retrieved_documents,
     }
     try:
-        return _invoke(INTENT_PROMPT, payload, INTENT_SCHEMA)
+        plan = _invoke(INTENT_PROMPT, payload, INTENT_SCHEMA)
     except (json.JSONDecodeError, ValidationError, TypeError, ValueError):
-        return _mock_plan(user_input, rewrite_result)
+        plan = _mock_plan(user_input, rewrite_result)
+    return normalize_explicit_order_actions(
+        user_input, rewrite_result, plan, catalog_aliases)
 
 
 def adapt_plan(user_input: str, rewrite_result: dict, plan: dict) -> dict:
     """새 actions 계약을 기존 키오스크 실행 코드가 읽는 형태로 변환한다."""
+    # Keep direct callers and patched tests on the same coverage contract as
+    # ``classify``.  The import is local to avoid loading the workbook until the
+    # adapter is actually used.
+    from .retrieve import _alias_map
+    plan = normalize_explicit_order_actions(
+        user_input, rewrite_result, plan, _alias_map())
     actions = plan.get("actions") or []
     intents = [action.get("intent") for action in actions]
 

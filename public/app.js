@@ -2,7 +2,7 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const AVATAR_URL = '/assets/moki-listening-avatar.png?v=20261015';
 const API_MODAL_DELAY_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 250 : 1000;
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 const STATE_KEY = 'moki-web-state';
 const PREFERENCE_KEY = 'moki-preferences';
 const LOCALES = ['ko', 'en', 'zh', 'ja'];
@@ -37,6 +37,10 @@ const MENU_NAMES = {
 
 const I18N = {
   ko: {
+    batchProgress: '복합 주문 {current}/{total} · 옵션 확인 중', batchPending: '새 메시지 전에 나머지 메뉴를 순서대로 확인하거나 취소해 주세요.', cancelBatch: '나머지 옵션 선택 취소', batchCancelled: '나머지 메뉴의 옵션 선택을 취소했어요.',
+    staffCodeChatPrompt: '직원 확인 영역으로 이동해 4자리 직원 코드를 입력해 주세요.',
+    benefitCheckResult: '멤버십·쿠폰·포인트 확인 결과', noLinkedBenefits: '연결된 혜택이 없어 할인은 0원입니다.', beforeDiscount: '할인 전 금액', discountAmount: '할인', afterDiscount: '할인 후 금액', demoPaymentComplete: '시연 결제 완료', paidAmount: '최종 결제액', benefitApplied: '멤버십·혜택 적용', benefitNotApplied: '연결된 혜택 없음', orderNumberLabel: '주문번호',
+    receiptCallout: '{number}번 손님, 잠시만 기다려 주세요!', receiptItems: '주문 메뉴', subtotal: '소계', demoReceiptLabel: '시연 결제 영수증',
     documentTitle: '모키 커피바', skipToChat: '대화창으로 바로가기', brandHome: '모키 커피바 홈', brandTagline: '한옥에서 천천히 고르는 한 잔',
     checkingContent: '콘텐츠 확인 중', connectedDemo: '데이터 연결됨 · 화면 체험 모드', connectedAI: '데이터·AI 연결 준비됨', keyNeeded: '데이터 연결됨 · API 키 필요', connectionError: '연결 확인 필요',
     easyView: '손쉬운 보기', apiKey: 'API 키', apiKeyChange: 'OpenAI API 키 변경', apiKeyEnter: 'OpenAI API 키 입력',
@@ -56,6 +60,10 @@ const I18N = {
     cartEmptyCheckout: '주문할 메뉴를 먼저 담아 주세요.', retryCheckout: '주문을 확정하지 못했어요. 연결과 선택을 확인한 뒤 다시 눌러 주세요.', confirming: '확정하는 중…', tableChanging: '좌석 번호를 변경하고 있어요…', tableChangeFailed: '좌석 번호를 변경하지 못했어요.', resetDone: '대화와 장바구니를 초기화했습니다.',
   },
   en: {
+    batchProgress: 'Compound order {current}/{total} · reviewing options', batchPending: 'Review each remaining item in order or cancel before sending a new message.', cancelBatch: 'Cancel remaining options', batchCancelled: 'The remaining menu option reviews were cancelled.',
+    staffCodeChatPrompt: 'Go to staff verification and have a staff member enter the 4-digit code.',
+    benefitCheckResult: 'Membership, coupons & points', noLinkedBenefits: 'No benefits are connected. Discount ₩0.', beforeDiscount: 'Before discount', discountAmount: 'Discount', afterDiscount: 'After discount', demoPaymentComplete: 'Demo payment complete', paidAmount: 'Final demo payment', benefitApplied: 'Membership & benefits', benefitNotApplied: 'No connected benefits', orderNumberLabel: 'Order number',
+    receiptCallout: 'Order {number}, please wait a moment!', receiptItems: 'Order items', subtotal: 'Subtotal', demoReceiptLabel: 'Demo payment receipt',
     documentTitle: 'Moki Coffee Bar', skipToChat: 'Skip to conversation', brandHome: 'Moki Coffee Bar home', brandTagline: 'Choose a quiet cup in a hanok', checkingContent: 'Checking content', connectedDemo: 'Data connected · demo mode', connectedAI: 'Data & AI ready', keyNeeded: 'Data connected · API key needed', connectionError: 'Check connection', easyView: 'Easy View', apiKey: 'API key', apiKeyChange: 'Change OpenAI API key', apiKeyEnter: 'Enter OpenAI API key',
     heroTitle: 'Take your time<br>choosing today’s cup.', heroDescription: 'Moki uses the menu data to help with recommendations, options, and allergen checks.', talkToMoki: 'Talk with Moki', heroAlt: 'Moki greeting you with a cup of coffee', photoMenu: 'Photo menu', photoMenuNote: '33 representative images included in the data file', menuCategories: 'Menu categories', menuLoading: 'Preparing the menu.', conversationTitle: 'Talk with Moki', listenAnswer: 'Listen', messageLabel: 'Message to Moki', messagePlaceholder: 'e.g. Recommend a smooth, low-acidity coffee', send: 'Send', chatHelper: 'Prices and options are checked again against the server menu data.',
     settings: 'Settings', tableNumber: 'Table number', tableOption: 'Table {n}', staffCodeLabel: 'Staff code for alcohol purchase', staffCodePlaceholder: 'Enter the 4-digit code', staffVerify: 'Staff verification', cancelAlcohol: 'Cancel alcohol purchase', reset: 'Reset chat and cart', orderDetails: 'Order', emptyCart: 'Your cart is empty.', total: 'Total', reviewOrder: 'Review order', sourcesTitle: 'Sources used', sourcesInitial: 'Menu and guidance sources appear after you chat.', sourcesEmpty: 'No separate menu source was needed for this answer.',
@@ -67,6 +75,10 @@ const I18N = {
     suggestions: 'Optional suggestions', sizeUp: 'Change to {size} (+{price})', addShot: 'Add 1 shot (+{price})', pairing: 'Pair with {name}? ({price})', accept: 'Apply', skip: 'Skip', suggestionAccepted: 'Applied.', suggestionSkipped: 'Keeping the default.', pairingNext: 'Now review the paired item’s options.', cartEmptyCheckout: 'Add a menu item before reviewing your order.', retryCheckout: 'Could not confirm the demo order. Check your connection and selections, then press the button again.', confirming: 'Confirming…', tableChanging: 'Changing the table…', tableChangeFailed: 'Could not change the table.', resetDone: 'Chat and cart reset.',
   },
   zh: {
+    batchProgress: '复合订单 {current}/{total}·正在确认选项', batchPending: '发送新消息前，请按顺序确认或取消剩余选项。', cancelBatch: '取消剩余选项', batchCancelled: '已取消剩余的菜单选项确认。',
+    staffCodeChatPrompt: '请前往员工确认区域，由员工输入 4 位代码。',
+    benefitCheckResult: '会员·优惠券·积分查询结果', noLinkedBenefits: '没有已连接的优惠，折扣为 0 韩元。', beforeDiscount: '折扣前金额', discountAmount: '折扣', afterDiscount: '折扣后金额', demoPaymentComplete: '演示支付完成', paidAmount: '最终演示金额', benefitApplied: '会员·优惠适用', benefitNotApplied: '无已连接优惠', orderNumberLabel: '订单号',
+    receiptCallout: '{number} 号顾客，请稍候！', receiptItems: '订单商品', subtotal: '小计', demoReceiptLabel: '演示支付收据',
     documentTitle: 'Moki 咖啡吧', skipToChat: '跳转到对话', brandHome: 'Moki 咖啡吧首页', brandTagline: '在韩屋里慢慢选一杯', checkingContent: '正在检查内容', connectedDemo: '数据已连接·演示模式', connectedAI: '数据与 AI 已就绪', keyNeeded: '数据已连接·需要 API 密钥', connectionError: '请检查连接', easyView: '无障碍视图', apiKey: 'API 密钥', apiKeyChange: '更改 OpenAI API 密钥', apiKeyEnter: '输入 OpenAI API 密钥',
     heroTitle: '慢慢挑选<br>今日的一杯。', heroDescription: 'Moki 会根据菜单数据帮您推荐、选项和确认过敏原。', talkToMoki: '与 Moki 对话', heroAlt: '拿着咖啡问候的 Moki', photoMenu: '图片菜单', photoMenuNote: '数据文件中的 33 张代表图片', menuCategories: '菜单分类', menuLoading: '正在准备菜单。', conversationTitle: '与 Moki 对话', listenAnswer: '听回答', messageLabel: '发给 Moki 的消息', messagePlaceholder: '例：请推荐低酸、香浓的咖啡', send: '发送', chatHelper: '价格和选项会与服务器菜单数据再次核对。',
     settings: '使用设置', tableNumber: '桌号', tableOption: '{n} 号桌', staffCodeLabel: '购酒员工确认码', staffCodePlaceholder: '请输入 4 位代码', staffVerify: '员工确认', cancelAlcohol: '取消购酒', reset: '重置对话和购物车', orderDetails: '订单', emptyCart: '购物车还是空的。', total: '合计', reviewOrder: '检查订单', sourcesTitle: '回答参考', sourcesInitial: '开始对话后将显示使用的菜单与指南。', sourcesEmpty: '本次回答不需要其他菜单资料。',
@@ -77,6 +89,10 @@ const I18N = {
     staffNeeded: '此购买需要员工确认。我来呼叫员工。', staffDone: '年龄确认已完成。增加酒类或数量时需再次确认。', alcoholInCart: '购物车中有酒类，需要员工确认。', staffRetry: '重试已验证请求', codeFourDigits: '请输入 4 位员工代码。', staffProcessing: '正在处理员工确认…', alcoholCancelled: '已取消酒类购买。您可以继续选择其他商品。', edit: '编辑', remove: '删除', decrease: '减少数量', increase: '增加数量', cartUpdated: '购物车已更新。', addedToCart: '已将 {name} 加入购物车。', selectOptionsFor: '选择 {name} 的选项', cartActionFailed: '无法更新购物车。', suggestions: '可选建议', sizeUp: '更换为 {size}（+{price}）', addShot: '加 1 份浓缩（+{price}）', pairing: '搭配 {name}？（{price}）', accept: '应用', skip: '跳过', suggestionAccepted: '已应用。', suggestionSkipped: '保留默认选择。', pairingNext: '请继续确认搭配商品的选项。', cartEmptyCheckout: '请先将商品加入购物车。', retryCheckout: '无法确认演示订单。检查连接和选项后请再次点击。', confirming: '正在确认…', tableChanging: '正在更改桌号…', tableChangeFailed: '无法更改桌号。', resetDone: '已重置对话和购物车。',
   },
   ja: {
+    batchProgress: '複合注文 {current}/{total}・オプション確認中', batchPending: '新しい送信の前に、残りを順番に確認するか取り消してください。', cancelBatch: '残りのオプションを取消', batchCancelled: '残りのメニューオプション確認を取り消しました。',
+    staffCodeChatPrompt: 'スタッフ確認欄へ移動し、スタッフが 4 桁のコードを入力してください。',
+    benefitCheckResult: 'メンバーシップ・クーポン・ポイント確認結果', noLinkedBenefits: '連携済みの特典はなく、割引は 0 ウォンです。', beforeDiscount: '割引前金額', discountAmount: '割引', afterDiscount: '割引後金額', demoPaymentComplete: 'デモ決済完了', paidAmount: '最終デモ金額', benefitApplied: 'メンバーシップ・特典', benefitNotApplied: '連携済み特典なし', orderNumberLabel: '注文番号',
+    receiptCallout: '注文番号 {number} 番のお客様、少々お待ちください！', receiptItems: '注文メニュー', subtotal: '小計', demoReceiptLabel: 'デモ決済レシート',
     documentTitle: 'モキ・コーヒーバー', skipToChat: '会話へ移動', brandHome: 'モキ・コーヒーバーのホーム', brandTagline: '韓屋でゆっくり選ぶ一杯', checkingContent: 'コンテンツを確認中', connectedDemo: 'データ接続済み・デモモード', connectedAI: 'データ・AI 準備完了', keyNeeded: 'データ接続済み・API キーが必要', connectionError: '接続をご確認ください', easyView: 'やさしい表示', apiKey: 'API キー', apiKeyChange: 'OpenAI API キーを変更', apiKeyEnter: 'OpenAI API キーを入力',
     heroTitle: '今日の一杯を<br>ゆっくり選んでください。', heroDescription: 'モキがメニューデータをもとに、おすすめ・オプション・アレルギー確認をお手伝いします。', talkToMoki: 'モキと話す', heroAlt: 'コーヒーを持って挨拶するモキ', photoMenu: '写真メニュー', photoMenuNote: 'データファイル内の代表画像 33 枚', menuCategories: 'メニュー分類', menuLoading: 'メニューを準備中です。', conversationTitle: 'モキと話す', listenAnswer: '回答を聞く', messageLabel: 'モキへのメッセージ', messagePlaceholder: '例：酸味が少なく香ばしいコーヒーをすすめて', send: '送信', chatHelper: '価格とオプションはサーバーのメニューデータと再確認します。',
     settings: '利用設定', tableNumber: 'テーブル番号', tableOption: 'テーブル {n}', staffCodeLabel: '酒類購入のスタッフ確認コード', staffCodePlaceholder: '4 桁のコードを入力', staffVerify: 'スタッフ確認', cancelAlcohol: '酒類購入を取り消す', reset: '会話とカートをリセット', orderDetails: '注文内容', emptyCart: 'カートはまだ空です。', total: '合計', reviewOrder: '注文を確認', sourcesTitle: '回答の参考情報', sourcesInitial: '会話を始めるとメニューとガイド資料が表示されます。', sourcesEmpty: 'この回答には別のメニュー資料は必要ありませんでした。',
@@ -97,7 +113,8 @@ const state = {
   sources: [], menu: [], categories: [], category: '커피',
   quickReplies: [], menuActions: [], busy: false, contentReady: false,
   serverAIReady: false, mockMode: false, optionItem: null, optionEditIndex: null,
-  optionPreset: null, deferredItems: [], pairingChoice: null,
+  optionPreset: null, deferredItems: [], deferredBatch: null,
+  pairingChoice: null, pairingTrail: [], lastCheckout: null,
 };
 let openAIAPIKey = '';
 let apiModalTimer = null;
@@ -138,6 +155,19 @@ function openDialog(dialog) {
 function closeDialog(dialog) {
   if (dialog && dialog.open) dialog.close();
   syncModalState();
+}
+
+function resetOptionDialogState() {
+  state.optionItem = null;
+  state.optionEditIndex = null;
+  state.optionPreset = null;
+  state.pairingChoice = null;
+  state.pairingTrail = [];
+}
+
+function closeOptionDialog() {
+  closeDialog($('#optionModal'));
+  resetOptionDialogState();
 }
 
 function errorMessage(detail, fallback) {
@@ -208,9 +238,12 @@ function setLocale(locale, { close = true, announceChange = true } = {}) {
   renderCart();
   renderSources();
   renderStaffStatus();
-  renderQuickReplies(state.quickReplies, state.menuActions);
+  renderQuickReplies();
   if ($('#optionModal').open && state.optionItem) renderOptionDialog();
-  if ($('#checkoutModal').open) { renderCheckoutReview(); renderCupChoices(); }
+  if ($('#checkoutModal').open) {
+    if (!$('#orderSuccess').hidden && state.lastCheckout) renderCheckoutReceipt(state.lastCheckout);
+    else { renderCheckoutReview(); renderCupChoices(); }
+  }
   if (close) closeDialog($('#languageModal'));
   if (announceChange) announce(`${LANGUAGE_LABELS[locale]} · ${tr('done')}`);
   scheduleAPIKeyModal();
@@ -521,6 +554,25 @@ function cartHasAlcohol() {
   return state.cart.some((item) => alcoholIds.has(item.menu_id));
 }
 
+function menuIsAlcohol(menuId) {
+  const menu = state.menu.find((item) => item.id === String(menuId || '').toUpperCase());
+  return Boolean(menu && (menu.is_alcohol || menu.category === '주류'));
+}
+
+function cartActionNeedsAlcoholApproval(action, fields = {}) {
+  const current = Number.isInteger(fields.index) ? state.cart[fields.index] : null;
+  if (action === 'add') return Boolean(fields.item && menuIsAlcohol(fields.item.menu_id));
+  if (action === 'set_qty') {
+    return Boolean(current && menuIsAlcohol(current.menu_id) && Number(fields.quantity) > Number(current.qty));
+  }
+  if (action === 'replace') {
+    return Boolean(fields.item && menuIsAlcohol(fields.item.menu_id) && (!current
+      || fields.item.variant_id !== current.variant_id
+      || Number(fields.item.qty) > Number(current.qty)));
+  }
+  return false;
+}
+
 function renderCart() {
   const wrap = $('#cartItems'); wrap.replaceChildren();
   if (!state.cart.length) {
@@ -548,7 +600,10 @@ function renderCart() {
   const total = state.cart.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
   $('#cartTotal').textContent = won(total);
   $('#confirmButton').disabled = !state.cart.length;
-  if ($('#checkoutModal').open) renderCheckoutReview();
+  if ($('#checkoutModal').open) {
+    if (!$('#orderSuccess').hidden && state.lastCheckout) renderCheckoutReceipt(state.lastCheckout);
+    else renderCheckoutReview();
+  }
 }
 
 function renderStaffStatus(message = '', focus = false) {
@@ -567,6 +622,20 @@ function renderStaffStatus(message = '', focus = false) {
   status.className = `setting-note${state.staffChecked && !state.staffVerificationRequired ? ' ready' : ''}`;
   status.textContent = message || (state.staffVerificationRequired ? tr('staffNeeded') : state.staffChecked ? tr('staffDone') : tr('alcoholInCart'));
   if (focus && needsCode) requestAnimationFrame(() => codeInput.focus());
+}
+
+function revealStaffVerification(message = '') {
+  renderStaffStatus(message, true);
+  const verification = $('#staffVerification');
+  verification.classList.remove('attention');
+  // Restart the visual cue even when two purchase actions are attempted in a row.
+  void verification.offsetWidth;
+  verification.classList.add('attention');
+  requestAnimationFrame(() => {
+    verification.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!$('#staffCodeInput').hidden) $('#staffCodeInput').focus({ preventScroll: true });
+  });
+  setTimeout(() => verification.classList.remove('attention'), 4200);
 }
 
 function renderSources() {
@@ -607,38 +676,124 @@ function renderLanguageChoices(container) {
   });
 }
 
-function normalizeDeferredItems(items) {
-  return (Array.isArray(items) ? items : []).filter((proposal) => {
-    if (!proposal || !/^M\d{2}$/.test(String(proposal.menu_id || ''))) return false;
-    const menu = state.menu.find((entry) => entry.id === proposal.menu_id);
-    return Boolean(menu && (menu.variants || []).some((variant) => variant.id === proposal.variant_id));
-  }).map((proposal) => ({ ...proposal, qty: Math.max(1, Math.min(10, Number(proposal.qty || 1))) }));
-}
-
-function proposalKey(proposal) {
+function proposalFingerprint(proposal) {
   return ['menu_id', 'variant_id', 'qty', 'bean', 'extra_shots', 'milk', 'sweetness', 'ice', 'warming']
     .map((key) => String(proposal && proposal[key] != null ? proposal[key] : '')).join('|');
 }
 
-function renderQuickReplies(replies = [], menuActions = [], deferredItems = state.deferredItems) {
-  state.quickReplies = Array.isArray(replies) ? replies : [];
-  state.menuActions = normalizeMenuActions(menuActions);
-  state.deferredItems = normalizeDeferredItems(deferredItems);
+function proposalKey(proposal) {
+  const proposalId = String(proposal && proposal.proposal_id || '').trim();
+  return proposalId ? `id:${proposalId}` : `values:${proposalFingerprint(proposal)}`;
+}
+
+function normalizeDeferredItems(items) {
+  return (Array.isArray(items) ? items : []).map((raw, index) => {
+    if (!raw || typeof raw !== 'object') return null;
+    const proposal = {
+      ...raw,
+      menu_id: String(raw.menu_id || '').toUpperCase(),
+      variant_id: String(raw.variant_id || ''),
+      qty: Math.max(1, Math.min(10, Number(raw.qty || 1))),
+    };
+    if (!/^M\d{2}$/.test(proposal.menu_id) || !Number.isFinite(proposal.qty)) return null;
+    const suppliedId = String(raw.proposal_id || '').trim().slice(0, 120);
+    proposal.proposal_id = suppliedId || `local-${index}-${proposalFingerprint(proposal)}`;
+    if (!state.menu.length) return proposal;
+    const menu = state.menu.find((entry) => entry.id === proposal.menu_id);
+    return menu && (menu.variants || []).some((variant) => variant.id === proposal.variant_id) ? proposal : null;
+  }).filter(Boolean);
+}
+
+function normalizeDeferredBatch(batch, items = state.deferredItems) {
+  if (!items.length) return null;
+  const savedCompleted = Number(batch && batch.completed);
+  const savedTotal = Number(batch && batch.total);
+  const completed = Number.isFinite(savedCompleted) ? Math.max(0, Math.floor(savedCompleted)) : 0;
+  const total = Math.max(
+    completed + items.length,
+    Number.isFinite(savedTotal) ? Math.floor(savedTotal) : 0,
+  );
+  const menuIds = [...new Set([
+    ...(Array.isArray(batch && batch.menuIds) ? batch.menuIds : []),
+    ...items.map((proposal) => proposal.menu_id),
+  ].filter((id) => /^M\d{2}$/.test(String(id))))];
+  return {
+    id: String(batch && batch.id || `batch-${Date.now()}`).slice(0, 120),
+    total,
+    completed: Math.min(completed, Math.max(0, total - items.length)),
+    menuIds,
+  };
+}
+
+function setResponseChoices(replies, menuActions, deferredItems) {
+  const deferred = normalizeDeferredItems(deferredItems);
+  if (deferred.length) {
+    state.deferredItems = deferred;
+    state.deferredBatch = normalizeDeferredBatch({
+      id: `batch-${Date.now()}`,
+      total: deferred.length,
+      completed: 0,
+      menuIds: deferred.map((proposal) => proposal.menu_id),
+    }, deferred);
+    // A structured order batch is the only actionable choice. Keeping generic
+    // quick replies here lets a second chat response overwrite the remaining queue.
+    state.quickReplies = [];
+    state.menuActions = [];
+  } else {
+    state.deferredItems = [];
+    state.deferredBatch = null;
+    state.quickReplies = Array.isArray(replies) ? replies : [];
+    state.menuActions = normalizeMenuActions(menuActions);
+  }
+}
+
+function cancelDeferredBatch() {
+  state.deferredItems = [];
+  state.deferredBatch = null;
+  state.staffAuthorization = null;
+  state.quickReplies = [];
+  state.menuActions = [];
+  closeOptionDialog();
+  renderQuickReplies();
+  saveState();
+  announce(tr('batchCancelled'));
+  $('#messageInput').focus();
+}
+
+function renderQuickReplies() {
   const wrap = $('#quickReplies'); wrap.replaceChildren();
   if (!state.history.length) renderLanguageChoices(wrap);
+
+  if (state.deferredItems.length) {
+    state.deferredBatch = normalizeDeferredBatch(state.deferredBatch);
+    const current = Math.min(
+      state.deferredBatch.total,
+      state.deferredBatch.completed + 1,
+    );
+    const progress = document.createElement('div'); progress.className = 'deferred-progress'; progress.setAttribute('role', 'status');
+    const title = document.createElement('strong'); title.textContent = tr('batchProgress', { current, total: state.deferredBatch.total });
+    const detail = document.createElement('span'); detail.textContent = tr('batchPending');
+    progress.append(title, detail); wrap.appendChild(progress);
+
+    const proposal = state.deferredItems[0];
+    const menu = state.menu.find((item) => item.id === proposal.menu_id);
+    if (menu) {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'option-action-chip proposal-chip current';
+      button.textContent = `${current}/${state.deferredBatch.total} · ${tr('selectOptionsFor', { name: menuDisplayName(menu) })} ×${proposal.qty}`;
+      button.disabled = state.staffVerificationRequired;
+      button.onclick = () => openOptionDialog(menu.id, null, proposal); wrap.appendChild(button);
+    }
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'batch-cancel-chip'; cancel.textContent = tr('cancelBatch');
+    cancel.onclick = cancelDeferredBatch; wrap.appendChild(cancel);
+    return;
+  }
+
   state.quickReplies.forEach((reply) => {
     if (!reply || !reply.label) return;
     const button = document.createElement('button'); button.type = 'button'; button.textContent = reply.label;
     button.onclick = () => sendMessage(reply.value || reply.label); wrap.appendChild(button);
   });
-  state.deferredItems.forEach((proposal, index) => {
-    const menu = state.menu.find((item) => item.id === proposal.menu_id);
-    if (!menu) return;
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'option-action-chip proposal-chip';
-    button.textContent = `${index + 1}. ${tr('selectOptionsFor', { name: menuDisplayName(menu) })} ×${proposal.qty}`;
-    button.onclick = () => openOptionDialog(menu.id, null, proposal); wrap.appendChild(button);
-  });
-  state.menuActions.filter((menuId) => !state.deferredItems.some((proposal) => proposal.menu_id === menuId)).forEach((menuId) => {
+  state.menuActions.forEach((menuId) => {
     const menu = state.menu.find((item) => item.id === menuId);
     if (!menu) return;
     const button = document.createElement('button'); button.type = 'button'; button.className = 'option-action-chip';
@@ -674,7 +829,9 @@ function chatHeaders() {
 function applyServerState(data) {
   if (data.cart) {
     state.cart = Array.isArray(data.cart.items) ? data.cart.items : [];
-    state.orderNo = data.cart.order_no || null;
+    const incomingOrderNo = data.cart.order_no || null;
+    if (state.lastCheckout && state.lastCheckout.order_no !== incomingOrderNo) state.lastCheckout = null;
+    state.orderNo = incomingOrderNo;
     state.cartStatus = data.cart.status || null;
     state.staffChecked = Boolean(data.cart.staff_checked);
   }
@@ -697,13 +854,16 @@ function makeChoiceLabel(input, title, detail = '') {
   label.append(input, copy); return label;
 }
 
-function openOptionDialog(menuId, editIndex = null, preset = null) {
+function openOptionDialog(menuId, editIndex = null, preset = null, context = {}) {
   const item = state.menu.find((entry) => entry.id === menuId);
   if (!item) return;
   state.optionItem = item;
   state.optionEditIndex = Number.isInteger(editIndex) ? editIndex : null;
   state.optionPreset = state.optionEditIndex == null && preset ? { ...preset } : null;
   state.pairingChoice = null;
+  state.pairingTrail = Array.isArray(context.pairingTrail) && context.pairingTrail.length
+    ? [...new Set(context.pairingTrail.map((id) => String(id).toUpperCase()))]
+    : [item.id];
   const current = state.optionEditIndex == null ? state.optionPreset : state.cart[state.optionEditIndex];
   state.optionBaseVariantId = (current && current.variant_id) || (item.variants[0] && item.variants[0].id);
   renderOptionDialog();
@@ -765,13 +925,15 @@ function selectedVariant() {
   return state.optionItem && (state.optionItem.variants || []).find((variant) => variant.id === id);
 }
 
-function addSuggestionRow(container, text, onAccept, onSkip) {
+function addSuggestionRow(container, text, onAccept, onSkip, selected = false) {
   const row = document.createElement('div'); row.className = 'suggestion-row';
   const copy = document.createElement('span'); copy.textContent = text;
   const actions = document.createElement('div');
   const accept = document.createElement('button'); accept.type = 'button'; accept.textContent = tr('accept');
   const skip = document.createElement('button'); skip.type = 'button'; skip.className = 'quiet-button'; skip.textContent = tr('skip');
   const status = document.createElement('small'); status.setAttribute('aria-live', 'polite');
+  accept.classList.toggle('selected', selected);
+  if (selected) status.textContent = tr('suggestionAccepted');
   accept.onclick = () => { onAccept(); status.textContent = tr('suggestionAccepted'); accept.classList.add('selected'); };
   skip.onclick = () => { onSkip(); status.textContent = tr('suggestionSkipped'); accept.classList.remove('selected'); };
   actions.append(accept, skip); row.append(copy, actions, status); container.appendChild(row);
@@ -810,14 +972,23 @@ function renderSuggestions() {
     }, () => { shots.value = '0'; updateOptionPrice(); });
   }
 
-  const pairingId = (item.pairing_ids || []).find((id) => state.menu.some((entry) => entry.id === id));
+  const pairingExclusions = new Set([
+    ...state.cart.map((entry) => entry.menu_id),
+    ...state.deferredItems.map((entry) => entry.menu_id),
+    ...(state.deferredBatch && Array.isArray(state.deferredBatch.menuIds) ? state.deferredBatch.menuIds : []),
+    ...state.pairingTrail,
+  ]);
+  const pairingId = (item.pairing_ids || []).find((id) => (
+    !pairingExclusions.has(id) && state.menu.some((entry) => entry.id === id)
+  ));
   const pairing = state.menu.find((entry) => entry.id === pairingId);
-  if (pairing) {
+  const hasMoreRequestedItems = Boolean(state.optionPreset && state.deferredItems.length > 1);
+  if (pairing && !hasMoreRequestedItems) {
     count += 1;
     const price = Math.min(...(pairing.variants || []).map((entry) => Number(entry.price)).filter(Number.isFinite));
     addSuggestionRow(box, tr('pairing', { name: menuDisplayName(pairing), price: won(price) }), () => {
       state.pairingChoice = pairing.id;
-    }, () => { state.pairingChoice = null; });
+    }, () => { state.pairingChoice = null; }, state.pairingChoice === pairing.id);
   }
   if (count) $('#optionGuidance').before(box);
 }
@@ -854,6 +1025,10 @@ function optionItemPayload() {
 
 async function cartAction(action, fields = {}, { silent = false } = {}) {
   if (state.busy) return false;
+  // A staff authorization is scoped to the approved purchase and must survive
+  // the option modal. It is consumed only by the first matching alcohol change.
+  const staffAuthorization = cartActionNeedsAlcoholApproval(action, fields)
+    ? state.staffAuthorization : null;
   const rollback = {
     cart: state.cart.map((item) => ({ ...item })), stateToken: state.stateToken, cartStatus: state.cartStatus,
     staffChecked: state.staffChecked, orderNo: state.orderNo,
@@ -865,7 +1040,7 @@ async function cartAction(action, fields = {}, { silent = false } = {}) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action, table_id: state.tableId, cart: cartForRequest(), state_token: state.stateToken,
-        language: state.locale, ...fields,
+        staff_authorization: staffAuthorization, language: state.locale, ...fields,
       }),
     });
     const data = await responsePayload(response);
@@ -873,11 +1048,11 @@ async function cartAction(action, fields = {}, { silent = false } = {}) {
     applyServerState(data);
     state.staffVerificationRequired = Boolean(data.requires_staff_verification);
     state.staffVerificationReason = data.staff_verification_reason || null;
-    state.staffAuthorization = null;
+    if (staffAuthorization || state.staffVerificationRequired) state.staffAuthorization = null;
     if (state.staffVerificationRequired) {
       state.pendingStaffRequest = null;
       state.pendingCartRollback = rollback;
-      if (!silent) appendMessage('assistant', tr('staffNeeded'), false);
+      if (!silent) appendMessage('assistant', `${tr('staffNeeded')}\n${tr('staffCodeChatPrompt')}`, false);
     } else if (!cartHasAlcohol()) {
       state.staffChallenge = null;
       state.staffChecked = false;
@@ -885,7 +1060,10 @@ async function cartAction(action, fields = {}, { silent = false } = {}) {
     } else {
       state.pendingCartRollback = null;
     }
-    renderCart(); renderStaffStatus('', state.staffVerificationRequired); saveState();
+    renderCart();
+    if (state.staffVerificationRequired) revealStaffVerification();
+    else renderStaffStatus();
+    saveState();
     $('#cartError').textContent = '';
     if (!silent) announce(tr('cartUpdated'));
     return true;
@@ -910,6 +1088,7 @@ async function submitOption(event) {
   const action = state.optionEditIndex == null ? 'add' : 'replace';
   const menuName = menuDisplayName(state.optionItem);
   const pairingId = action === 'add' ? state.pairingChoice : null;
+  const pairingTrail = [...state.pairingTrail];
   const completedPreset = state.optionPreset;
   const fields = action === 'add' ? { item: payload } : { item: payload, index: state.optionEditIndex };
   const success = await cartAction(action, fields);
@@ -917,14 +1096,22 @@ async function submitOption(event) {
   if (!success) return;
   if (completedPreset) {
     const completedIndex = state.deferredItems.findIndex((proposal) => proposalKey(proposal) === proposalKey(completedPreset));
-    if (completedIndex >= 0) state.deferredItems.splice(completedIndex, 1);
-    renderQuickReplies(state.quickReplies, state.menuActions, state.deferredItems);
+    if (completedIndex >= 0) {
+      state.deferredItems.splice(completedIndex, 1);
+      if (state.deferredBatch) state.deferredBatch.completed += 1;
+    }
   }
-  closeDialog($('#optionModal'));
+  if (!state.deferredItems.length) {
+    state.deferredBatch = null;
+    state.staffAuthorization = null;
+  }
+  renderQuickReplies();
+  closeOptionDialog();
+  saveState();
   announce(tr('addedToCart', { name: menuName }));
   if (pairingId && !state.staffVerificationRequired) {
     announce(tr('pairingNext'));
-    openOptionDialog(pairingId);
+    openOptionDialog(pairingId, null, null, { pairingTrail: [...pairingTrail, pairingId] });
   } else if (state.deferredItems.length && !state.staffVerificationRequired) {
     const next = state.deferredItems[0];
     openOptionDialog(next.menu_id, null, next);
@@ -934,10 +1121,20 @@ async function submitOption(event) {
 async function sendMessage(rawMessage, options = {}) {
   const message = String(rawMessage || '').trim();
   if (!message || state.busy) return;
-  if (!openAIAPIKey && !state.serverAIReady && !state.mockMode) { openAPIKeyModal(); return; }
   if (state.staffVerificationRequired) { renderStaffStatus('', true); return; }
+  if (state.deferredItems.length) {
+    renderQuickReplies();
+    announce(tr('batchPending'));
+    if (!$('#optionModal').open && !$$('dialog[open]').length) {
+      const next = state.deferredItems[0];
+      openOptionDialog(next.menu_id, null, next);
+    }
+    return;
+  }
+  if (!openAIAPIKey && !state.serverAIReady && !state.mockMode) { openAPIKeyModal(); return; }
   applyDetectedLocale(message);
-  state.busy = true; $('#sendButton').disabled = true; renderQuickReplies();
+  state.busy = true; $('#sendButton').disabled = true;
+  state.quickReplies = []; state.menuActions = []; renderQuickReplies();
   const previousHistory = historyForRequest(Array.isArray(options.historyOverride) ? options.historyOverride : state.history);
   if (options.appendUser !== false) {
     appendMessage('user', message); $('#messageInput').value = ''; saveState();
@@ -961,25 +1158,30 @@ async function sendMessage(rawMessage, options = {}) {
     if (data.requires_staff_verification) {
       thinking.remove();
       applyServerState(data);
-      appendMessage('assistant', tr('staffNeeded'), false);
+      appendMessage('assistant', `${tr('staffNeeded')}\n${tr('staffCodeChatPrompt')}`, false);
       state.staffVerificationRequired = true;
       state.staffVerificationReason = data.staff_verification_reason || 'alcohol_purchase';
       state.staffAuthorization = null;
       state.pendingStaffRequest = { message, history: previousHistory };
-      renderCart(); renderSources(); renderQuickReplies(); renderStaffStatus('', true); saveState();
+      renderCart(); renderSources(); renderQuickReplies(); revealStaffVerification(); saveState();
       return;
     }
     if (!response.ok) throw new Error(errorMessage(data.detail, tr('answerFailed')));
     thinking.remove();
     appendMessage('assistant', data.reply || tr('answerFailed'), true, data.menu_images);
     applyServerState(data);
+    setResponseChoices(data.quick_replies, data.menu_actions, data.deferred_cart_items);
     state.staffVerificationRequired = false; state.staffVerificationReason = null;
-    state.staffChallenge = null; state.staffAuthorization = null; state.pendingStaffRequest = null;
-    const deferred = normalizeDeferredItems(data.deferred_cart_items);
-    renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies(data.quick_replies, data.menu_actions, deferred); saveState();
-    if (deferred.length) openOptionDialog(deferred[0].menu_id, null, deferred[0]);
-    else if (data.open_option_menu_id) openOptionDialog(String(data.open_option_menu_id).toUpperCase());
+    state.staffChallenge = null;
+    const returnedStaffAuthorization = data.staff_authorization || options.staffAuthorization || null;
+    const hasAuthorizedMenuSelection = Boolean(data.staff_authorization) || state.deferredItems.length
+      || data.open_option_menu_id || state.menuActions.length;
+    state.staffAuthorization = hasAuthorizedMenuSelection ? returnedStaffAuthorization : null;
+    state.pendingStaffRequest = null;
+    renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies(); saveState();
+    if (state.deferredItems.length) openOptionDialog(state.deferredItems[0].menu_id, null, state.deferredItems[0]);
     else if (data.open_order_form) openCheckout();
+    else if (data.open_option_menu_id) openOptionDialog(String(data.open_option_menu_id).toUpperCase());
   } catch (error) {
     if (thinking.isConnected) thinking.remove();
     appendMessage('assistant', `${tr('checkConnection')} ${error.message}`, false);
@@ -1039,9 +1241,11 @@ async function verifyStaff() {
       if (!response.ok) throw new Error(errorMessage(data.detail, tr('staffNeeded')));
       applyServerState(data);
       state.staffVerificationRequired = false; state.staffVerificationReason = null; state.staffChallenge = null;
-      state.staffAuthorization = data.staff_authorization || null;
-      state.pendingCartRollback = null;
       retryRequest = state.pendingStaffRequest;
+      // A chat preflight still has to pass through the deferred option modal;
+      // an already-mutated cart is complete as soon as staff verifies it.
+      state.staffAuthorization = retryRequest ? (data.staff_authorization || null) : null;
+      state.pendingCartRollback = null;
       renderCart(); renderStaffStatus(tr('staffDone')); saveState();
     }
   } catch (error) {
@@ -1051,6 +1255,13 @@ async function verifyStaff() {
   }
   if (refreshRequest) await sendMessage(refreshRequest.message, { appendUser: false, historyOverride: refreshRequest.history });
   else if (retryRequest) await retryPendingStaffRequest();
+  else if (!state.staffVerificationRequired && state.deferredItems.length) {
+    renderQuickReplies(); saveState();
+    if (!$$('dialog[open]').length) {
+      const next = state.deferredItems[0];
+      openOptionDialog(next.menu_id, null, next);
+    }
+  }
 }
 
 function localizedTableChangeMessage(table) {
@@ -1065,7 +1276,7 @@ async function changeTable(nextTable) {
   const oldTable = state.tableId;
   if (!Number.isInteger(table) || table === oldTable || state.busy) return;
   if (state.staffVerificationRequired) {
-    $('#tableSelect').value = String(oldTable); renderStaffStatus('', true); announce(tr('staffNeeded')); return;
+    $('#tableSelect').value = String(oldTable); revealStaffVerification(); announce(tr('staffNeeded')); return;
   }
   state.busy = true; $('#tableSelect').disabled = true; announce(tr('tableChanging'));
   try {
@@ -1099,7 +1310,77 @@ function renderCheckoutReview() {
     copy.append(name, details); const price = document.createElement('strong'); price.textContent = won(item.subtotal);
     row.append(image, copy, price); wrap.appendChild(row);
   });
-  $('#checkoutTotal').textContent = won(state.cart.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
+  const subtotal = state.cart.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+  $('#benefitBeforeAmount').textContent = won(subtotal);
+  $('#benefitDiscountAmount').textContent = won(0);
+  $('#benefitAfterAmount').textContent = won(subtotal);
+  $('#checkoutTotal').textContent = won(subtotal);
+}
+
+function normalizeCheckoutReceipt(raw) {
+  if (!raw || typeof raw !== 'object' || raw.simulated !== true) return null;
+  const orderNo = String(raw.order_no || '').trim().slice(0, 120);
+  if (!orderNo) return null;
+  const tableId = Number(raw.table_id);
+  const items = (Array.isArray(raw.items) ? raw.items : []).slice(0, 30).map((item) => ({
+    menu_id: String(item && item.menu_id || '').toUpperCase().slice(0, 20),
+    variant_id: String(item && item.variant_id || '').slice(0, 80),
+    name: String(item && item.name || '').slice(0, 160),
+    qty: Math.max(1, Math.min(10, Number(item && item.qty || 1))),
+    subtotal: Math.max(0, Number(item && item.subtotal || 0)),
+    temp: item && item.temp, size: item && item.size,
+    bean: item && item.bean, extra_shots: Number(item && item.extra_shots || 0),
+    milk: item && item.milk, sweetness: item && item.sweetness,
+    ice: item && item.ice, warming: item && item.warming,
+  })).filter((item) => item.menu_id);
+  const totalBefore = Math.max(0, Number(raw.total_before_discount || 0));
+  const discount = Math.max(0, Number(raw.discount || 0));
+  const totalDue = Math.max(0, Number(raw.total_due ?? (totalBefore - discount)));
+  return {
+    simulated: true,
+    order_no: orderNo,
+    table_id: Number.isInteger(tableId) && tableId >= 1 && tableId <= 12 ? tableId : state.tableId,
+    items,
+    total_before_discount: totalBefore,
+    discount,
+    total_due: totalDue,
+    payment_method: ['card', 'mobile', 'gifticon'].includes(raw.payment_method) ? raw.payment_method : 'card',
+    receipt: ['paper', 'digital', 'none'].includes(raw.receipt) ? raw.receipt : 'none',
+  };
+}
+
+function paymentMethodLabel(value) {
+  return tr({ card: 'card', mobile: 'mobilePay', gifticon: 'gifticon' }[value] || 'card');
+}
+
+function receiptChoiceLabel(value) {
+  return tr({ paper: 'paperReceipt', digital: 'digitalReceipt', none: 'noReceipt' }[value] || 'noReceipt');
+}
+
+function renderCheckoutReceipt(raw = state.lastCheckout) {
+  const checkout = normalizeCheckoutReceipt(raw);
+  if (!checkout) return;
+  const items = $('#receiptItems'); items.replaceChildren();
+  checkout.items.forEach((item) => {
+    const menu = state.menu.find((entry) => entry.id === item.menu_id);
+    const line = document.createElement('article'); line.className = 'receipt-item-line';
+    const copy = document.createElement('div');
+    const name = document.createElement('b');
+    name.textContent = `${menu ? menuDisplayName(menu) : (item.name || item.menu_id)} ×${item.qty}`;
+    const options = document.createElement('small'); options.textContent = cartOptionText(item);
+    const subtotal = document.createElement('strong'); subtotal.textContent = won(item.subtotal);
+    subtotal.setAttribute('aria-label', `${tr('subtotal')} ${won(item.subtotal)}`);
+    copy.append(name, options); line.append(copy, subtotal); items.appendChild(line);
+  });
+  $('#receiptCallout').textContent = tr('receiptCallout', { number: checkout.order_no });
+  $('#receiptTable').textContent = tr('tableOption', { n: checkout.table_id });
+  $('#receiptBeforeDiscount').textContent = won(checkout.total_before_discount);
+  $('#receiptDiscount').textContent = won(checkout.discount);
+  $('#receiptPaidAmount').textContent = won(checkout.total_due);
+  $('#receiptPaymentMethod').textContent = paymentMethodLabel(checkout.payment_method);
+  $('#receiptChoice').textContent = receiptChoiceLabel(checkout.receipt);
+  $('#receiptBenefitApplied').textContent = tr('benefitNotApplied');
+  $('#orderNumber').textContent = checkout.order_no;
 }
 
 function renderCupChoices() {
@@ -1129,8 +1410,19 @@ function renderCupChoices() {
 function openCheckout() {
   if (!state.cart.length) { announce(tr('cartEmptyCheckout')); $('#confirmButton').focus(); return; }
   if (cartHasAlcohol() && !state.staffChecked) {
-    state.staffVerificationRequired = true; renderStaffStatus('', true);
-    announce(tr('staffNeeded')); $('.settings-panel').scrollIntoView({ behavior: 'smooth', block: 'center' }); return;
+    state.staffVerificationRequired = true;
+    appendMessage('assistant', `${tr('staffNeeded')}\n${tr('staffCodeChatPrompt')}`, false);
+    revealStaffVerification();
+    announce(`${tr('staffNeeded')} ${tr('staffCodeChatPrompt')}`); saveState(); return;
+  }
+  const completed = normalizeCheckoutReceipt(state.lastCheckout);
+  if (completed && completed.order_no === state.orderNo) {
+    state.lastCheckout = completed;
+    $('#checkoutFormBody').hidden = true; $('#orderSuccess').hidden = false;
+    $('#checkoutError').textContent = '';
+    renderCheckoutReceipt(completed);
+    openDialog($('#checkoutModal'));
+    return;
   }
   $('#checkoutFormBody').hidden = false; $('#orderSuccess').hidden = true; $('#checkoutError').textContent = '';
   renderCheckoutReview(); renderCupChoices();
@@ -1163,9 +1455,17 @@ async function submitCheckout(event) {
     const data = await responsePayload(response);
     if (!response.ok) throw new Error(errorMessage(data.detail, tr('retryCheckout')));
     if (!data.checkout || data.checkout.simulated !== true) throw new Error(tr('retryCheckout'));
-    applyServerState(data); renderCart(); saveState();
+    applyServerState(data);
+    state.lastCheckout = normalizeCheckoutReceipt({
+      ...data.checkout,
+      order_no: data.order_no || state.orderNo,
+      table_id: data.table_id || state.tableId,
+      items: state.cart.map((item) => ({ ...item })),
+    });
+    if (!state.lastCheckout) throw new Error(tr('retryCheckout'));
+    renderCart(); saveState();
     $('#checkoutFormBody').hidden = true; $('#orderSuccess').hidden = false;
-    $('#orderNumber').textContent = tr('orderNumber', { number: state.orderNo || '—' });
+    renderCheckoutReceipt(state.lastCheckout);
     announce(`${tr('orderComplete')}. ${tr('orderNotSubmitted')}`);
   } catch (error) {
     $('#checkoutError').textContent = `${error.message} ${tr('retryCheckout')}`;
@@ -1184,6 +1484,9 @@ function saveState() {
     staffChallenge: state.staffChallenge,
     pendingStaffRequest: state.staffVerificationRequired ? state.pendingStaffRequest : null,
     pendingCartRollback: state.staffVerificationRequired ? state.pendingCartRollback : null,
+    deferredItems: state.deferredItems,
+    deferredBatch: state.deferredBatch,
+    lastCheckout: state.lastCheckout,
   }));
 }
 
@@ -1207,7 +1510,11 @@ function restoreState() {
       ? { message: saved.pendingStaffRequest.message.slice(0, 2000), history: historyForRequest(saved.pendingStaffRequest.history) } : null;
     state.pendingCartRollback = current && saved.pendingCartRollback && Array.isArray(saved.pendingCartRollback.cart)
       ? saved.pendingCartRollback : null;
+    state.deferredItems = current ? normalizeDeferredItems(saved.deferredItems) : [];
+    state.deferredBatch = current ? normalizeDeferredBatch(saved.deferredBatch, state.deferredItems) : null;
     state.tableId = Number.isInteger(saved.tableId) && saved.tableId >= 1 && saved.tableId <= 12 ? saved.tableId : 5;
+    state.lastCheckout = current ? normalizeCheckoutReceipt(saved.lastCheckout) : null;
+    if (state.lastCheckout && state.lastCheckout.order_no !== state.orderNo) state.lastCheckout = null;
   } catch (_) { localStorage.removeItem(STATE_KEY); }
 }
 
@@ -1218,7 +1525,8 @@ function resetSession() {
   state.pendingStaffRequest = null; state.pendingCartRollback = null;
   state.sources = []; state.quickReplies = []; state.menuActions = [];
   state.optionItem = null; state.optionEditIndex = null; state.optionPreset = null;
-  state.deferredItems = []; state.pairingChoice = null;
+  state.deferredItems = []; state.deferredBatch = null; state.pairingChoice = null; state.pairingTrail = [];
+  state.lastCheckout = null;
   localStorage.removeItem(STATE_KEY);
   $('#cartError').textContent = ''; $('#optionError').textContent = ''; $('#checkoutError').textContent = '';
   renderHistory(); renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies(); announce(tr('resetDone'));
@@ -1237,10 +1545,12 @@ async function boot() {
     if (!healthResponse.ok || !health.ok || !menuResponse.ok) throw new Error(tr('connectionError'));
     state.contentReady = true; state.serverAIReady = Boolean(health.ai_ready); state.mockMode = Boolean(health.mock_mode);
     state.menu = Array.isArray(menu.items) ? menu.items : [];
+    state.deferredItems = normalizeDeferredItems(state.deferredItems);
+    state.deferredBatch = normalizeDeferredBatch(state.deferredBatch, state.deferredItems);
     state.categories = Array.isArray(menu.categories) ? menu.categories : [];
     if (!state.categories.includes(state.category)) state.category = state.categories[0] || '커피';
     refreshConnectionStatus(); renderCategories(); renderMenu(); renderCart(); renderStaffStatus();
-    renderHistory(); renderQuickReplies(state.quickReplies, state.menuActions);
+    renderHistory(); renderQuickReplies(); saveState();
     scheduleAPIKeyModal();
   } catch (error) {
     setConnection('error', tr('connectionError'));
@@ -1285,9 +1595,15 @@ $('#easyViewReset').addEventListener('click', () => {
   state.largeText = false; state.highContrast = false; state.largeTargets = false; applyAccessibility(); savePreferences();
 });
 
-$$('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => closeDialog($(`#${button.dataset.closeDialog}`))));
+$$('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => {
+  if (button.dataset.closeDialog === 'optionModal') closeOptionDialog();
+  else closeDialog($(`#${button.dataset.closeDialog}`));
+}));
 $$('dialog').forEach((dialog) => dialog.addEventListener('close', syncModalState));
-$('#optionModal').addEventListener('cancel', () => { state.optionItem = null; state.optionEditIndex = null; });
+$('#optionModal').addEventListener('cancel', resetOptionDialogState);
+$('#optionModal').addEventListener('close', () => {
+  if (!$('#optionModal').open) resetOptionDialogState();
+});
 
 $$('input[name="serviceMode"]').forEach((input) => input.addEventListener('change', renderCupChoices));
 $$('input[name="splitMode"]').forEach((input) => input.addEventListener('change', () => {

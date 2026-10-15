@@ -146,7 +146,15 @@
         <fieldset><legend data-i18n="serviceMode">이용 방식</legend><div class="choice-grid"><label><input type="radio" name="serviceMode" value="dine_in" checked><span data-i18n="dineIn">매장</span></label><label><input type="radio" name="serviceMode" value="takeout"><span data-i18n="takeout">포장</span></label></div></fieldset>
         <fieldset><legend data-i18n="cupChoice">컵 선택</legend><div class="choice-grid" id="cupChoices"></div></fieldset>
         <fieldset><legend data-i18n="supplies">필요한 비품</legend><div class="check-grid"><label><input type="checkbox" name="supplies" value="carrier"><span data-i18n="carrier">캐리어</span></label><label><input type="checkbox" name="supplies" value="straw"><span data-i18n="straw">빨대</span></label></div></fieldset>
-        <section class="benefit-box" aria-labelledby="benefitTitle"><h3 id="benefitTitle" data-i18n="couponPoints">쿠폰·포인트</h3><p data-i18n="noBenefits">사용 가능한 쿠폰과 포인트가 없어요. 할인 0원</p></section>
+        <section class="benefit-box" aria-labelledby="benefitTitle">
+          <h3 id="benefitTitle" data-i18n="benefitCheckResult">멤버십·쿠폰·포인트 확인 결과</h3>
+          <p data-i18n="noLinkedBenefits">연결된 혜택이 없어 할인은 0원입니다.</p>
+          <dl class="benefit-summary">
+            <div><dt data-i18n="beforeDiscount">할인 전 금액</dt><dd id="benefitBeforeAmount">0원</dd></div>
+            <div><dt data-i18n="discountAmount">할인</dt><dd id="benefitDiscountAmount">0원</dd></div>
+            <div><dt data-i18n="afterDiscount">할인 후 금액</dt><dd id="benefitAfterAmount">0원</dd></div>
+          </dl>
+        </section>
         <fieldset><legend data-i18n="paymentMethod">결제 방법</legend><div class="choice-grid three"><label><input type="radio" name="paymentMethod" value="card" checked><span data-i18n="card">카드</span></label><label><input type="radio" name="paymentMethod" value="mobile"><span data-i18n="mobilePay">모바일</span></label><label><input type="radio" name="paymentMethod" value="gifticon"><span data-i18n="gifticon">기프티콘</span></label></div></fieldset>
         <fieldset><legend data-i18n="splitPayment">나눠 결제</legend><div class="choice-grid three"><label><input type="radio" name="splitMode" value="none" checked><span data-i18n="noSplit">나누지 않음</span></label><label><input type="radio" name="splitMode" value="by_item"><span data-i18n="byItem">메뉴별</span></label><label><input type="radio" name="splitMode" value="equal"><span data-i18n="equalSplit">균등 분할</span></label></div><label class="split-count" id="splitCountWrap" hidden><span data-i18n="peopleCount">인원수</span><select id="splitCount"></select></label></fieldset>
         <fieldset><legend data-i18n="receipt">영수증</legend><div class="choice-grid three"><label><input type="radio" name="receipt" value="paper"><span data-i18n="paperReceipt">종이</span></label><label><input type="radio" name="receipt" value="digital"><span data-i18n="digitalReceipt">디지털</span></label><label><input type="radio" name="receipt" value="none" checked><span data-i18n="noReceipt">안 받음</span></label></div></fieldset>
@@ -155,7 +163,27 @@
         <div class="checkout-final-total"><span data-i18n="finalTotal">최종 금액</span><strong id="checkoutTotal">0원</strong></div>
         <div class="modal-actions"><button class="quiet-button" type="button" data-close-dialog="checkoutModal" data-i18n="cancel">취소</button><button class="primary-button" id="checkoutSubmit" type="submit" data-i18n="confirmDemoOrder">시연용 주문 확정</button></div>
       </div>
-      <section class="order-success" id="orderSuccess" hidden aria-live="polite"><span aria-hidden="true">✓</span><h3 data-i18n="orderComplete">시연용 주문이 확정됐어요</h3><p id="orderNumber"></p><p data-i18n="orderNotSubmitted">실제 결제나 매장 접수는 되지 않았습니다.</p><button class="primary-button" type="button" data-close-dialog="checkoutModal" data-i18n="done">완료</button></section>
+      <section class="order-success" id="orderSuccess" hidden aria-live="polite">
+        <span aria-hidden="true">✓</span>
+        <h3 data-i18n="demoPaymentComplete">시연 결제 완료</h3>
+        <p class="receipt-callout" id="receiptCallout">0번 손님, 잠시만 기다려 주세요!</p>
+        <p data-i18n="orderNotSubmitted">실제 결제나 매장 접수는 되지 않았습니다.</p>
+        <section class="receipt-items-section" aria-labelledby="receiptItemsTitle">
+          <h4 id="receiptItemsTitle" data-i18n="receiptItems">주문 메뉴</h4>
+          <div class="receipt-items" id="receiptItems"></div>
+        </section>
+        <dl class="demo-receipt" data-i18n-aria="demoReceiptLabel" aria-label="시연 결제 영수증">
+          <div><dt data-i18n="tableNumber">좌석 번호</dt><dd id="receiptTable">—</dd></div>
+          <div><dt data-i18n="beforeDiscount">할인 전 금액</dt><dd id="receiptBeforeDiscount">0원</dd></div>
+          <div><dt data-i18n="discountAmount">할인</dt><dd id="receiptDiscount">0원</dd></div>
+          <div class="receipt-total"><dt data-i18n="paidAmount">최종 결제액</dt><dd id="receiptPaidAmount">0원</dd></div>
+          <div><dt data-i18n="paymentMethod">결제 방법</dt><dd id="receiptPaymentMethod">—</dd></div>
+          <div><dt data-i18n="receipt">영수증</dt><dd id="receiptChoice">—</dd></div>
+          <div><dt data-i18n="benefitApplied">멤버십·혜택 적용</dt><dd id="receiptBenefitApplied">적용 안 됨</dd></div>
+          <div><dt data-i18n="orderNumberLabel">주문번호</dt><dd id="orderNumber">—</dd></div>
+        </dl>
+        <button class="primary-button" type="button" data-close-dialog="checkoutModal" data-i18n="done">완료</button>
+      </section>
     </form>
   </dialog>
 

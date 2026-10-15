@@ -98,6 +98,10 @@ class CartActionRequest(BaseModel):
     table_id: int = Field(default=5, ge=min(TABLES), le=max(TABLES))
     cart: list[CartLine] = Field(default_factory=list, max_length=30)
     state_token: str | None = Field(default=None, max_length=2048)
+    # A short, signed authorization returned after the staff code succeeds.
+    # It is bound to this exact table/cart snapshot and is consumed by the
+    # first subsequent alcohol increase in the browser option flow.
+    staff_authorization: str | None = Field(default=None, max_length=2048)
     item: CartLine | None = None
     index: int | None = Field(default=None, ge=0, le=29)
     quantity: int | None = Field(default=None, ge=1, le=10)
@@ -378,18 +382,28 @@ def _restore_signed_state(cart: Cart, token: str | None) -> None:
         return
 
 
-def _issue_staff_challenge(cart: Cart, scope: str) -> str | None:
+def _issue_staff_challenge(
+    cart: Cart,
+    scope: str,
+    *,
+    authorization_mode: str = "none",
+    allowed_cart_fingerprints: list[str] | None = None,
+    allowed_menu_ids: list[str] | None = None,
+) -> str | None:
     return _sign_payload({
         "v": 1,
         "purpose": "staff_challenge",
         "table_id": cart.table_id,
         "cart": _cart_fingerprint(cart),
         "scope": scope,
+        "authorization_mode": authorization_mode,
+        "allowed_cart_fingerprints": allowed_cart_fingerprints or [],
+        "allowed_menu_ids": allowed_menu_ids or [],
         "exp": int(time.time()) + 5 * 60,
     })
 
 
-def _challenge_scope(token: str | None, cart: Cart) -> str | None:
+def _challenge_payload(token: str | None, cart: Cart) -> dict | None:
     payload = _read_signed_payload(token, "staff_challenge")
     if not payload:
         return None
@@ -398,16 +412,31 @@ def _challenge_scope(token: str | None, cart: Cart) -> str | None:
             or payload.get("cart") != _cart_fingerprint(cart)
             or not re.fullmatch(r"[0-9a-f]{64}", scope)):
         return None
-    return scope
+    return payload
 
 
-def _issue_staff_authorization(cart: Cart, scope: str) -> str | None:
+def _challenge_scope(token: str | None, cart: Cart) -> str | None:
+    payload = _challenge_payload(token, cart)
+    return str(payload["scope"]) if payload else None
+
+
+def _issue_staff_authorization(
+    cart: Cart,
+    scope: str,
+    *,
+    authorization_mode: str = "none",
+    allowed_cart_fingerprints: list[str] | None = None,
+    allowed_menu_ids: list[str] | None = None,
+) -> str | None:
     return _sign_payload({
         "v": 1,
         "purpose": "staff_authorization",
         "table_id": cart.table_id,
         "cart": _cart_fingerprint(cart),
         "scope": scope,
+        "authorization_mode": authorization_mode,
+        "allowed_cart_fingerprints": allowed_cart_fingerprints or [],
+        "allowed_menu_ids": allowed_menu_ids or [],
         "exp": int(time.time()) + 5 * 60,
     })
 
@@ -420,6 +449,61 @@ def _has_staff_authorization(token: str | None, cart: Cart, scope: str) -> bool:
         and payload.get("cart") == _cart_fingerprint(cart)
         and secrets.compare_digest(str(payload.get("scope", "")), scope)
     )
+
+
+def _has_staff_preapproval(
+    token: str | None,
+    cart: Cart,
+    updated: Cart,
+) -> bool:
+    """Allow one option-screen alcohol add after a verified chat request.
+
+    The token is still bound to the signed table and the exact pre-add cart
+    fingerprint.  Once an item is added, that fingerprint changes, so the same
+    authorization cannot approve a later quantity/type increase.
+    """
+    payload = _read_signed_payload(token, "staff_authorization")
+    if not (
+        payload
+        and payload.get("table_id") == cart.table_id
+        and payload.get("cart") == _cart_fingerprint(cart)
+        and re.fullmatch(r"[0-9a-f]{64}", str(payload.get("scope", "")))
+    ):
+        return False
+    mode = str(payload.get("authorization_mode", "none"))
+    if mode == "exact":
+        allowed = payload.get("allowed_cart_fingerprints") or []
+        return (
+            len(allowed) <= 10
+            and all(re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in allowed)
+            and _cart_fingerprint(updated) in allowed
+        )
+    if mode == "generic_one_alcohol_line":
+        before = _alcohol_quantities(cart)
+        increased = [
+            key for key, quantity in _alcohol_quantities(updated).items()
+            if quantity > before.get(key, 0)
+        ]
+        return len(increased) == 1
+    if mode == "menu_ids_one_alcohol_line":
+        allowed = payload.get("allowed_menu_ids") or []
+        if not (
+            len(allowed) <= 10
+            and all(re.fullmatch(r"M\d{2}", str(value)) for value in allowed)
+            and all(
+                (row := menu_by_id(str(value)))
+                and str(row.get("주류 구분", "")).startswith("주류 포함")
+                for value in allowed
+            )
+        ):
+            return False
+        before = _alcohol_quantities(cart)
+        increased = [
+            key for key, quantity in _alcohol_quantities(updated).items()
+            if quantity > before.get(key, 0)
+        ]
+        return len(increased) == 1 and increased[0][0] in allowed
+    return False
 
 
 def _cart_item_from_line(line: CartLine) -> CartItem:
@@ -510,12 +594,25 @@ def _order_form_metadata() -> dict:
         "payment_methods": ["card", "mobile", "gifticon"],
         "split_modes": ["none", "by_item", "equal"],
         "receipt_options": ["paper", "digital", "none"],
+        "membership": {
+            "lookup_supported": False,
+            "connected": False,
+            "benefits_available": False,
+            "message": "시연에서는 회원 계정 조회·연결을 지원하지 않습니다.",
+        },
         "discounts": {
+            "selection_supported": False,
             "account_connected": False,
+            "benefits_available": False,
             "coupon_available": False,
             "points_available": False,
             "discount_amount": 0,
             "points_to_earn": 0,
+            "options": [{
+                "id": "none",
+                "label": "적용 가능한 할인 없음",
+                "amount": 0,
+            }],
         },
         "constraints": {
             "alcohol_service_mode": "dine_in",
@@ -717,6 +814,68 @@ TABLE_CHANGE_WORDS = (
     "変更", "変え", "移動",
 )
 
+ALCOHOL_TERMS = (
+    "술", "주류", "알코올", "맥주", "라거", "와인", "하이볼", "칵테일",
+    "위스키", "막걸리", "소주", "beer", "wine", "alcohol", "liquor", "cocktail",
+    "highball", "sake", "酒", "ビール", "ワイン",
+)
+ALCOHOL_PURCHASE_RE = re.compile(
+    r"(?:구매(?:하고\s*싶|할게|할래|하려고\s*해|해\s*줘|해\s*주세요)|"
+    r"주문(?:할게|할래|하고\s*싶|하려고\s*해|"
+    r"해\s*줘|해\s*주세요)|"
+    r"장바구니.{0,12}(?:담|넣)|담아\s*(?:줘|주세요)?|"
+    r"마실래|마시고\s*싶|살게|살래|"
+    r"(?:술|주류|알코올|맥주|와인|하이볼)(?:을|를)?\s*(?:좀\s*)?(?:주세요|줘)|"
+    r"(?:한|두|세|\d+)\s*(?:잔|병)\s*(?:주세요|줘)|"
+    r"\b(?:buy|purchase|order|add\s+to\s+(?:my\s+)?cart|i(?:'d| would)\s+like)\b|"
+    r"(?:购买|購買|下单|下單)|(?:購入|注文))",
+    re.IGNORECASE,
+)
+ALCOHOL_PURCHASE_NEGATION_RE = re.compile(
+    r"(?:술|주류|알코올|맥주|라거|와인|하이볼|칵테일|위스키)"
+    r"(?:을|를|은|는)?\s*"
+    r"(?:"
+    r"(?:주문|구매|사|마시)(?:하고|하려고|할)?\s*싶지\s*않|"
+    r"안\s*(?:살|사|구매|주문|마실|마시)|"
+    r"(?:주문|구매|마시|사)하지\s*않"
+    r")|"
+    r"\b(?:i\s+)?(?:do\s+not|don't|dont|will\s+not|won't|wont)\s+"
+    r"(?:want\s+to\s+)?"
+    r"(?:buy|purchase|order|get|drink)\b.{0,32}"
+    r"(?:alcohol|beer|wine|liquor|cocktail|highball)",
+    re.IGNORECASE,
+)
+
+
+def _explicit_alcohol_purchase_intent(text: str) -> bool:
+    """Gate purchase intent, never price/ABV/recommendation information alone."""
+    lowered = str(text or "").casefold()
+    if re.search(
+        r"(?:술|주류|알코올)(?:이|가|은|는)?\s*"
+        r"(?:말고|빼고|제외|없는|없이|아닌|안\s*든)|"
+        r"(?:무|논)알코올|non[-\s]?alcoholic|without\s+alcohol",
+        lowered,
+    ):
+        return False
+    if ALCOHOL_PURCHASE_NEGATION_RE.search(lowered):
+        return False
+    return (
+        any(term in lowered for term in ALCOHOL_TERMS)
+        and bool(ALCOHOL_PURCHASE_RE.search(lowered))
+    )
+
+
+def _specific_alcohol_menu_ids(text: str) -> list[str]:
+    """Return catalog-matched alcohol IDs in a deterministic order."""
+    from src.retrieve import rule_hits
+
+    menu_ids, _ = rule_hits(text)
+    return sorted(
+        menu_id for menu_id in menu_ids
+        if (row := menu_by_id(menu_id))
+        and str(row.get("주류 구분", "")).startswith("주류 포함")
+    )
+
 
 def _requested_table_change(text: str) -> int | None:
     """정보 질문이 아닌 명시적 좌석 변경 발화에서만 대상 번호를 찾는다."""
@@ -771,6 +930,7 @@ def _cart_action_scope(request: CartActionRequest, cart: Cart) -> str:
 def cart_action(request: CartActionRequest):
     """메뉴 선택 다이얼로그와 장바구니 버튼의 변경을 즉시 검증한다."""
     cart = _restore_cart(request.table_id, request.cart, request.state_token)
+    original_snapshot = deepcopy(cart)
     if cart.order_no:
         raise HTTPException(
             status_code=409,
@@ -830,7 +990,21 @@ def cart_action(request: CartActionRequest):
             raise HTTPException(status_code=422, detail=error)
 
     cart.order_no = None
-    requires_staff = cart.has_alcohol and not cart.staff_checked
+    alcohol_increase = _adds_alcohol(original_snapshot, cart)
+    preapproved = (
+        alcohol_increase
+        and _has_staff_preapproval(
+            request.staff_authorization, original_snapshot, cart)
+    )
+    if alcohol_increase:
+        # A previously verified existing alcohol cart does not authorize a new
+        # quantity/type increase.  Only the one short preapproval above does.
+        cart.staff_checked = bool(preapproved)
+    elif cart.has_alcohol:
+        cart.staff_checked = original_snapshot.staff_checked
+    else:
+        cart.staff_checked = False
+    requires_staff = alcohol_increase and not cart.staff_checked
     scope = _cart_action_scope(request, cart)
     challenge = None
     if requires_staff:
@@ -927,12 +1101,19 @@ def confirm_order(request: CheckoutRequest):
         "language": request.language,
         "state_token": _issue_state_token(cart),
         "checkout": {
+            "order_no": cart.order_no,
+            "table_id": cart.table_id,
+            "items": _cart_payload(cart)["items"],
             "service_mode": request.service_mode,
             "cup": request.cup,
             "supplies": list(dict.fromkeys(request.supplies)),
             "discount": 0,
+            "subtotal": cart.total,
             "total_before_discount": cart.total,
             "total_due": cart.total,
+            "membership_connected": False,
+            "membership_applied": False,
+            "benefits_available": False,
             "coupon_applied": False,
             "points_used": 0,
             "points_earned": 0,
@@ -947,6 +1128,7 @@ def confirm_order(request: CheckoutRequest):
             "split_parts": split_parts,
             "receipt": request.receipt,
             "simulated": True,
+            "completion_status": "demo_complete",
             "payment_status": "simulation_complete",
             "external_payment_performed": False,
             "store_order_submitted": False,
@@ -956,7 +1138,15 @@ def confirm_order(request: CheckoutRequest):
     }
 
 
-def _staff_required_payload(cart: Cart, scope: str, language: str = "ko") -> dict:
+def _staff_required_payload(
+    cart: Cart,
+    scope: str,
+    language: str = "ko",
+    *,
+    authorization_mode: str = "none",
+    allowed_cart_fingerprints: list[str] | None = None,
+    allowed_menu_ids: list[str] | None = None,
+) -> dict:
     _require_state_secret()
     replies = {
         "ko": "직원 확인이 필요한 내용입니다. 직원을 부르겠습니다.",
@@ -979,7 +1169,13 @@ def _staff_required_payload(cart: Cart, scope: str, language: str = "ko") -> dic
         "state_token": _issue_state_token(cart),
         "requires_staff_verification": True,
         "staff_verification_reason": "alcohol_purchase",
-        "staff_challenge": _issue_staff_challenge(cart, scope),
+        "staff_challenge": _issue_staff_challenge(
+            cart,
+            scope,
+            authorization_mode=authorization_mode,
+            allowed_cart_fingerprints=allowed_cart_fingerprints,
+            allowed_menu_ids=allowed_menu_ids,
+        ),
         "order_form": _order_form_metadata(),
     }
 
@@ -1017,13 +1213,10 @@ def chat(
                 }
                 raise HTTPException(status_code=409, detail=details[request.language])
             cart.table_id = requested_table
-            requires_staff = cart.has_alcohol and not cart.staff_checked
+            # Moving seats does not buy or increase alcohol, so it must never
+            # interrupt the user with an age-check modal.
+            requires_staff = False
             staff_challenge = None
-            if requires_staff:
-                _require_state_secret()
-                staff_challenge = _issue_staff_challenge(
-                    cart, _staff_scope(request)
-                )
             return {
                 "reply": _localized_table_reply(request.language, requested_table),
                 "quick_replies": [],
@@ -1048,10 +1241,36 @@ def chat(
         scope = _staff_scope(request)
         staff_authorized = _has_staff_authorization(
             request.staff_authorization, cart, scope)
-        cart_needs_staff = (
-            cart.has_alcohol and not cart.staff_checked and not staff_authorized)
-        if cart_needs_staff:
-            return _staff_required_payload(cart, scope, request.language)
+        explicit_alcohol_purchase = _explicit_alcohol_purchase_intent(
+            request.message)
+        specific_alcohol_menu_ids = _specific_alcohol_menu_ids(request.message)
+        generic_alcohol_purchase = (
+            explicit_alcohol_purchase
+            and not specific_alcohol_menu_ids
+        )
+        # The deterministic mock router cannot construct cart_add targets from
+        # every purchase phrase (for example, "맥주 주문할게요").  Gate those
+        # explicit purchases before routing as well, then bind the one-use
+        # authorization to the catalog IDs actually mentioned in the request.
+        mock_specific_alcohol_purchase = bool(
+            is_mock() and explicit_alcohol_purchase and specific_alcohol_menu_ids
+        )
+        if ((generic_alcohol_purchase or mock_specific_alcohol_purchase)
+                and not staff_authorized):
+            # This also covers a generic request such as "주류를 구매하고
+            # 싶어요" before a concrete menu exists.  Information-only price,
+            # ABV and recommendation questions continue to the normal answer path.
+            return _staff_required_payload(
+                cart,
+                scope,
+                request.language,
+                authorization_mode=(
+                    "menu_ids_one_alcohol_line"
+                    if specific_alcohol_menu_ids
+                    else "generic_one_alcohol_line"
+                ),
+                allowed_menu_ids=specific_alcohol_menu_ids,
+            )
 
         if not is_mock() and not ensure_api_key():
             raise HTTPException(
@@ -1084,12 +1303,27 @@ def chat(
         result_intent = str(getattr(result, "intent", ""))
         deferred_items: list[CartItem] = []
         structured_checkout = False
+        declared_added = getattr(result, "added_items", None)
+        if declared_added is None:
+            # Compatibility for patched/older TurnResult objects in callers.
+            new_items = (
+                cart.items[len(original_snapshot.items):]
+                if len(cart.items) > len(original_snapshot.items) else []
+            )
+        else:
+            new_items = list(declared_added)
         if (request.defer_cart_add and result_intent == "장바구니"
-                and len(cart.items) > len(original_snapshot.items)):
+                and new_items):
             # 브라우저 주문은 모델이 제안한 항목을 즉시 확정하지 않는다.
-            # 검증된 제안만 옵션 화면에 넘기고 서명 상태는 변경 전으로 되돌린다.
-            deferred_items = deepcopy(cart.items[len(original_snapshot.items):])
-            cart = original_snapshot
+            # 검증된 제안만 옵션 화면에 넘긴다. 같은 발화의 수정·삭제는
+            # 즉시 반영하되, executor가 마지막에 append한 add 제안만 떼어낸다.
+            deferred_items = deepcopy(new_items)
+            if declared_added is None:
+                cart = original_snapshot
+            else:
+                cart.items = cart.items[:-len(deferred_items)]
+                cart.order_no = original_snapshot.order_no
+                cart.staff_checked = original_snapshot.staff_checked
             result_reply = _deferred_cart_reply(
                 request.language, max(1, len(deferred_items))
             )
@@ -1123,8 +1357,18 @@ def chat(
 
         # 실제 구매 요청으로 주류가 추가된 경우에만 답변을 보류한다. 변경 전
         # 장바구니를 돌려줘서 승인 후 자동 재시도가 중복 추가를 만들지 않게 한다.
-        if cart.has_alcohol and not cart.staff_checked:
-            return _staff_required_payload(original_snapshot, scope, request.language)
+        if (_adds_alcohol(original_snapshot, cart)
+                and not cart.staff_checked):
+            return _staff_required_payload(
+                original_snapshot,
+                scope,
+                request.language,
+                # A concrete chat purchase must be retried with the exact
+                # scoped authorization.  Empty-cart state preapproval is
+                # reserved for the generic "I want to buy alcohol" flow.
+                authorization_mode="exact",
+                allowed_cart_fingerprints=[_cart_fingerprint(cart)],
+            )
 
         result_menu_images = getattr(result, "menu_images", None)
         if result_menu_images is None:
@@ -1138,13 +1382,24 @@ def chat(
                 history=history,
             )
 
+        authorized_choice_ids = (
+            specific_alcohol_menu_ids
+            if staff_authorized and explicit_alcohol_purchase else []
+        )
         menu_actions = _menu_actions(
             result.docs,
             result_menu_images,
-            menu_ids=[item.menu_id for item in deferred_items],
+            menu_ids=[item.menu_id for item in deferred_items] + authorized_choice_ids,
         )
         open_option_menu_id = (
             deferred_items[0].menu_id if deferred_items else None
+        )
+        if (open_option_menu_id is None
+                and len(authorized_choice_ids) == 1):
+            open_option_menu_id = authorized_choice_ids[0]
+        pending_staff_challenge = (
+            _issue_staff_challenge(cart, scope)
+            if cart.has_alcohol and not cart.staff_checked else None
         )
 
         return {
@@ -1164,7 +1419,15 @@ def chat(
             "state_token": _issue_state_token(cart),
             "requires_staff_verification": False,
             "staff_verification_reason": None,
-            "staff_challenge": None,
+            # A pending cart may be verified voluntarily, but viewing,
+            # reducing or removing it is never blocked by this challenge.
+            "staff_challenge": pending_staff_challenge,
+            "staff_authorization": (
+                request.staff_authorization
+                if staff_authorized
+                and (deferred_items or explicit_alcohol_purchase)
+                else None
+            ),
             "order_form": _order_form_metadata(),
         }
 
@@ -1177,16 +1440,17 @@ def verify_staff(
     _require_staff_code(x_moki_staff_code, request.language)
     _require_state_secret()
     cart = _restore_cart(request.table_id, request.cart, request.state_token)
-    scope = _challenge_scope(request.staff_challenge, cart)
-    if not scope:
+    challenge = _challenge_payload(request.staff_challenge, cart)
+    if not challenge:
         raise HTTPException(
             status_code=410,
             detail=_api_text(request.language, "challenge_expired"),
         )
     cart.order_no = None
-    # 첫 구매 시도는 원래 장바구니로 되돌린 뒤 확인하므로 빈 장바구니에도
-    # 정확히 같은 구매 요청 한 번에만 쓸 수 있는 짧은 승인을 발급한다.
+    # Empty-cart approval is carried only in the short authorization token,
+    # never as a broadly reusable signed ``staff_checked`` cart state.
     cart.staff_checked = cart.has_alcohol
+    scope = str(challenge["scope"])
     messages = {
         "ko": ("직원 나이 확인이 완료되었습니다."
                if cart.has_alcohol else "직원 확인이 완료되었습니다."),
@@ -1202,7 +1466,24 @@ def verify_staff(
         "table_id": cart.table_id,
         "language": request.language,
         "state_token": _issue_state_token(cart),
-        "staff_authorization": _issue_staff_authorization(cart, scope),
+        "staff_authorization": _issue_staff_authorization(
+            cart,
+            scope,
+            authorization_mode=str(
+                challenge.get("authorization_mode", "none")),
+            allowed_cart_fingerprints=[
+                str(value)
+                for value in (challenge.get("allowed_cart_fingerprints") or [])
+                if re.fullmatch(r"[0-9a-f]{64}", str(value))
+            ][:10],
+            allowed_menu_ids=[
+                str(value)
+                for value in (challenge.get("allowed_menu_ids") or [])
+                if re.fullmatch(r"M\d{2}", str(value))
+                and (row := menu_by_id(str(value)))
+                and str(row.get("주류 구분", "")).startswith("주류 포함")
+            ][:10],
+        ),
         "open_order_form": False,
         "order_form": _order_form_metadata(),
     }
