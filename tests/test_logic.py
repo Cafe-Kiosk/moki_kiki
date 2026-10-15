@@ -718,4 +718,9 @@ check("결제 의도로 와도 미지원 항목을 코드가 안내",
       "이 키오스크에서 지원하지 않습니다: 쿠폰·기프티콘 · 분할 결제" in getattr(r, "reply", ""), True)
 check("P07 문서가 검색에 들어감 ('몇 분')", "P07" in rule_hits("제 커피 몇 분 뒤에 나와요?")[1], True)
 
+
+_sp.load.cache_clear(); _sys = _sp.load("system")
+check("system.md: [담기완료] 면 '담아 드릴까요?' 묻지 않는 규칙 (S09 T3)",
+      "[담기완료] 가 있으면 그 품목은 이번 턴에 이미 장바구니에 담겼다" in _sys and "담아 드릴까요?" in _sys, True)
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
