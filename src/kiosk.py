@@ -173,6 +173,24 @@ def strip_footer_lines(reply: str, plans: bool = False) -> str:
     return "\n".join(kept).rstrip()
 
 
+# 이미 담았는데 담을지 묻는 문장 ('장바구니에 담아 드릴까요?', '담을까요?', '추가해 드릴까요?')
+ADD_QUESTION_RE = re.compile(
+    r"[^.!?\n]*(?:담아\s*드릴까요|담아\s*드릴게요\s*\?|담을까요|담아도\s*될까요|넣어\s*드릴까요|넣을까요|"
+    r"추가해\s*드릴까요|추가할까요)\s*\?")
+
+
+def fix_add_question(reply: str) -> str:
+    """[담기완료] 턴에 모델이 '담아 드릴까요?'라고 물으면 '장바구니에 담았습니다.'로 바꾼다 (S09 T3).
+
+    프롬프트 규칙(14번)만으로는 프롬프트가 조금만 바뀌어도 다시 나타났다.
+    이미 '담았습니다'를 말했으면 질문만 지운다.
+    """
+    said = "담았습니다" in ADD_QUESTION_RE.sub("", reply)
+    out = ADD_QUESTION_RE.sub("" if said else " 장바구니에 담았습니다.", reply, count=1)
+    out = ADD_QUESTION_RE.sub("", out)
+    return re.sub(r"[ \t]{2,}", " ", out).replace(" \n", "\n").strip()
+
+
 def footer_lines(cart: Cart) -> list[str]:
     """장바구니가 바뀐 턴에 답변 끝에 붙는 줄들: 품목별 ⚠️ 주류·카페인, 마지막에 🧾 합계."""
     lines = []
@@ -282,8 +300,8 @@ def handle(user_input: str, store, cart: Cart,
 
     # ── 장바구니 담기 ──────────────────────────────────────
     calc_lines = build_calc(user_input, intent, r.get("order_items"), cart, r)
-    if pending_note:
-        calc_lines.insert(0, pending_note)
+    if pending_note:      # 뒤에 둔다 — 맨 앞에 두면 '하지 않았습니다'가 [담기완료]보다 먼저 읽혀 혼동 (S09 T3)
+        calc_lines.append(pending_note)
     if any(e.startswith("JSON 파싱 실패") for e in r.get("errors", [])):
         calc_lines.append("요청을 해석하지 못했습니다 — 담기·빼기·변경은 하지 않았습니다. 손님에게 다시 말해 달라고 요청")
 
@@ -293,6 +311,8 @@ def handle(user_input: str, store, cart: Cart,
     reply, cached = answer(user_input, as_context(docs),
                            calc="\n".join(calc_lines), history=history)
     reply = sanitize_reply(strip_footer_lines(reply, plans=intent == "예산추천"))  # 태그·내부 ID 제거
+    if any(ln.startswith("[담기완료]") for ln in calc_lines):
+        reply = fix_add_question(reply)
     if intent == "예산추천" and (table := budget_table(user_input, r)):
         reply = reply + "\n\n" + "\n".join(table)           # 안별 구성·합계·잔액은 코드가 붙인다
     if cart_signature(cart) != before:

@@ -800,4 +800,36 @@ r2 = _R(); r2.reply = "주문번호는 M0057 입니다.\n🧾 합계 4,500원"
 check("노출 있으면 자동 실패 판정", rc.verdict_line(r1), ("**판정** 실패 (자동 — 내부 값 노출: 주문 단위 ID #M28-NA-ONE)", True))
 check("주문번호·🧾 만 있으면 사람 판정으로 남김", rc.verdict_line(r2), (rc.MANUAL, False))
 
+print("\n【 [담기완료] 턴의 '담아 드릴까요?' 교정 (S09 T3) 】")
+from src.kiosk import fix_add_question
+check("'담아 드릴까요?' → '장바구니에 담았습니다.'",
+      fix_add_question("카페 라떼 따뜻한 S 사이즈 1잔 추가해 드릴게요. 5,500원입니다. 장바구니에 담아 드릴까요?"),
+      "카페 라떼 따뜻한 S 사이즈 1잔 추가해 드릴게요. 5,500원입니다. 장바구니에 담았습니다.")
+check("'담을까요?' 도 교정", fix_add_question("라떼 한 잔이요. 장바구니에 담을까요?"), "라떼 한 잔이요. 장바구니에 담았습니다.")
+check("이미 '담았습니다'를 말했으면 질문만 지움",
+      fix_add_question("장바구니에 담았습니다. 다른 것도 담아 드릴까요?"), "장바구니에 담았습니다.")
+check("담기와 무관한 질문은 그대로", fix_add_question("담았습니다. 다른 메뉴도 보시겠어요?"), "담았습니다. 다른 메뉴도 보시겠어요?")
+saved = K.route, K.answer, K.hybrid_search
+c = Cart(table_id=5); add(c, "M02", "ICED", "S"); c.pending = "confirm"
+K.route = lambda *a, **k: {"intent": "장바구니", "rewritten_query": "x", "language": "ko", "errors": [],
+                           "order_items": [{"action": "add", "menu_name": "카페 라떼", "temp": "HOT", "size": "S", "qty": 1}]}
+K.answer = lambda *a, **k: ("카페 라떼 1잔 추가해 드릴게요. 장바구니에 담아 드릴까요?", True)
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    r = K.handle("라떼도 하나 추가할래요, 따뜻한 S로", None, c)
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("S09 T3 흐름: 답변 첫 줄 교정 + 대기 취소 문구는 calc 맨 뒤",
+      (r.reply.splitlines()[0], r.calc.splitlines()[0].startswith("[담기완료]"),
+       r.calc.splitlines()[-1].endswith("하지 않았습니다.")),
+      ("카페 라떼 1잔 추가해 드릴게요. 장바구니에 담았습니다.", True, True))
+K.answer = lambda *a, **k: ("어떤 크기로 할까요? 담아 드릴까요?", True)
+K.route = lambda *a, **k: {"intent": "메뉴질문", "rewritten_query": "x", "language": "ko", "errors": [], "order_items": []}
+K.hybrid_search = lambda *a, **k: ([], [])
+try:
+    r = K.handle("라떼 어때요", None, Cart(table_id=5))
+finally:
+    K.route, K.answer, K.hybrid_search = saved
+check("[담기완료] 없는 턴은 교정하지 않음", r.reply, "어떤 크기로 할까요? 담아 드릴까요?")
+
 print(f"\n{'='*52}\n통과 {ok} · 실패 {fail}   (API 호출 0회)")
