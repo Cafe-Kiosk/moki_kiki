@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from src.cart import (BEAN_SURCHARGE, MILK_SURCHARGE, OPTION_MENUS, SHOT_PRICE,
                       Cart, CartItem, find_variants, list_menus, menu_by_id,
-                      validate_item_options, variant_by_id)
+                      resolve_variant, validate_item_options, variant_by_id)
 from src.config import (STAFF_VERIFICATION_CODE, TABLES, ensure_api_key,
                         is_mock, request_api_key, request_language)
 from src.content import content_status, menu_image_cards, source_cards
@@ -697,6 +697,80 @@ def _deferred_cart_reply(language: str, count: int) -> str:
     }[language]
 
 
+def _additional_order_items(text: str) -> list[CartItem]:
+    """Build option-review presets for explicitly named additional-order menus.
+
+    The option dialog remains authoritative.  For one named menu we preserve a
+    plainly stated HOT/ICED and S/L choice; all other options stay at their
+    catalog defaults for the customer to review before adding.
+    """
+    from src.retrieve import rule_hits
+
+    menu_ids, _ = rule_hits(text)
+    ordered_ids = sorted(menu_id for menu_id in menu_ids if menu_by_id(menu_id))
+    if not ordered_ids:
+        return []
+
+    normalized = str(text or "").casefold()
+    temp = None
+    size = None
+    if len(ordered_ids) == 1:
+        if re.search(r"(?:아이스|차갑|\biced\b|冰|アイス)", normalized):
+            temp = "ICED"
+        elif re.search(r"(?:핫|따뜻|뜨겁|\bhot\b|热|ホット)", normalized):
+            temp = "HOT"
+        if re.search(r"(?:\bl(?:arge)?\b|라지|大杯|ラージ)", normalized):
+            size = "L"
+        elif re.search(r"(?:\bs(?:mall)?\b|스몰|小杯|スモール)", normalized):
+            size = "S"
+
+    items: list[CartItem] = []
+    for menu_id in ordered_ids[:10]:
+        variant, variants = resolve_variant(menu_id, temp=temp, size=size)
+        if variant is None:
+            candidates = variants
+            if temp:
+                candidates = [row for row in candidates
+                              if str(row.get("온도", "")).upper() == temp] or candidates
+            if size:
+                candidates = [row for row in candidates
+                              if str(row.get("크기", "")).upper() == size] or candidates
+            variant = candidates[0] if candidates else None
+        menu = menu_by_id(menu_id)
+        if not menu or not variant:
+            continue
+        items.append(CartItem(
+            menu_id=menu_id,
+            variant_id=str(variant["주문 단위 ID"]),
+            name=str(menu["메뉴명"]),
+            temp=str(variant.get("온도") or "NA"),
+            size=str(variant.get("크기") or "ONE"),
+            is_alcohol=str(menu.get("주류 구분", "")).startswith("주류 포함"),
+        ))
+    return items
+
+
+def _additional_order_payload(cart: Cart, language: str, items: list[CartItem]) -> dict:
+    return {
+        "reply": _deferred_cart_reply(language, len(items)),
+        "quick_replies": [],
+        "sources": [],
+        "menu_images": [],
+        "menu_actions": [],
+        "open_option_menu_id": None,
+        "deferred_cart_items": [_cart_line_payload(item) for item in items],
+        "open_order_form": False,
+        "cart": _cart_payload(cart),
+        "table_id": cart.table_id,
+        "language": language,
+        "state_token": _issue_state_token(cart),
+        "requires_staff_verification": False,
+        "staff_verification_reason": None,
+        "staff_challenge": None,
+        "order_form": _order_form_metadata(),
+    }
+
+
 def _order_review_reply(language: str, has_items: bool) -> str:
     if not has_items:
         return {
@@ -846,6 +920,31 @@ ALCOHOL_PURCHASE_NEGATION_RE = re.compile(
     r"(?:alcohol|beer|wine|liquor|cocktail|highball)",
     re.IGNORECASE,
 )
+
+ADDITIONAL_ORDER_INFO_RE = re.compile(
+    r"(?:how\s+to.{0,16}(?:another|additional)\s+order|"
+    r"(?:추가\s*주문|another\s+order|additional\s+order|加单|追加订单|追加注文)"
+    r".{0,12}(?:가능|어떻게|할\s*수|있나|있어\s*\?|possible|how\s+to|"
+    r"可以吗|怎么|できますか|方法))",
+    re.IGNORECASE,
+)
+ADDITIONAL_ORDER_COMMAND_RE = re.compile(
+    r"(?:추가\s*주문(?:하고\s*싶|할게|할래|해\s*줘|해\s*주세요|시작|하려고)?|"
+    r"더\s*(?:주문|시키|담)(?:하고\s*싶|할게|할래|을게|어\s*줘)?|"
+    r"\b(?:another|additional|new)\s+order\b|\border\s+more\b|"
+    r"加单|追加订单|再点|追加注文|もう.{0,8}注文)",
+    re.IGNORECASE,
+)
+
+
+def _explicit_additional_order_intent(text: str) -> bool:
+    """Recognize a command to start a new cart after confirmation."""
+    normalized = str(text or "").strip()
+    return bool(
+        normalized
+        and not ADDITIONAL_ORDER_INFO_RE.search(normalized)
+        and ADDITIONAL_ORDER_COMMAND_RE.search(normalized)
+    )
 
 
 def _explicit_alcohol_purchase_intent(text: str) -> bool:
@@ -1195,6 +1294,13 @@ def chat(
         )
     with request_api_key(x_openai_api_key), request_language(request.language):
         cart = _restore_cart(request.table_id, request.cart, request.state_token)
+        additional_order_requested = _explicit_additional_order_intent(
+            request.message)
+        if cart.order_no and additional_order_requested:
+            # A confirmed order stays immutable.  Conversational "additional
+            # order" starts a separate cart at the same table, matching the
+            # explicit button flow in the browser.
+            cart = Cart(table_id=cart.table_id)
         requested_table = _requested_table_change(request.message)
         if requested_table is not None:
             if requested_table not in TABLES:
@@ -1262,6 +1368,12 @@ def chat(
                 ),
                 allowed_menu_ids=specific_alcohol_menu_ids,
             )
+
+        if additional_order_requested:
+            additional_items = _additional_order_items(request.message)
+            if additional_items:
+                return _additional_order_payload(
+                    cart, request.language, additional_items)
 
         if not is_mock() and not ensure_api_key():
             raise HTTPException(

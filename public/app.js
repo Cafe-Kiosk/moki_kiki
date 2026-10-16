@@ -47,7 +47,7 @@ const I18N = {
     heroTitle: '오늘의 한 잔을<br>천천히 골라보세요.', heroDescription: '메뉴 추천부터 옵션과 알레르기 확인까지, 모키가 데이터에 근거해 도와드릴게요.', talkToMoki: '모키와 대화하기', heroAlt: '커피를 들고 인사하는 모키',
     photoMenu: '사진 메뉴판', photoMenuNote: '데이터 파일에 포함된 대표 이미지 33장', menuCategories: '메뉴 분류', menuLoading: '메뉴를 준비하고 있어요.', conversationTitle: '모키와 대화하기', listenAnswer: '답변 듣기', messageLabel: '모키에게 보낼 메시지', messagePlaceholder: '예: 산미가 적고 고소한 커피를 추천해 주세요', send: '보내기', chatHelper: '가격과 옵션은 서버가 메뉴 데이터와 다시 확인합니다.',
     settings: '이용 설정', tableNumber: '좌석 번호', tableOption: '{n}번 테이블', staffCodeLabel: '주류 구매 직원 확인 코드', staffCodePlaceholder: '4자리 코드를 입력해 주세요', staffVerify: '직원 확인', cancelAlcohol: '주류 구매 취소', reset: '대화와 장바구니 초기화',
-    orderDetails: '주문 내역', emptyCart: '아직 담긴 메뉴가 없습니다.', total: '합계', reviewOrder: '주문 검토하기', sourcesTitle: '답변에 참고한 정보', sourcesInitial: '대화를 시작하면 사용한 메뉴와 안내 자료가 표시됩니다.', sourcesEmpty: '이번 답변에는 별도의 메뉴 자료가 필요하지 않았습니다.',
+    orderDetails: '주문 내역', emptyCart: '아직 담긴 메뉴가 없습니다.', total: '합계', reviewOrder: '주문 검토하기', additionalOrder: '추가 주문하기', additionalOrderStarted: '이전 주문은 그대로 확정되어 있어요. 같은 좌석에서 추가 주문할 메뉴를 새 장바구니에 담아 주세요.', sourcesTitle: '답변에 참고한 정보', sourcesInitial: '대화를 시작하면 사용한 메뉴와 안내 자료가 표시됩니다.', sourcesEmpty: '이번 답변에는 별도의 메뉴 자료가 필요하지 않았습니다.',
     close: '닫기', easyViewTitle: '손쉬운 보기', easyViewDescription: '글자와 버튼을 크게 보고, 색상 대비를 높일 수 있어요.', largeText: '큰 글자', largeTextHelp: '전체 글자를 크게 표시', highContrast: '고대비', highContrastHelp: '글자와 배경을 더 선명하게', largeTargets: '큰 버튼', largeTargetsHelp: '누르기 쉽게 조작 영역을 확대', enableEasyView: '모두 켜기', resetView: '기본 보기', done: '완료',
     chooseOnce: '한 번에 선택', temperatureSize: '온도·크기', quantity: '수량', optionGuidance: '옵션을 바꾸지 않으면 기본값 그대로 담아요. 이 화면에서 한 번에 확인해 주세요.', expectedAmount: '예상 금액', cancel: '취소', addToCart: '장바구니에 담기', saveChanges: '변경 저장', optionsTitle: '옵션', allergens: '알레르기', noAllergens: '표시된 알레르기 정보 없음', defaultChoice: '기본', optionSelectTitle: '{name} 옵션 선택',
     checkoutTitle: '주문 한 번에 검토하기', serviceMode: '이용 방식', dineIn: '매장', takeout: '포장', cupChoice: '컵 선택', storeCup: '매장용 다회용컵', personalCup: '개인컵', disposableCup: '일회용컵', supplies: '필요한 비품', carrier: '캐리어', straw: '빨대', couponPoints: '쿠폰·포인트', noBenefits: '사용 가능한 쿠폰과 포인트가 없어요. 할인 0원', paymentMethod: '결제 방법', card: '카드', mobilePay: '모바일', gifticon: '기프티콘', splitPayment: '나눠 결제', noSplit: '나누지 않음', byItem: '메뉴별', equalSplit: '균등 분할', peopleCount: '인원수', receipt: '영수증', paperReceipt: '종이', digitalReceipt: '디지털', noReceipt: '안 받음', demoOnly: '시연용 기능', demoNotice: '실제 결제나 매장 접수는 이루어지지 않습니다.', finalTotal: '최종 금액', confirmDemoOrder: '시연용 주문 확정', orderComplete: '시연용 주문이 확정됐어요', orderNotSubmitted: '실제 결제나 매장 접수는 되지 않았습니다.', orderNumber: '시연용 주문번호: {number}',
@@ -66,7 +66,7 @@ const I18N = {
     receiptCallout: 'Order {number}, please wait a moment!', receiptItems: 'Order items', subtotal: 'Subtotal', demoReceiptLabel: 'Demo payment receipt',
     documentTitle: 'Moki Coffee Bar', skipToChat: 'Skip to conversation', brandHome: 'Moki Coffee Bar home', brandTagline: 'Choose a quiet cup in a hanok', checkingContent: 'Checking content', connectedDemo: 'Data connected · demo mode', connectedAI: 'Data & AI ready', keyNeeded: 'Data connected · API key needed', connectionError: 'Check connection', easyView: 'Easy View', apiKey: 'API key', apiKeyChange: 'Change OpenAI API key', apiKeyEnter: 'Enter OpenAI API key',
     heroTitle: 'Take your time<br>choosing today’s cup.', heroDescription: 'Moki uses the menu data to help with recommendations, options, and allergen checks.', talkToMoki: 'Talk with Moki', heroAlt: 'Moki greeting you with a cup of coffee', photoMenu: 'Photo menu', photoMenuNote: '33 representative images included in the data file', menuCategories: 'Menu categories', menuLoading: 'Preparing the menu.', conversationTitle: 'Talk with Moki', listenAnswer: 'Listen', messageLabel: 'Message to Moki', messagePlaceholder: 'e.g. Recommend a smooth, low-acidity coffee', send: 'Send', chatHelper: 'Prices and options are checked again against the server menu data.',
-    settings: 'Settings', tableNumber: 'Table number', tableOption: 'Table {n}', staffCodeLabel: 'Staff code for alcohol purchase', staffCodePlaceholder: 'Enter the 4-digit code', staffVerify: 'Staff verification', cancelAlcohol: 'Cancel alcohol purchase', reset: 'Reset chat and cart', orderDetails: 'Order', emptyCart: 'Your cart is empty.', total: 'Total', reviewOrder: 'Review order', sourcesTitle: 'Sources used', sourcesInitial: 'Menu and guidance sources appear after you chat.', sourcesEmpty: 'No separate menu source was needed for this answer.',
+    settings: 'Settings', tableNumber: 'Table number', tableOption: 'Table {n}', staffCodeLabel: 'Staff code for alcohol purchase', staffCodePlaceholder: 'Enter the 4-digit code', staffVerify: 'Staff verification', cancelAlcohol: 'Cancel alcohol purchase', reset: 'Reset chat and cart', orderDetails: 'Order', emptyCart: 'Your cart is empty.', total: 'Total', reviewOrder: 'Review order', additionalOrder: 'Start another order', additionalOrderStarted: 'Your previous order remains confirmed. Add items to a new cart for another order at the same table.', sourcesTitle: 'Sources used', sourcesInitial: 'Menu and guidance sources appear after you chat.', sourcesEmpty: 'No separate menu source was needed for this answer.',
     close: 'Close', easyViewTitle: 'Easy View', easyViewDescription: 'Make text and controls larger, or increase color contrast.', largeText: 'Large text', largeTextHelp: 'Enlarge text across the page', highContrast: 'High contrast', highContrastHelp: 'Make text and backgrounds clearer', largeTargets: 'Large controls', largeTargetsHelp: 'Increase tap target sizes', enableEasyView: 'Turn all on', resetView: 'Default view', done: 'Done', chooseOnce: 'CHOOSE ONCE', temperatureSize: 'Temperature & size', quantity: 'Quantity', optionGuidance: 'Keep the defaults to skip changes. Review everything once on this screen.', expectedAmount: 'Estimated amount', cancel: 'Cancel', addToCart: 'Add to cart', saveChanges: 'Save changes', optionsTitle: 'Options', allergens: 'Allergens', noAllergens: 'No allergen information listed', defaultChoice: 'Default', optionSelectTitle: 'Choose options for {name}',
     checkoutTitle: 'Review your order once', serviceMode: 'Service', dineIn: 'Dine in', takeout: 'Takeout', cupChoice: 'Cup', storeCup: 'Reusable store cup', personalCup: 'Personal cup', disposableCup: 'Disposable cup', supplies: 'Supplies', carrier: 'Carrier', straw: 'Straw', couponPoints: 'Coupons & points', noBenefits: 'No coupons or points are available. Discount ₩0', paymentMethod: 'Payment method', card: 'Card', mobilePay: 'Mobile', gifticon: 'Gifticon', splitPayment: 'Split payment', noSplit: 'No split', byItem: 'By item', equalSplit: 'Equal split', peopleCount: 'People', receipt: 'Receipt', paperReceipt: 'Paper', digitalReceipt: 'Digital', noReceipt: 'None', demoOnly: 'Demo only', demoNotice: 'No real payment or store submission will occur.', finalTotal: 'Final total', confirmDemoOrder: 'Confirm demo order', orderComplete: 'Demo order confirmed', orderNotSubmitted: 'No real payment or store submission was made.', orderNumber: 'Demo order number: {number}',
     apiTitle: 'Connect OpenAI API key', apiDescription: 'Enter an API key to chat. It stays only in this page’s memory and is not saved.', apiKeyLabel: 'OpenAI API key', apiPrivacy: 'The key disappears when you refresh or close the page. Do not use it on a shared device.', startWithKey: 'Start with this key', footer: 'Moki Coffee Bar · AI applications team project · Prices and nutrition are fictional for this demo.',
@@ -81,7 +81,7 @@ const I18N = {
     receiptCallout: '{number} 号顾客，请稍候！', receiptItems: '订单商品', subtotal: '小计', demoReceiptLabel: '演示支付收据',
     documentTitle: 'Moki 咖啡吧', skipToChat: '跳转到对话', brandHome: 'Moki 咖啡吧首页', brandTagline: '在韩屋里慢慢选一杯', checkingContent: '正在检查内容', connectedDemo: '数据已连接·演示模式', connectedAI: '数据与 AI 已就绪', keyNeeded: '数据已连接·需要 API 密钥', connectionError: '请检查连接', easyView: '无障碍视图', apiKey: 'API 密钥', apiKeyChange: '更改 OpenAI API 密钥', apiKeyEnter: '输入 OpenAI API 密钥',
     heroTitle: '慢慢挑选<br>今日的一杯。', heroDescription: 'Moki 会根据菜单数据帮您推荐、选项和确认过敏原。', talkToMoki: '与 Moki 对话', heroAlt: '拿着咖啡问候的 Moki', photoMenu: '图片菜单', photoMenuNote: '数据文件中的 33 张代表图片', menuCategories: '菜单分类', menuLoading: '正在准备菜单。', conversationTitle: '与 Moki 对话', listenAnswer: '听回答', messageLabel: '发给 Moki 的消息', messagePlaceholder: '例：请推荐低酸、香浓的咖啡', send: '发送', chatHelper: '价格和选项会与服务器菜单数据再次核对。',
-    settings: '使用设置', tableNumber: '桌号', tableOption: '{n} 号桌', staffCodeLabel: '购酒员工确认码', staffCodePlaceholder: '请输入 4 位代码', staffVerify: '员工确认', cancelAlcohol: '取消购酒', reset: '重置对话和购物车', orderDetails: '订单', emptyCart: '购物车还是空的。', total: '合计', reviewOrder: '检查订单', sourcesTitle: '回答参考', sourcesInitial: '开始对话后将显示使用的菜单与指南。', sourcesEmpty: '本次回答不需要其他菜单资料。',
+    settings: '使用设置', tableNumber: '桌号', tableOption: '{n} 号桌', staffCodeLabel: '购酒员工确认码', staffCodePlaceholder: '请输入 4 位代码', staffVerify: '员工确认', cancelAlcohol: '取消购酒', reset: '重置对话和购物车', orderDetails: '订单', emptyCart: '购物车还是空的。', total: '合计', reviewOrder: '检查订单', additionalOrder: '继续加单', additionalOrderStarted: '之前的订单仍已确认。请在新购物车中添加同桌的加单商品。', sourcesTitle: '回答参考', sourcesInitial: '开始对话后将显示使用的菜单与指南。', sourcesEmpty: '本次回答不需要其他菜单资料。',
     close: '关闭', easyViewTitle: '无障碍视图', easyViewDescription: '可放大文字和按钮，并提高颜色对比度。', largeText: '大字体', largeTextHelp: '放大整个页面的文字', highContrast: '高对比度', highContrastHelp: '让文字和背景更清晰', largeTargets: '大按钮', largeTargetsHelp: '扩大可点击区域', enableEasyView: '全部开启', resetView: '默认视图', done: '完成', chooseOnce: '一次选定', temperatureSize: '温度·尺寸', quantity: '数量', optionGuidance: '保留默认值即可跳过修改。请在本页一次确认。', expectedAmount: '预计金额', cancel: '取消', addToCart: '加入购物车', saveChanges: '保存更改', optionsTitle: '选项', allergens: '过敏原', noAllergens: '无已标注的过敏信息', defaultChoice: '默认', optionSelectTitle: '选择 {name} 的选项',
     checkoutTitle: '一次检查订单', serviceMode: '用餐方式', dineIn: '堂食', takeout: '外带', cupChoice: '杯子', storeCup: '店内杯', personalCup: '自带杯', disposableCup: '一次性杯', supplies: '所需用品', carrier: '杯托', straw: '吸管', couponPoints: '优惠券·积分', noBenefits: '暂无可用优惠券或积分。优惠 0 韩元', paymentMethod: '支付方式', card: '卡', mobilePay: '移动支付', gifticon: '礼品券', splitPayment: '分开支付', noSplit: '不分开', byItem: '按商品', equalSplit: '平均分', peopleCount: '人数', receipt: '收据', paperReceipt: '纸质', digitalReceipt: '电子', noReceipt: '不需要', demoOnly: '仅供演示', demoNotice: '不会发生真实支付或提交到门店。', finalTotal: '最终金额', confirmDemoOrder: '确认演示订单', orderComplete: '演示订单已确认', orderNotSubmitted: '未进行真实支付或门店提交。', orderNumber: '演示订单号：{number}',
     apiTitle: '连接 OpenAI API 密钥', apiDescription: '输入 API 密钥后即可对话。密钥仅保留在当前页面内存中，不会保存。', apiKeyLabel: 'OpenAI API 密钥', apiPrivacy: '刷新或关闭页面后密钥会消失。请勿在公用设备上使用。', startWithKey: '使用此密钥开始', footer: 'Moki 咖啡吧·AI 应用团队项目·价格和营养信息为演示用虚构设定。',
@@ -95,7 +95,7 @@ const I18N = {
     receiptCallout: '注文番号 {number} 番のお客様、少々お待ちください！', receiptItems: '注文メニュー', subtotal: '小計', demoReceiptLabel: 'デモ決済レシート',
     documentTitle: 'モキ・コーヒーバー', skipToChat: '会話へ移動', brandHome: 'モキ・コーヒーバーのホーム', brandTagline: '韓屋でゆっくり選ぶ一杯', checkingContent: 'コンテンツを確認中', connectedDemo: 'データ接続済み・デモモード', connectedAI: 'データ・AI 準備完了', keyNeeded: 'データ接続済み・API キーが必要', connectionError: '接続をご確認ください', easyView: 'やさしい表示', apiKey: 'API キー', apiKeyChange: 'OpenAI API キーを変更', apiKeyEnter: 'OpenAI API キーを入力',
     heroTitle: '今日の一杯を<br>ゆっくり選んでください。', heroDescription: 'モキがメニューデータをもとに、おすすめ・オプション・アレルギー確認をお手伝いします。', talkToMoki: 'モキと話す', heroAlt: 'コーヒーを持って挨拶するモキ', photoMenu: '写真メニュー', photoMenuNote: 'データファイル内の代表画像 33 枚', menuCategories: 'メニュー分類', menuLoading: 'メニューを準備中です。', conversationTitle: 'モキと話す', listenAnswer: '回答を聞く', messageLabel: 'モキへのメッセージ', messagePlaceholder: '例：酸味が少なく香ばしいコーヒーをすすめて', send: '送信', chatHelper: '価格とオプションはサーバーのメニューデータと再確認します。',
-    settings: '利用設定', tableNumber: 'テーブル番号', tableOption: 'テーブル {n}', staffCodeLabel: '酒類購入のスタッフ確認コード', staffCodePlaceholder: '4 桁のコードを入力', staffVerify: 'スタッフ確認', cancelAlcohol: '酒類購入を取り消す', reset: '会話とカートをリセット', orderDetails: '注文内容', emptyCart: 'カートはまだ空です。', total: '合計', reviewOrder: '注文を確認', sourcesTitle: '回答の参考情報', sourcesInitial: '会話を始めるとメニューとガイド資料が表示されます。', sourcesEmpty: 'この回答には別のメニュー資料は必要ありませんでした。',
+    settings: '利用設定', tableNumber: 'テーブル番号', tableOption: 'テーブル {n}', staffCodeLabel: '酒類購入のスタッフ確認コード', staffCodePlaceholder: '4 桁のコードを入力', staffVerify: 'スタッフ確認', cancelAlcohol: '酒類購入を取り消す', reset: '会話とカートをリセット', orderDetails: '注文内容', emptyCart: 'カートはまだ空です。', total: '合計', reviewOrder: '注文を確認', additionalOrder: '追加注文する', additionalOrderStarted: '前の注文は確定済みのままです。同じテーブルの追加注文を新しいカートに入れてください。', sourcesTitle: '回答の参考情報', sourcesInitial: '会話を始めるとメニューとガイド資料が表示されます。', sourcesEmpty: 'この回答には別のメニュー資料は必要ありませんでした。',
     close: '閉じる', easyViewTitle: 'やさしい表示', easyViewDescription: '文字やボタンを大きくし、色のコントラストを高められます。', largeText: '大きな文字', largeTextHelp: 'ページ全体の文字を拡大', highContrast: '高コントラスト', highContrastHelp: '文字と背景をより鮮明に', largeTargets: '大きなボタン', largeTargetsHelp: 'タップ領域を拡大', enableEasyView: 'すべてオン', resetView: '標準表示', done: '完了', chooseOnce: '一度に選択', temperatureSize: '温度・サイズ', quantity: '数量', optionGuidance: '変更しない場合は初期値のままです。この画面で一度にご確認ください。', expectedAmount: '予想金額', cancel: 'キャンセル', addToCart: 'カートに入れる', saveChanges: '変更を保存', optionsTitle: 'オプション', allergens: 'アレルゲン', noAllergens: '記載されたアレルギー情報なし', defaultChoice: '標準', optionSelectTitle: '{name} のオプション',
     checkoutTitle: '注文を一度に確認', serviceMode: '利用方法', dineIn: '店内', takeout: 'テイクアウト', cupChoice: 'カップ', storeCup: '店内用カップ', personalCup: 'マイカップ', disposableCup: '使い捨てカップ', supplies: '必要な備品', carrier: 'キャリア', straw: 'ストロー', couponPoints: 'クーポン・ポイント', noBenefits: '利用可能なクーポンやポイントはありません。割引 0 ウォン', paymentMethod: '支払い方法', card: 'カード', mobilePay: 'モバイル', gifticon: 'ギフトコン', splitPayment: '分割支払い', noSplit: '分けない', byItem: '商品別', equalSplit: '均等分割', peopleCount: '人数', receipt: 'レシート', paperReceipt: '紙', digitalReceipt: 'デジタル', noReceipt: '不要', demoOnly: 'デモ専用', demoNotice: '実際の決済や店舗への送信は行われません。', finalTotal: '最終金額', confirmDemoOrder: 'デモ注文を確定', orderComplete: 'デモ注文を確定しました', orderNotSubmitted: '実際の決済や店舗送信は行われていません。', orderNumber: 'デモ注文番号: {number}',
     apiTitle: 'OpenAI API キーを接続', apiDescription: '会話のため API キーを入力してください。キーはこのページのメモリにだけ保持され、保存されません。', apiKeyLabel: 'OpenAI API キー', apiPrivacy: 'ページを更新または閉じるとキーは消えます。共用端末では使用しないでください。', startWithKey: 'このキーで開始', footer: 'モキ・コーヒーバー・AI 応用チームプロジェクト・価格と栄養情報はデモ用の架空設定です。',
@@ -104,10 +104,38 @@ const I18N = {
   },
 };
 
+const STAFF_CALL_I18N = {
+  ko: {
+    staffCall: '직원 호출', staffCallActive: '직원 호출됨', staffCallTitle: '직원 호출',
+    staffCallDescription: '메뉴나 이용에 도움이 필요하신가요?', staffCallDemoNotice: '이 화면에서는 실제 직원에게 호출이 전달되지 않습니다.',
+    requestStaffCall: '직원 호출하기', staffCallRequestedTitle: '직원 호출을 표시했어요',
+    staffCallRequestedDescription: '현재 테이블에 직원 호출 상태가 표시됩니다.', cancelStaffCall: '호출 취소', staffCallCancelled: '직원 호출을 취소했어요.',
+  },
+  en: {
+    staffCall: 'Call staff', staffCallActive: 'Staff called', staffCallTitle: 'Call staff',
+    staffCallDescription: 'Do you need help with the menu or your visit?', staffCallDemoNotice: 'This demo does not send a real request to staff.',
+    requestStaffCall: 'Call staff', staffCallRequestedTitle: 'Staff call displayed',
+    staffCallRequestedDescription: 'This table is now showing a staff-call status.', cancelStaffCall: 'Cancel call', staffCallCancelled: 'The staff call was cancelled.',
+  },
+  zh: {
+    staffCall: '呼叫员工', staffCallActive: '已呼叫员工', staffCallTitle: '呼叫员工',
+    staffCallDescription: '需要菜单或用餐方面的帮助吗？', staffCallDemoNotice: '此演示画面不会向真实员工发送请求。',
+    requestStaffCall: '呼叫员工', staffCallRequestedTitle: '已显示员工呼叫',
+    staffCallRequestedDescription: '当前桌位已显示员工呼叫状态。', cancelStaffCall: '取消呼叫', staffCallCancelled: '已取消员工呼叫。',
+  },
+  ja: {
+    staffCall: 'スタッフを呼ぶ', staffCallActive: 'スタッフ呼出中', staffCallTitle: 'スタッフ呼出',
+    staffCallDescription: 'メニューやご利用にお手伝いが必要ですか？', staffCallDemoNotice: 'このデモ画面から実際のスタッフに呼出は送信されません。',
+    requestStaffCall: 'スタッフを呼ぶ', staffCallRequestedTitle: 'スタッフ呼出を表示しました',
+    staffCallRequestedDescription: '現在のテーブルにスタッフ呼出状態が表示されます。', cancelStaffCall: '呼出を取り消す', staffCallCancelled: 'スタッフ呼出を取り消しました。',
+  },
+};
+Object.entries(STAFF_CALL_I18N).forEach(([locale, messages]) => Object.assign(I18N[locale], messages));
+
 const state = {
   locale: 'ko', localeChosen: false, largeText: false, highContrast: false, largeTargets: false,
   history: [], cart: [], orderNo: null, stateToken: null, cartStatus: null,
-  staffChecked: false, tableId: 5, staffVerificationRequired: false,
+  staffChecked: false, staffCallRequested: false, tableId: 5, staffVerificationRequired: false,
   staffVerificationReason: null, staffChallenge: null, staffAuthorization: null,
   pendingStaffRequest: null, pendingCartRollback: null,
   sources: [], menu: [], categories: [], category: '커피',
@@ -155,6 +183,35 @@ function openDialog(dialog) {
 function closeDialog(dialog) {
   if (dialog && dialog.open) dialog.close();
   syncModalState();
+}
+
+function renderStaffCallState() {
+  const active = state.staffCallRequested;
+  const button = $('#staffCallButton');
+  button.textContent = tr(active ? 'staffCallActive' : 'staffCall');
+  button.classList.toggle('active', active);
+  button.setAttribute('aria-pressed', String(active));
+  $('#staffCallPrompt').hidden = active;
+  $('#staffCallSuccess').hidden = !active;
+}
+
+function openStaffCallDialog() {
+  renderStaffCallState();
+  openDialog($('#staffCallModal'));
+}
+
+function requestStaffCall() {
+  state.staffCallRequested = true;
+  renderStaffCallState(); saveState();
+  announce(tr('staffCallRequestedTitle'));
+}
+
+function cancelStaffCall() {
+  state.staffCallRequested = false;
+  renderStaffCallState(); saveState();
+  closeDialog($('#staffCallModal'));
+  announce(tr('staffCallCancelled'));
+  $('#staffCallButton').focus();
 }
 
 function resetOptionDialogState() {
@@ -222,6 +279,7 @@ function translateStaticPage() {
   $$('[data-i18n-alt]').forEach((element) => { element.alt = tr(element.dataset.i18nAlt); });
   $('#currentLanguageLabel').textContent = LANGUAGE_LABELS[state.locale];
   $('#languageClose').hidden = !state.localeChosen;
+  renderStaffCallState();
   refreshConnectionStatus();
 }
 
@@ -270,6 +328,13 @@ function applyDetectedLocale(message) {
   if (!locale || locale === state.locale) return;
   setLocale(locale, { close: false, announceChange: false });
   announce(LANGUAGE_DETECTED_MESSAGES[locale]);
+}
+
+function isAdditionalOrderRequest(message) {
+  const text = String(message || '').trim().toLowerCase();
+  if (!text) return false;
+  if (/(?:how\s+to.{0,16}(?:another|additional)\s+order|(?:추가\s*주문|another\s+order|additional\s+order|加单|追加订单|追加注文).{0,12}(?:가능|어떻게|할\s*수|있나|있어\s*\?|possible|how\s+to|可以吗|怎么|できますか|方法))/i.test(text)) return false;
+  return /(?:추가\s*주문(?:하고\s*싶|할게|할래|해\s*줘|해\s*주세요|시작|하려고)?|더\s*(?:주문|시키|담)(?:하고\s*싶|할게|할래|을게|어\s*줘)?|\b(?:another|additional|new)\s+order\b|\border\s+more\b|加单|追加订单|再点|追加注文|もう.{0,8}注文)/i.test(text);
 }
 
 function setAccessibility(name, value) {
@@ -574,6 +639,7 @@ function cartActionNeedsAlcoholApproval(action, fields = {}) {
 }
 
 function renderCart() {
+  const confirmed = Boolean(state.orderNo);
   const wrap = $('#cartItems'); wrap.replaceChildren();
   if (!state.cart.length) {
     const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = tr('emptyCart'); wrap.appendChild(empty);
@@ -588,18 +654,19 @@ function renderCart() {
     const options = document.createElement('small'); options.textContent = cartOptionText(item);
     const price = document.createElement('div'); price.className = 'cart-line-price'; price.textContent = won(item.subtotal);
     const controls = document.createElement('div'); controls.className = 'cart-controls';
-    const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.ariaLabel = `${nameText}: ${tr('decrease')}`; minus.disabled = Number(item.qty) <= 1;
+    const minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−'; minus.ariaLabel = `${nameText}: ${tr('decrease')}`; minus.disabled = confirmed || Number(item.qty) <= 1;
     minus.onclick = () => cartAction('set_qty', { index, quantity: Number(item.qty) - 1 });
     const quantity = document.createElement('span'); quantity.textContent = String(item.qty); quantity.ariaLabel = `${tr('quantity')} ${item.qty}`;
-    const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.ariaLabel = `${nameText}: ${tr('increase')}`; plus.disabled = Number(item.qty) >= 10;
+    const plus = document.createElement('button'); plus.type = 'button'; plus.textContent = '+'; plus.ariaLabel = `${nameText}: ${tr('increase')}`; plus.disabled = confirmed || Number(item.qty) >= 10;
     plus.onclick = () => cartAction('set_qty', { index, quantity: Number(item.qty) + 1 });
-    const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'cart-text-button'; edit.textContent = tr('edit'); edit.onclick = () => openOptionDialog(item.menu_id, index);
-    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'cart-text-button danger'; remove.textContent = tr('remove'); remove.ariaLabel = `${nameText}: ${tr('remove')}`; remove.onclick = () => cartAction('remove', { index });
+    const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'cart-text-button'; edit.textContent = tr('edit'); edit.disabled = confirmed; edit.onclick = () => openOptionDialog(item.menu_id, index);
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'cart-text-button danger'; remove.textContent = tr('remove'); remove.disabled = confirmed; remove.ariaLabel = `${nameText}: ${tr('remove')}`; remove.onclick = () => cartAction('remove', { index });
     controls.append(minus, quantity, plus, edit, remove); copy.append(name, options, price, controls); line.append(image, copy); wrap.appendChild(line);
   });
   const total = state.cart.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
   $('#cartTotal').textContent = won(total);
   $('#confirmButton').disabled = !state.cart.length;
+  $('#additionalOrderCartButton').hidden = !confirmed;
   if ($('#checkoutModal').open) {
     if (!$('#orderSuccess').hidden && state.lastCheckout) renderCheckoutReceipt(state.lastCheckout);
     else renderCheckoutReview();
@@ -1132,8 +1199,9 @@ async function sendMessage(rawMessage, options = {}) {
     }
     return;
   }
-  if (!openAIAPIKey && !state.serverAIReady && !state.mockMode) { openAPIKeyModal(); return; }
   applyDetectedLocale(message);
+  if (state.orderNo && isAdditionalOrderRequest(message)) startAdditionalOrder();
+  if (!openAIAPIKey && !state.serverAIReady && !state.mockMode) { openAPIKeyModal(); return; }
   state.busy = true; $('#sendButton').disabled = true;
   state.quickReplies = []; state.menuActions = []; renderQuickReplies();
   const previousHistory = historyForRequest(Array.isArray(options.historyOverride) ? options.historyOverride : state.history);
@@ -1433,6 +1501,25 @@ function openCheckout() {
   openDialog($('#checkoutModal'));
 }
 
+function startAdditionalOrder() {
+  if (!state.orderNo || state.busy) return;
+  state.cart = []; state.orderNo = null; state.stateToken = null; state.cartStatus = null;
+  state.staffChecked = false; state.staffVerificationRequired = false;
+  state.staffVerificationReason = null; state.staffChallenge = null; state.staffAuthorization = null;
+  state.pendingStaffRequest = null; state.pendingCartRollback = null;
+  state.quickReplies = []; state.menuActions = [];
+  state.deferredItems = []; state.deferredBatch = null;
+  state.optionItem = null; state.optionEditIndex = null; state.optionPreset = null;
+  state.pairingChoice = null; state.pairingTrail = []; state.lastCheckout = null;
+  $('#checkoutForm').reset();
+  $('#cartError').textContent = ''; $('#optionError').textContent = ''; $('#checkoutError').textContent = '';
+  closeDialog($('#checkoutModal'));
+  renderCart(); renderStaffStatus(); renderQuickReplies();
+  appendMessage('assistant', tr('additionalOrderStarted'));
+  saveState(); announce(tr('additionalOrderStarted'));
+  $('#messageInput').focus();
+}
+
 async function submitCheckout(event) {
   event.preventDefault();
   if (state.busy) return;
@@ -1482,7 +1569,7 @@ function saveState() {
   sessionStorage.setItem(STATE_KEY, JSON.stringify({
     version: STORAGE_VERSION, history: state.history.slice(-20), cart: state.cart,
     orderNo: state.orderNo, stateToken: state.stateToken, cartStatus: state.cartStatus,
-    staffChecked: state.staffChecked, tableId: state.tableId,
+    staffChecked: state.staffChecked, staffCallRequested: state.staffCallRequested, tableId: state.tableId,
     staffVerificationRequired: state.staffVerificationRequired,
     staffChallenge: state.staffChallenge,
     pendingStaffRequest: state.staffVerificationRequired ? state.pendingStaffRequest : null,
@@ -1507,6 +1594,7 @@ function restoreState() {
     state.orderNo = saved.orderNo || null; state.stateToken = saved.stateToken || null;
     state.cartStatus = typeof saved.cartStatus === 'string' ? saved.cartStatus : null;
     state.staffChecked = Boolean(saved.staffChecked && saved.stateToken);
+    state.staffCallRequested = Boolean(current && saved.staffCallRequested);
     state.staffVerificationRequired = Boolean(current && saved.staffVerificationRequired && saved.staffChallenge);
     state.staffChallenge = current && typeof saved.staffChallenge === 'string' ? saved.staffChallenge : null;
     state.pendingStaffRequest = current && saved.pendingStaffRequest && typeof saved.pendingStaffRequest.message === 'string'
@@ -1534,7 +1622,7 @@ function prepareVisitState() {
 
 function resetSession() {
   state.history = []; state.cart = []; state.orderNo = null; state.stateToken = null;
-  state.cartStatus = null; state.staffChecked = false; state.staffVerificationRequired = false;
+  state.cartStatus = null; state.staffChecked = false; state.staffCallRequested = false; state.staffVerificationRequired = false;
   state.staffVerificationReason = null; state.staffChallenge = null; state.staffAuthorization = null;
   state.pendingStaffRequest = null; state.pendingCartRollback = null;
   state.sources = []; state.quickReplies = []; state.menuActions = [];
@@ -1544,12 +1632,12 @@ function resetSession() {
   localStorage.removeItem(STATE_KEY);
   sessionStorage.removeItem(STATE_KEY);
   $('#cartError').textContent = ''; $('#optionError').textContent = ''; $('#checkoutError').textContent = '';
-  renderHistory(); renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies(); announce(tr('resetDone'));
+  renderHistory(); renderCart(); renderStaffStatus(); renderStaffCallState(); renderSources(); renderQuickReplies(); announce(tr('resetDone'));
 }
 
 async function boot() {
   prepareVisitState(); loadPreferences(); restoreState(); applyAccessibility(); translateStaticPage();
-  renderTableOptions(); renderHistory(); renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies();
+  renderTableOptions(); renderHistory(); renderCart(); renderStaffStatus(); renderStaffCallState(); renderSources(); renderQuickReplies();
   for (let count = 2; count <= 10; count += 1) {
     const option = document.createElement('option'); option.value = count; option.textContent = String(count); $('#splitCount').appendChild(option);
   }
@@ -1578,9 +1666,14 @@ $('#chatForm').addEventListener('submit', (event) => { event.preventDefault(); s
 $('#optionForm').addEventListener('submit', submitOption);
 $('#checkoutForm').addEventListener('submit', submitCheckout);
 $('#confirmButton').addEventListener('click', openCheckout);
+$('#additionalOrderCartButton').addEventListener('click', startAdditionalOrder);
+$('#additionalOrderReceiptButton').addEventListener('click', startAdditionalOrder);
 $('#tableSelect').addEventListener('change', (event) => changeTable(event.target.value));
 $('#staffVerifyButton').addEventListener('click', verifyStaff);
 $('#staffCancelButton').addEventListener('click', cancelStaffVerification);
+$('#staffCallButton').addEventListener('click', openStaffCallDialog);
+$('#staffCallConfirmButton').addEventListener('click', requestStaffCall);
+$('#staffCallCancelButton').addEventListener('click', cancelStaffCall);
 $('#staffCodeInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); verifyStaff(); } });
 $('#staffCodeModal').addEventListener('cancel', (event) => {
   event.preventDefault();

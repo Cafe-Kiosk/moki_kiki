@@ -133,6 +133,61 @@ class FrontendCompoundOrderContractTests(unittest.TestCase):
         self.assertNotIn("MOKI1234", self.script + self.markup)
         self.assertNotIn("demo_member_10", self.script + self.markup)
 
+    def test_confirmed_order_can_start_a_separate_additional_order(self):
+        self.assertIn('id="additionalOrderCartButton"', self.markup)
+        self.assertIn('id="additionalOrderReceiptButton"', self.markup)
+        self.assertGreaterEqual(self.script.count("additionalOrder:"), 4)
+
+        start = self.script.index("function startAdditionalOrder()")
+        end = self.script.index("async function submitCheckout", start)
+        additional_order = self.script[start:end]
+        self.assertIn("if (!state.orderNo || state.busy) return", additional_order)
+        self.assertIn("state.cart = []", additional_order)
+        self.assertIn("state.orderNo = null", additional_order)
+        self.assertIn("state.stateToken = null", additional_order)
+        self.assertIn("state.staffChecked = false", additional_order)
+        self.assertIn("state.lastCheckout = null", additional_order)
+        self.assertIn("appendMessage('assistant', tr('additionalOrderStarted'))", additional_order)
+        self.assertIn("saveState()", additional_order)
+
+    def test_confirmed_order_lines_are_read_only(self):
+        start = self.script.index("function renderCart()")
+        end = self.script.index("function renderStaffStatus", start)
+        render = self.script[start:end]
+        self.assertIn("const confirmed = Boolean(state.orderNo)", render)
+        self.assertIn("minus.disabled = confirmed ||", render)
+        self.assertIn("plus.disabled = confirmed ||", render)
+        self.assertIn("edit.disabled = confirmed", render)
+        self.assertIn("remove.disabled = confirmed", render)
+        self.assertIn("$('#additionalOrderCartButton').hidden = !confirmed", render)
+
+    def test_staff_call_can_be_requested_cancelled_and_restored(self):
+        for element_id in (
+            "staffCallButton", "staffCallModal", "staffCallPrompt",
+            "staffCallConfirmButton", "staffCallSuccess", "staffCallCancelButton",
+        ):
+            self.assertIn(f'id="{element_id}"', self.markup)
+        self.assertIn("staffCallDemoNotice", self.markup)
+        self.assertIn("const STAFF_CALL_I18N", self.script)
+        self.assertIn("state.staffCallRequested = true", self.script)
+        self.assertIn("state.staffCallRequested = false", self.script)
+        self.assertIn("staffCallRequested: state.staffCallRequested", self.script)
+        self.assertIn("state.staffCallRequested = Boolean(current && saved.staffCallRequested)", self.script)
+        self.assertIn("button.setAttribute('aria-pressed', String(active))", self.script)
+
+        start = self.script.index("function requestStaffCall()")
+        end = self.script.index("function cancelStaffCall()", start)
+        self.assertNotIn("fetch(", self.script[start:end])
+
+    def test_chat_additional_order_resets_confirmed_state_before_request(self):
+        self.assertIn("function isAdditionalOrderRequest(message)", self.script)
+        send_start = self.script.index("async function sendMessage")
+        send_end = self.script.index("async function retryPendingStaffRequest", send_start)
+        send = self.script[send_start:send_end]
+        reset = "if (state.orderNo && isAdditionalOrderRequest(message)) startAdditionalOrder()"
+        self.assertIn(reset, send)
+        self.assertLess(send.index(reset), send.index("fetch('/api/chat'"))
+
 
 if __name__ == "__main__":
     unittest.main()

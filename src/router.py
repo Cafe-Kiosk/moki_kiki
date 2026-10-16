@@ -334,6 +334,17 @@ def normalize_explicit_order_actions(
 
     actions: list[dict] = []
     for action in normalized.get("actions") or []:
+        if (action.get("intent") == "reorder" and action.get("targets")
+                and not action.get("blocked_reason")):
+            reordered = deepcopy(action)
+            reordered.update({
+                "intent": "cart_add",
+                "quantity_mode": "set",
+                "requires_tool": True,
+                "mutates_state": True,
+            })
+            actions.append(reordered)
+            continue
         if action.get("intent") != "option_check" or action.get("blocked_reason"):
             actions.append(action)
             continue
@@ -457,7 +468,7 @@ def adapt_plan(user_input: str, rewrite_result: dict, plan: dict) -> dict:
         legacy_intent = "옵션"
     elif any(i in {"out_of_scope", "unsafe_request", "injection_attempt"} for i in intents):
         legacy_intent = "범위밖"
-    elif any(i in {"start_order", "help", "accessibility", "language_set"} for i in intents):
+    elif any(i in {"start_order", "reorder", "help", "accessibility", "language_set"} for i in intents):
         legacy_intent = "잡담"
     else:
         legacy_intent = "메뉴질문"

@@ -70,6 +70,7 @@
         <section class="panel settings-panel">
           <div class="panel-heading compact"><h2 data-i18n="settings">이용 설정</h2></div>
           <label><span data-i18n="tableNumber">좌석 번호</span><select id="tableSelect"></select></label>
+          <button class="secondary-button staff-call-button" id="staffCallButton" type="button" data-i18n="staffCall">직원 호출</button>
           <button class="secondary-button" id="resetButton" type="button" data-i18n="reset">대화와 장바구니 초기화</button>
         </section>
 
@@ -79,6 +80,7 @@
           <p class="form-error" id="cartError" role="alert"></p>
           <div class="cart-total"><span data-i18n="total">합계</span><strong id="cartTotal">0원</strong></div>
           <button class="primary-button" id="confirmButton" type="button" data-i18n="reviewOrder">주문 검토하기</button>
+          <button class="secondary-button" id="additionalOrderCartButton" type="button" data-i18n="additionalOrder" hidden>추가 주문하기</button>
         </section>
 
         <section class="panel source-panel">
@@ -129,6 +131,23 @@
         <button class="quiet-button" id="staffCancelButton" type="button" data-i18n="cancelAlcohol">주류 구매 취소</button>
         <p class="setting-note" id="staffStatus" aria-live="polite"></p>
       </div>
+    </section>
+  </dialog>
+
+  <dialog class="modal staff-call-modal" id="staffCallModal" aria-labelledby="staffCallTitle" aria-describedby="staffCallDescription">
+    <section class="modal-card staff-call-card">
+      <div class="modal-heading"><div><span class="eyebrow">STAFF CALL</span><h2 id="staffCallTitle" data-i18n="staffCallTitle">직원 호출</h2></div><button class="icon-button" type="button" data-close-dialog="staffCallModal" data-i18n-aria="close">×</button></div>
+      <div id="staffCallPrompt">
+        <p id="staffCallDescription" data-i18n="staffCallDescription">메뉴나 이용에 도움이 필요하신가요?</p>
+        <p class="simulation-note" role="note"><b data-i18n="demoOnly">시연용 기능</b><span data-i18n="staffCallDemoNotice">이 화면에서는 실제 직원에게 호출이 전달되지 않습니다.</span></p>
+        <div class="modal-actions"><button class="quiet-button" type="button" data-close-dialog="staffCallModal" data-i18n="cancel">취소</button><button class="primary-button" id="staffCallConfirmButton" type="button" data-i18n="requestStaffCall">직원 호출하기</button></div>
+      </div>
+      <section class="staff-call-success" id="staffCallSuccess" hidden aria-live="polite">
+        <span aria-hidden="true">🔔</span>
+        <h3 data-i18n="staffCallRequestedTitle">직원 호출을 표시했어요</h3>
+        <p data-i18n="staffCallRequestedDescription">현재 테이블에 직원 호출 상태가 표시됩니다.</p>
+        <div class="modal-actions"><button class="quiet-button" type="button" data-close-dialog="staffCallModal" data-i18n="close">닫기</button><button class="secondary-button" id="staffCallCancelButton" type="button" data-i18n="cancelStaffCall">호출 취소</button></div>
+      </section>
     </section>
   </dialog>
 
@@ -190,7 +209,10 @@
           <div><dt data-i18n="benefitApplied">멤버십·혜택 적용</dt><dd id="receiptBenefitApplied">적용 안 됨</dd></div>
           <div><dt data-i18n="orderNumberLabel">주문번호</dt><dd id="orderNumber">—</dd></div>
         </dl>
-        <button class="primary-button" type="button" data-close-dialog="checkoutModal" data-i18n="done">완료</button>
+        <div class="modal-actions order-success-actions">
+          <button class="quiet-button" type="button" data-close-dialog="checkoutModal" data-i18n="done">완료</button>
+          <button class="primary-button" id="additionalOrderReceiptButton" type="button" data-i18n="additionalOrder">추가 주문하기</button>
+        </div>
       </section>
     </form>
   </dialog>

@@ -9,7 +9,8 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from api.index import app, _explicit_alcohol_purchase_intent
+from api.index import (app, _explicit_additional_order_intent,
+                       _explicit_alcohol_purchase_intent)
 from src.cart import Cart, CartItem
 from src.kiosk import CartExecutionError, _execute_cart_actions
 from src.router import adapt_plan, _is_checkout_command, _mock_plan
@@ -83,6 +84,39 @@ def _line(item):
 
 
 class CompoundRouterTests(unittest.TestCase):
+    def test_additional_order_command_is_distinct_from_policy_question(self):
+        for message in (
+            "추가 주문하고 싶어", "아메리카노 한 잔 더 주문할게",
+            "I want another order", "加单", "追加注文したい",
+        ):
+            with self.subTest(message=message):
+                self.assertTrue(_explicit_additional_order_intent(message))
+        for message in (
+            "추가 주문이 가능한가요?", "How to place another order?",
+            "追加注文はできますか",
+        ):
+            with self.subTest(message=message):
+                self.assertFalse(_explicit_additional_order_intent(message))
+
+    def test_reorder_with_menu_becomes_cart_add_and_without_menu_starts_cleanly(self):
+        message = "아이스 아메리카노 한 잔 추가 주문할게"
+        target = _target("M02", "M02-ICED-S", 1)
+        with_menu = adapt_plan(
+            message,
+            {"rewritten_utterance": message, "language": "ko"},
+            _plan(_action("reorder", [target], "set")),
+        )
+        self.assertEqual(with_menu["intent"], "장바구니")
+        self.assertEqual(with_menu["order_items"][0]["menu_id"], "M02")
+
+        generic = adapt_plan(
+            "추가 주문하고 싶어",
+            {"rewritten_utterance": "추가 주문하고 싶어", "language": "ko"},
+            _plan(_action("reorder", [])),
+        )
+        self.assertEqual(generic["intent"], "잡담")
+        self.assertEqual(generic["order_items"], [])
+
     def test_mock_checkout_commands_exclude_payment_information_questions(self):
         rewrite = {"rewritten_utterance": "", "language": "ko"}
         for message in (
@@ -657,6 +691,70 @@ class CompoundApiTests(unittest.TestCase):
         self.assertFalse(metadata["membership"]["lookup_supported"])
         self.assertFalse(metadata["discounts"]["selection_supported"])
         self.assertEqual(metadata["discounts"]["discount_amount"], 0)
+
+    def test_chat_additional_order_starts_fresh_cart_after_confirmation(self):
+        first = {
+            "menu_id": "M14", "variant_id": "M14-HOT-ONE", "qty": 1,
+            "bean": None, "extra_shots": 0, "milk": None,
+            "sweetness": None, "ice": None, "warming": None,
+        }
+
+        def add_to_fresh_cart(_message, _store, cart, _history):
+            self.assertIsNone(cart.order_no)
+            self.assertEqual(cart.items, [])
+            added = CartItem(
+                menu_id="M02", variant_id="M02-ICED-S", name="아메리카노",
+                temp="ICED", size="S",
+            )
+            cart.add(added)
+            return SimpleNamespace(
+                reply="추가 주문을 시작했어요.", intent="장바구니",
+                quick_replies=[], docs=[], menu_images=[], added_items=[added],
+            )
+
+        env = {"MOKI_STATE_SECRET": STATE_SECRET, "OPENAI_API_KEY": "test-key"}
+        with patch.dict(os.environ, env, clear=False):
+            added = self.client.post("/api/cart/action", json={
+                "action": "add", "table_id": 4, "cart": [], "item": first,
+            }).json()
+            confirmed = self.client.post("/api/order/confirm", json={
+                "table_id": 4, "cart": [first], "state_token": added["state_token"],
+                "service_mode": "dine_in", "cup": "store", "supplies": [],
+                "payment_method": "card", "split_mode": "none", "split_count": 1,
+                "receipt": "none", "language": "ko",
+            }).json()
+            with patch("api.index.is_mock", return_value=False), \
+                    patch("api.index.handle", side_effect=add_to_fresh_cart):
+                response = self.client.post("/api/chat", json={
+                    "message": "아이스 아메리카노 한 잔 추가 주문하고 싶어",
+                    "table_id": 4,
+                    "cart": [_line(SimpleNamespace(**item))
+                             for item in confirmed["cart"]["items"]],
+                    "state_token": confirmed["state_token"],
+                    "language": "ko", "defer_cart_add": True,
+                })
+            mock_response = self.client.post("/api/chat", json={
+                "message": "아이스 아메리카노 한 잔 추가 주문하고 싶어",
+                "table_id": 4,
+                "cart": [_line(SimpleNamespace(**item))
+                         for item in confirmed["cart"]["items"]],
+                "state_token": confirmed["state_token"],
+                "language": "ko", "defer_cart_add": True,
+            })
+
+        self.assertEqual(response.status_code, 200, response.text)
+        payload = response.json()
+        self.assertEqual(payload["table_id"], 4)
+        self.assertIsNone(payload["cart"]["order_no"])
+        self.assertEqual(payload["cart"]["items"], [])
+        self.assertEqual(payload["deferred_cart_items"][0]["menu_id"], "M02")
+        self.assertEqual(mock_response.status_code, 200, mock_response.text)
+        mock_payload = mock_response.json()
+        self.assertIsNone(mock_payload["cart"]["order_no"])
+        self.assertEqual(mock_payload["cart"]["items"], [])
+        self.assertEqual(mock_payload["deferred_cart_items"][0]["menu_id"], "M02")
+        self.assertEqual(mock_payload["deferred_cart_items"][0]["variant_id"],
+                         "M02-ICED-S")
 
 
 if __name__ == "__main__":
