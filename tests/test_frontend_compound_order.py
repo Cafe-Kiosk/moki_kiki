@@ -49,6 +49,15 @@ class FrontendCompoundOrderContractTests(unittest.TestCase):
         )
         self.assertIn("state.deferredItems = normalizeDeferredItems(state.deferredItems)", self.script)
 
+    def test_order_history_is_not_persisted_across_site_visits(self):
+        self.assertIn("sessionStorage.setItem(STATE_KEY", self.script)
+        self.assertIn("sessionStorage.getItem(STATE_KEY", self.script)
+        self.assertIn("function prepareVisitState()", self.script)
+        self.assertIn("localStorage.removeItem(STATE_KEY)", self.script)
+        self.assertIn("navigation.type !== 'reload'", self.script)
+        self.assertNotIn("localStorage.setItem(STATE_KEY", self.script)
+        self.assertNotIn("localStorage.getItem(STATE_KEY", self.script)
+
     def test_completed_actions_and_pairing_cannot_duplicate_the_batch(self):
         start = self.script.index("function setResponseChoices")
         end = self.script.index("function cancelDeferredBatch", start)

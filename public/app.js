@@ -1479,7 +1479,7 @@ async function submitCheckout(event) {
 }
 
 function saveState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify({
+  sessionStorage.setItem(STATE_KEY, JSON.stringify({
     version: STORAGE_VERSION, history: state.history.slice(-20), cart: state.cart,
     orderNo: state.orderNo, stateToken: state.stateToken, cartStatus: state.cartStatus,
     staffChecked: state.staffChecked, tableId: state.tableId,
@@ -1495,7 +1495,7 @@ function saveState() {
 
 function restoreState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+    const saved = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}');
     const current = saved.version === STORAGE_VERSION;
     state.history = (Array.isArray(saved.history) ? saved.history : [])
       .filter((message) => message && (message.role === 'user' || message.role === 'assistant'))
@@ -1518,7 +1518,18 @@ function restoreState() {
     state.tableId = Number.isInteger(saved.tableId) && saved.tableId >= 1 && saved.tableId <= 12 ? saved.tableId : 5;
     state.lastCheckout = current ? normalizeCheckoutReceipt(saved.lastCheckout) : null;
     if (state.lastCheckout && state.lastCheckout.order_no !== state.orderNo) state.lastCheckout = null;
-  } catch (_) { localStorage.removeItem(STATE_KEY); }
+  } catch (_) { sessionStorage.removeItem(STATE_KEY); }
+}
+
+function prepareVisitState() {
+  // Older releases persisted order history across visits.  Remove that legacy
+  // record on every load.  A deliberate fresh navigation starts a clean kiosk,
+  // while an accidental reload in the same tab may recover the active order.
+  localStorage.removeItem(STATE_KEY);
+  const navigation = performance.getEntriesByType?.('navigation')?.[0];
+  if (!navigation || navigation.type !== 'reload') {
+    sessionStorage.removeItem(STATE_KEY);
+  }
 }
 
 function resetSession() {
@@ -1531,12 +1542,13 @@ function resetSession() {
   state.deferredItems = []; state.deferredBatch = null; state.pairingChoice = null; state.pairingTrail = [];
   state.lastCheckout = null;
   localStorage.removeItem(STATE_KEY);
+  sessionStorage.removeItem(STATE_KEY);
   $('#cartError').textContent = ''; $('#optionError').textContent = ''; $('#checkoutError').textContent = '';
   renderHistory(); renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies(); announce(tr('resetDone'));
 }
 
 async function boot() {
-  loadPreferences(); restoreState(); applyAccessibility(); translateStaticPage();
+  prepareVisitState(); loadPreferences(); restoreState(); applyAccessibility(); translateStaticPage();
   renderTableOptions(); renderHistory(); renderCart(); renderStaffStatus(); renderSources(); renderQuickReplies();
   for (let count = 2; count <= 10; count += 1) {
     const option = document.createElement('option'); option.value = count; option.textContent = String(count); $('#splitCount').appendChild(option);
